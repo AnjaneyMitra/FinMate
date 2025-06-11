@@ -1,0 +1,17 @@
+# Ignore Python virtual environment
+.venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore database and model files
+finmate.db
+*.pkl
+
+# Ignore environment variables
+.env
+.env.*
+
+# Ignore logs
+*.log
