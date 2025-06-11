@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+PyJWT
+requests
+scikit-learn
+numpy
+pandas
+statsmodels
+prophet
