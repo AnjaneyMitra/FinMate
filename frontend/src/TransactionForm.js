@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FirebaseDataService from './services/FirebaseDataService';
 import { auth } from './firebase';
 
@@ -11,10 +11,13 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
     payment_method: 'credit_card',
     date: new Date().toISOString().split('T')[0],
     merchant_name: '',
-    notes: ''
+    notes: '',
+    goalId: '' // For goal assignment
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [goals, setGoals] = useState([]); // For goal dropdown
+  const [goalsLoading, setGoalsLoading] = useState(true);
 
   const dataService = new FirebaseDataService();
 
@@ -63,6 +66,21 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
     { value: 'cheque', label: 'Cheque', icon: '📝' }
   ];
 
+  useEffect(() => {
+    async function fetchGoals() {
+      setGoalsLoading(true);
+      try {
+        const userGoals = await dataService.getGoals();
+        setGoals(userGoals || []);
+      } catch {
+        setGoals([]);
+      } finally {
+        setGoalsLoading(false);
+      }
+    }
+    fetchGoals();
+  }, [dataService]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -95,7 +113,8 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
       const transactionData = {
         ...formData,
         amount: parseFloat(formData.amount),
-        date: new Date(formData.date).toISOString()
+        date: new Date(formData.date).toISOString(),
+        goalId: formData.goalId || null // Attach goalId if selected
       };
 
       console.log('📝 Preparing to save transaction:', transactionData);
@@ -114,7 +133,8 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
         payment_method: 'credit_card',
         date: new Date().toISOString().split('T')[0],
         merchant_name: '',
-        notes: ''
+        notes: '',
+        goalId: '' // Reset goalId
       });
 
       // Notify parent component
@@ -334,6 +354,29 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
               className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               placeholder="Additional notes (optional)"
             />
+          </div>
+
+          {/* Goal Assignment Dropdown */}
+          <div>
+            <label htmlFor="goalId" className="block text-lg font-medium text-gray-700 mb-3">
+              🎯 Assign to Goal (optional)
+            </label>
+            <select
+              id="goalId"
+              name="goalId"
+              value={formData.goalId || ''}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              disabled={goalsLoading || goals.length === 0}
+            >
+              <option value="">No goal</option>
+              {goals.map(goal => (
+                <option key={goal.id} value={goal.id}>
+                  {goal.emoji || '🎯'} {goal.name} (Target: ₹{goal.target})
+                </option>
+              ))}
+            </select>
+            {goalsLoading && <div className="text-xs text-gray-400 mt-1">Loading goals...</div>}
           </div>
 
           {/* Submit Button */}

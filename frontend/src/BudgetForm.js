@@ -228,13 +228,14 @@ export default function BudgetForm() {
   const [goals, setGoals] = useState([]); // [{id, name, target, saved, emoji, date, category}]
   const [goalForm, setGoalForm] = useState({ name: '', target: '', emoji: '🎯', date: '', category: '' });
   const [goalSaveStatus, setGoalSaveStatus] = useState(null);
+  const [showGoalForm, setShowGoalForm] = useState(false);
 
   // Load goals from Firestore on mount
   useEffect(() => {
     async function fetchGoals() {
       try {
         const dataService = new FirebaseDataService();
-        const userGoals = await dataService.getGoals(); // implement getGoals in service
+        const userGoals = await dataService.getGoals();
         setGoals(userGoals || []);
       } catch {}
     }
@@ -247,15 +248,25 @@ export default function BudgetForm() {
     setGoalSaveStatus('saving');
     try {
       const dataService = new FirebaseDataService();
-      await dataService.saveGoal(goalForm); // implement saveGoal in service
+      await dataService.saveGoal(goalForm);
       setGoalForm({ name: '', target: '', emoji: '🎯', date: '', category: '' });
       setGoalSaveStatus('success');
+      setShowGoalForm(false);
       // Refresh goals
       const userGoals = await dataService.getGoals();
       setGoals(userGoals || []);
     } catch {
       setGoalSaveStatus('error');
     }
+  };
+
+  // Gamified progress calculation
+  const getGoalLevel = (percent) => {
+    if (percent === 100) return { level: 'Mastered', color: 'bg-green-500', icon: '🏆' };
+    if (percent >= 75) return { level: 'Expert', color: 'bg-blue-500', icon: '💎' };
+    if (percent >= 50) return { level: 'Intermediate', color: 'bg-yellow-400', icon: '⭐' };
+    if (percent >= 25) return { level: 'Beginner', color: 'bg-orange-400', icon: '🎯' };
+    return { level: 'Getting Started', color: 'bg-gray-300', icon: '🚀' };
   };
 
   return (
@@ -604,71 +615,88 @@ export default function BudgetForm() {
 
       {/* --- Financial Goals Section --- */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-xl font-semibold text-teal-700 mb-2 flex items-center">
-          My Financial Goals <span className="ml-2 text-xs text-gray-500">(Track & Celebrate!)</span>
-        </h3>
-        <form onSubmit={handleGoalSubmit} className="flex flex-col sm:flex-row gap-2 items-center mb-4">
-          <input
-            type="text"
-            placeholder="Goal name (e.g. Vacation)"
-            className="border rounded px-3 py-2 w-48"
-            value={goalForm.name}
-            onChange={e => setGoalForm({ ...goalForm, name: e.target.value })}
-            required
-          />
-          <input
-            type="number"
-            min="1"
-            placeholder="Target (₹)"
-            className="border rounded px-3 py-2 w-32"
-            value={goalForm.target}
-            onChange={e => setGoalForm({ ...goalForm, target: e.target.value })}
-            required
-          />
-          <input
-            type="date"
-            className="border rounded px-3 py-2 w-40"
-            value={goalForm.date}
-            onChange={e => setGoalForm({ ...goalForm, date: e.target.value })}
-          />
-          <input
-            type="text"
-            maxLength={2}
-            className="border rounded px-3 py-2 w-16 text-center"
-            value={goalForm.emoji}
-            onChange={e => setGoalForm({ ...goalForm, emoji: e.target.value })}
-            placeholder="🎯"
-          />
-          <input
-            type="text"
-            placeholder="Category (optional)"
-            className="border rounded px-3 py-2 w-32"
-            value={goalForm.category}
-            onChange={e => setGoalForm({ ...goalForm, category: e.target.value })}
-          />
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-semibold text-teal-700 flex items-center gap-2">
+            <span>🎮 My Financial Goals</span>
+            <span className="ml-2 text-xs text-gray-500">(Level up your savings!)</span>
+          </h3>
           <button
-            type="submit"
-            className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors"
-            disabled={goalSaveStatus === 'saving'}
+            className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+            onClick={() => setShowGoalForm((v) => !v)}
           >
-            {goalSaveStatus === 'saving' ? 'Saving...' : 'Add Goal'}
+            {showGoalForm ? 'Close' : 'Add Goal'}
           </button>
-          {goalSaveStatus === 'success' && <span className="text-xs text-green-600 ml-2">Saved!</span>}
-          {goalSaveStatus === 'error' && <span className="text-xs text-red-600 ml-2">Error</span>}
-        </form>
+        </div>
+        {showGoalForm && (
+          <form onSubmit={handleGoalSubmit} className="flex flex-col sm:flex-row gap-2 items-center mb-4 animate-fade-in">
+            <input
+              type="text"
+              placeholder="Goal name (e.g. Vacation)"
+              className="border rounded px-3 py-2 w-48"
+              value={goalForm.name}
+              onChange={e => setGoalForm({ ...goalForm, name: e.target.value })}
+              required
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Target (₹)"
+              className="border rounded px-3 py-2 w-32"
+              value={goalForm.target}
+              onChange={e => setGoalForm({ ...goalForm, target: e.target.value })}
+              required
+            />
+            <input
+              type="date"
+              className="border rounded px-3 py-2 w-40"
+              value={goalForm.date}
+              onChange={e => setGoalForm({ ...goalForm, date: e.target.value })}
+            />
+            <input
+              type="text"
+              maxLength={2}
+              className="border rounded px-3 py-2 w-16 text-center"
+              value={goalForm.emoji}
+              onChange={e => setGoalForm({ ...goalForm, emoji: e.target.value })}
+              placeholder="🎯"
+            />
+            <input
+              type="text"
+              placeholder="Category (optional)"
+              className="border rounded px-3 py-2 w-32"
+              value={goalForm.category}
+              onChange={e => setGoalForm({ ...goalForm, category: e.target.value })}
+            />
+            <button
+              type="submit"
+              className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors"
+              disabled={goalSaveStatus === 'saving'}
+            >
+              {goalSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+            </button>
+            {goalSaveStatus === 'success' && <span className="text-xs text-green-600 ml-2">Saved!</span>}
+            {goalSaveStatus === 'error' && <span className="text-xs text-red-600 ml-2">Error</span>}
+          </form>
+        )}
         {/* Goals List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {goals.length === 0 && <div className="text-gray-400 col-span-3">No goals yet. Add one above!</div>}
           {goals.map(goal => {
             const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
+            const { level, color, icon } = getGoalLevel(percent);
             return (
-              <div key={goal.id} className="bg-gray-50 rounded-lg p-4 shadow flex flex-col gap-2 relative">
+              <div key={goal.id} className="bg-gray-50 rounded-lg p-4 shadow flex flex-col gap-2 relative border border-gray-100 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-2 text-2xl font-bold">{goal.emoji || '🎯'} <span className="text-lg font-semibold text-gray-800">{goal.name}</span></div>
                 <div className="text-sm text-gray-600">Target: ₹{Number(goal.target).toLocaleString('en-IN')}</div>
                 <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
-                  <div className={`bg-teal-500 h-3 rounded-full transition-all`} style={{ width: `${percent}%` }}></div>
+                  <div className={`${color} h-3 rounded-full transition-all`} style={{ width: `${percent}%` }}></div>
                 </div>
-                <div className="text-xs text-gray-700 mt-1">Progress: ₹{Number(goal.saved).toLocaleString('en-IN')} / ₹{Number(goal.target).toLocaleString('en-IN')} ({percent}%)</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-gray-700">Progress: ₹{Number(goal.saved).toLocaleString('en-IN')} / ₹{Number(goal.target).toLocaleString('en-IN')} ({percent}%)</span>
+                  <span className={`text-xs font-semibold ${color} px-2 py-1 rounded-full flex items-center gap-1`}>
+                    {icon} {level}
+                  </span>
+                </div>
                 {goal.date && <div className="text-xs text-gray-400">By: {goal.date}</div>}
                 {percent === 100 && <div className="absolute top-2 right-2 text-green-600 text-xl animate-bounce">🎉</div>}
               </div>

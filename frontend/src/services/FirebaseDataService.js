@@ -54,6 +54,11 @@ export class FirebaseDataService {
         updatedAt: serverTimestamp()
       });
       
+      // If assigned to a goal, increment goal's saved
+      if (transactionData.goalId && transactionData.amount > 0) {
+        await this.incrementGoalSaved(transactionData.goalId, transactionData.amount);
+      }
+      
       console.log('✅ Transaction added with ID:', docRef.id);
       return { id: docRef.id, ...transactionData };
     } catch (error) {
@@ -68,12 +73,30 @@ export class FirebaseDataService {
   async updateTransaction(transactionId, updateData) {
     try {
       const docRef = doc(db, 'transactions', transactionId);
+      // Get previous transaction for goal/amount diff
+      const prevSnap = await getDoc(docRef);
+      const prev = prevSnap.exists() ? prevSnap.data() : null;
       await updateDoc(docRef, {
         ...updateData,
         updatedAt: serverTimestamp()
       });
-      
-      console.log('✅ Transaction updated:', transactionId);
+      // Handle goal progress update
+      if (prev) {
+        // If goal changed, decrement old, increment new
+        if (prev.goalId && prev.goalId !== updateData.goalId) {
+          await this.decrementGoalSaved(prev.goalId, prev.amount);
+        }
+        if (updateData.goalId) {
+          // If same goal, adjust by diff; if new, increment new
+          const diff = (updateData.amount || 0) - (prev.goalId === updateData.goalId ? (prev.amount || 0) : 0);
+          if (diff !== 0) {
+            if (diff > 0) await this.incrementGoalSaved(updateData.goalId, diff);
+            else await this.decrementGoalSaved(updateData.goalId, -diff);
+          } else if (prev.goalId !== updateData.goalId) {
+            await this.incrementGoalSaved(updateData.goalId, updateData.amount || 0);
+          }
+        }
+      }
       return true;
     } catch (error) {
       console.error('❌ Error updating transaction:', error);
@@ -83,8 +106,14 @@ export class FirebaseDataService {
 
   async deleteTransaction(transactionId) {
     try {
-      await deleteDoc(doc(db, 'transactions', transactionId));
-      console.log('✅ Transaction deleted:', transactionId);
+      const docRef = doc(db, 'transactions', transactionId);
+      const prevSnap = await getDoc(docRef);
+      const prev = prevSnap.exists() ? prevSnap.data() : null;
+      await deleteDoc(docRef);
+      // If linked to a goal, decrement saved
+      if (prev && prev.goalId && prev.amount > 0) {
+        await this.decrementGoalSaved(prev.goalId, prev.amount);
+      }
       return true;
     } catch (error) {
       console.error('❌ Error deleting transaction:', error);
@@ -595,6 +624,27 @@ export class FirebaseDataService {
       console.error('❌ Error saving goal:', error);
       throw error;
     }
+  }
+
+  // --- Goal Progress Automation ---
+  async incrementGoalSaved(goalId, amount) {
+    if (!goalId || typeof amount !== 'number') return;
+    const goalRef = doc(db, 'goals', goalId);
+    await updateDoc(goalRef, {
+      saved: (await getDoc(goalRef)).data().saved + amount,
+      updatedAt: serverTimestamp()
+    });
+  }
+
+  async decrementGoalSaved(goalId, amount) {
+    if (!goalId || typeof amount !== 'number') return;
+    const goalRef = doc(db, 'goals', goalId);
+    const goalSnap = await getDoc(goalRef);
+    const currentSaved = goalSnap.exists() ? goalSnap.data().saved : 0;
+    await updateDoc(goalRef, {
+      saved: Math.max(0, currentSaved - amount),
+      updatedAt: serverTimestamp()
+    });
   }
 
   // Utility methods
