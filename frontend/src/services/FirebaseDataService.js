@@ -13,7 +13,8 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  setDoc
 } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -176,25 +177,34 @@ export class FirebaseDataService {
   }
 
   // Budget Management
+  // Now using its own Firestore collection for budgets
   async saveBudget(budgetData) {
     try {
       const userId = this.getCurrentUserId();
       const budgetRef = doc(db, 'budgets', userId);
-      
-      await updateDoc(budgetRef, {
-        ...budgetData,
-        updatedAt: serverTimestamp()
-      }).catch(async () => {
-        // If document doesn't exist, create it
-        await addDoc(collection(db, 'budgets'), {
-          ...budgetData,
-          userId,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+      // --- Validation/Auto-correction: Ensure sum matches income ---
+      const cats = ['essentials','savings','discretionary','emergency'];
+      const income = Number(budgetData.income) || 0;
+      let total = cats.reduce((sum, c) => sum + (Number(budgetData[c]) || 0), 0);
+      let corrected = { ...budgetData };
+      if (income > 0 && total !== income) {
+        // Proportionally adjust all categories
+        cats.forEach(c => {
+          corrected[c] = Math.round((budgetData[c] || 0) * income / (total || 1));
         });
-      });
-
-      console.log('✅ Budget saved');
+        // Final correction for rounding
+        const checkSum = cats.reduce((sum, c) => sum + (Number(corrected[c]) || 0), 0);
+        if (checkSum !== income) {
+          corrected['essentials'] += (income - checkSum);
+        }
+      }
+      await setDoc(budgetRef, {
+        ...corrected,
+        userId,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+      console.log('✅ Budget saved (validated/corrected)');
       return true;
     } catch (error) {
       console.error('❌ Error saving budget:', error);
@@ -207,7 +217,6 @@ export class FirebaseDataService {
       const userId = this.getCurrentUserId();
       const budgetRef = doc(db, 'budgets', userId);
       const budgetSnap = await getDoc(budgetRef);
-
       if (budgetSnap.exists()) {
         return {
           id: budgetSnap.id,
@@ -219,6 +228,45 @@ export class FirebaseDataService {
       return null;
     } catch (error) {
       console.error('❌ Error fetching budget:', error);
+      throw error;
+    }
+  }
+
+  // --- Planned Spending by Category ---
+  async savePlannedSpendingByCategory(categories) {
+    try {
+      const userId = this.getCurrentUserId();
+      const plannedRef = doc(db, 'plannedSpendingByCategory', userId);
+      await setDoc(plannedRef, {
+        userId,
+        categories,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+      console.log('✅ Planned spending by category saved');
+      return true;
+    } catch (error) {
+      console.error('❌ Error saving planned spending by category:', error);
+      throw error;
+    }
+  }
+
+  async getPlannedSpendingByCategory() {
+    try {
+      const userId = this.getCurrentUserId();
+      const plannedRef = doc(db, 'plannedSpendingByCategory', userId);
+      const plannedSnap = await getDoc(plannedRef);
+      if (plannedSnap.exists()) {
+        return {
+          id: plannedSnap.id,
+          ...plannedSnap.data(),
+          createdAt: plannedSnap.data().createdAt?.toDate?.()?.toISOString(),
+          updatedAt: plannedSnap.data().updatedAt?.toDate?.()?.toISOString()
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching planned spending by category:', error);
       throw error;
     }
   }
@@ -504,6 +552,47 @@ export class FirebaseDataService {
       return insights;
     } catch (error) {
       console.error('❌ Error fetching spending insights:', error);
+      throw error;
+    }
+  }
+
+  // --- Financial Goals ---
+  async getGoals() {
+    try {
+      const userId = this.getCurrentUserId();
+      const goalsRef = collection(db, 'goals');
+      const q = query(goalsRef, where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      const goals = [];
+      snapshot.forEach(docSnap => {
+        goals.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      return goals;
+    } catch (error) {
+      console.error('❌ Error fetching goals:', error);
+      return [];
+    }
+  }
+
+  async saveGoal(goal) {
+    try {
+      const userId = this.getCurrentUserId();
+      // If goal has id, update; else, add new
+      if (goal.id) {
+        const goalRef = doc(db, 'goals', goal.id);
+        await updateDoc(goalRef, { ...goal, userId, updatedAt: serverTimestamp() });
+      } else {
+        await addDoc(collection(db, 'goals'), {
+          ...goal,
+          userId,
+          saved: 0, // Start at 0 saved
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      return true;
+    } catch (error) {
+      console.error('❌ Error saving goal:', error);
       throw error;
     }
   }
