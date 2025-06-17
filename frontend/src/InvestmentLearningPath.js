@@ -394,14 +394,10 @@ export default function InvestmentLearningPath() {
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                 <button 
                   onClick={() => {
-                    if (!userProfile) {
-                      setShowProfileSetup(true);
-                    } else {
-                      // Start with first topic
-                      const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
-                      const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
-                      generatePersonalizedContent(selectedLevel, firstTopic);
-                    }
+                    // Always start with first topic, regardless of profile status
+                    const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
+                    const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
+                    generatePersonalizedContent(selectedLevel, firstTopic);
                   }}
                   className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors flex items-center justify-center space-x-2"
                 >
