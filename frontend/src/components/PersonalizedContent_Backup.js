@@ -114,7 +114,7 @@ const PersonalizedContent = ({
         </button>
       </div>
 
-      {/* Enhanced Title with metadata */}
+      {/* Title */}
       {content.title && (
         <div className="border-b border-gray-200 pb-4">
           <h3 className="text-2xl font-bold text-gray-900 mb-3">{content.title}</h3>
@@ -180,15 +180,15 @@ const PersonalizedContent = ({
       )}
 
       {/* Main content */}
-      <div className="learning-content prose prose-lg max-w-none">
+      <div className="learning-content prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-semibold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-ul:text-gray-700 prose-li:text-gray-700 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:pl-4">
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({children}) => <h1 className="text-2xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">{children}</h1>,
+            h1: ({children}) => <h1 className="text-2xl font-bold text-gray-900 mb-4">{children}</h1>,
             h2: ({children}) => <h2 className="text-xl font-semibold text-gray-800 mb-3 mt-6">{children}</h2>,
             h3: ({children}) => <h3 className="text-lg font-medium text-gray-800 mb-2 mt-4">{children}</h3>,
             p: ({children}) => <p className="text-gray-700 mb-4 leading-relaxed">{children}</p>,
-            ul: ({children}) => <ul className="space-y-2 mb-4 ml-4">{children}</ul>,
+            ul: ({children}) => <ul className="space-y-2 mb-4">{children}</ul>,
             ol: ({children}) => <ol className="space-y-2 mb-4 list-decimal list-inside">{children}</ol>,
             li: ({children}) => <li className="text-gray-700 leading-relaxed">{children}</li>,
             strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
@@ -321,12 +321,6 @@ const PersonalizedContent = ({
         </div>
       )}
 
-      {/* Content Actions */}
-      <ContentActions 
-        content={content}
-        topic={content.title || 'Investment Learning Content'}
-      />
-
       {/* Personalization indicator */}
       {userProfile && content.source === 'gemini' && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -341,6 +335,12 @@ const PersonalizedContent = ({
           </div>
         </div>
       )}
+
+      {/* Content Actions */}
+      <ContentActions 
+        content={content}
+        topic={content.title || 'Investment Learning Content'}
+      />
 
       {/* Action buttons */}
       {userProfile && content.source !== 'error' && (
