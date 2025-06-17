@@ -331,62 +331,51 @@ export default function BudgetForm() {
         </div>
       </div>
 
-      {/* Real-Time Budget Analytics - Only show when budget exists */}
+      {/* Budget Analytics Preview - Only show when budget exists */}
       {(suggestedBudget && !suggestedBudget.error) && (
         <div className="bg-gradient-to-br from-teal-50 to-blue-100 rounded-xl p-6 mt-8 border border-teal-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span>📊</span> Live Budget Analytics
+            <span>📊</span> Budget Analytics Preview
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Real Spending Progress */}
+            {/* Spending Progress Preview */}
             <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Current Month Progress</h4>
+              <h4 className="font-semibold text-gray-700 mb-3">Monthly Spending Progress</h4>
               <div className="space-y-2">
-                {(() => {
-                  const categories = [
-                    { 
-                      name: 'Food & Dining', 
-                      planned: suggestedBudget.essentials * 0.4 || 8000,
-                      actual: Math.round((suggestedBudget.essentials * 0.4 || 8000) * (0.6 + Math.random() * 0.5))
-                    },
-                    { 
-                      name: 'Transportation', 
-                      planned: suggestedBudget.discretionary * 0.3 || 5000,
-                      actual: Math.round((suggestedBudget.discretionary * 0.3 || 5000) * (0.4 + Math.random() * 0.4))
-                    },
-                    { 
-                      name: 'Entertainment', 
-                      planned: suggestedBudget.discretionary * 0.4 || 6000,
-                      actual: Math.round((suggestedBudget.discretionary * 0.4 || 6000) * (0.2 + Math.random() * 0.4))
-                    }
-                  ];
-                  
-                  return categories.map((cat, index) => {
-                    const percent = Math.min(100, Math.round((cat.actual / cat.planned) * 100));
-                    const isOverBudget = percent > 80;
-                    const colorClass = isOverBudget ? 'bg-red-400' : percent > 60 ? 'bg-yellow-400' : 'bg-green-400';
-                    const textColor = isOverBudget ? 'text-red-600' : percent > 60 ? 'text-yellow-600' : 'text-green-600';
-                    
-                    return (
-                      <div key={cat.name} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{cat.name}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div className={`${colorClass} h-2 rounded-full progress-bar`} style={{ width: `${percent}%` }}></div>
-                          </div>
-                          <span className={`text-xs ${textColor} font-semibold`}>{percent}%</span>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Food & Dining</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div className="bg-red-400 h-2 rounded-full" style={{ width: '85%' }}></div>
+                    </div>
+                    <span className="text-xs text-red-600">85%</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Transportation</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div className="bg-yellow-400 h-2 rounded-full" style={{ width: '60%' }}></div>
+                    </div>
+                    <span className="text-xs text-yellow-600">60%</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Entertainment</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div className="bg-green-400 h-2 rounded-full" style={{ width: '35%' }}></div>
+                    </div>
+                    <span className="text-xs text-green-600">35%</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Real-time budget utilization tracking</p>
+              <p className="text-xs text-gray-500 mt-3">Real-time budget tracking</p>
             </div>
 
-            {/* Live Budget vs Actual Comparison */}
+            {/* Chart Preview */}
             <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Budget vs Actual Spending</h4>
+              <h4 className="font-semibold text-gray-700 mb-3">Planned vs Actual Comparison</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-3 bg-blue-400 rounded"></div>
@@ -397,44 +386,28 @@ export default function BudgetForm() {
                   <span className="text-xs text-gray-600">Actual Spending</span>
                 </div>
                 <div className="mt-4 space-y-2">
-                  {(() => {
-                    const budgetComparison = [
-                      { name: 'Essentials', planned: suggestedBudget.essentials || 0, actual: Math.round((suggestedBudget.essentials || 0) * 0.75) },
-                      { name: 'Savings', planned: suggestedBudget.savings || 0, actual: Math.round((suggestedBudget.savings || 0) * 0.65) },
-                      { name: 'Discretionary', planned: suggestedBudget.discretionary || 0, actual: Math.round((suggestedBudget.discretionary || 0) * 0.85) }
-                    ];
-                    
-                    const maxAmount = Math.max(...budgetComparison.map(item => Math.max(item.planned, item.actual)));
-                    
-                    return budgetComparison.map((item, index) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <div className="text-xs w-16 text-gray-600">{item.name}</div>
-                        <div className="flex gap-1">
-                          <div 
-                            className="h-2 bg-blue-400 rounded"
-                            style={{ width: `${Math.max(8, (item.planned / maxAmount) * 40)}px` }}
-                            title={`Planned: ₹${item.planned.toLocaleString('en-IN')}`}
-                          ></div>
-                          <div 
-                            className="h-2 bg-teal-400 rounded"
-                            style={{ width: `${Math.max(8, (item.actual / maxAmount) * 40)}px` }}
-                            title={`Actual: ₹${item.actual.toLocaleString('en-IN')}`}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500 ml-2">
-                          {item.actual > item.planned ? '+' : ''}₹{(item.actual - item.planned).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    ));
-                  })()}
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs w-16 text-gray-600">Food</div>
+                    <div className="flex gap-1">
+                      <div className="w-8 h-2 bg-blue-400 rounded"></div>
+                      <div className="w-10 h-2 bg-teal-400 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs w-16 text-gray-600">Travel</div>
+                    <div className="flex gap-1">
+                      <div className="w-6 h-2 bg-blue-400 rounded"></div>
+                      <div className="w-4 h-2 bg-teal-400 rounded"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Live comparison with your set budget</p>
+              <p className="text-xs text-gray-500 mt-3">Interactive horizontal bar charts</p>
             </div>
           </div>
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
-              ⚡ <strong>Real-time data:</strong> Budget tracking • Spending alerts • Progress monitoring • Smart insights
+              ✨ <strong>Features:</strong> Real-time tracking • Smart categorization • Visual comparisons • Budget alerts
             </p>
           </div>
         </div>

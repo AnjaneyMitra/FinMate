@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { auth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from './firebase';
 import Dashboard from './Dashboard';
+import LandingPage from './LandingPage';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -96,13 +97,7 @@ function App() {
           />
           <Route 
             path="/" 
-            element={
-              user ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
+            element={<LandingPage />} 
           />
         </Routes>
       </div>

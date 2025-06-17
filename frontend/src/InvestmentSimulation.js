@@ -37,6 +37,114 @@ export default function InvestmentSimulation() {
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
       <h2 className="text-2xl font-bold mb-4 text-teal-700">Investment Simulation Zone</h2>
+      
+      {/* Live Investment Calculator */}
+      <div className="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-xl p-6 mb-6 border border-teal-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span>📊</span> Live Investment Calculator
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Real-time Parameter Display */}
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <h4 className="font-semibold text-gray-700 mb-3">Current Parameters</h4>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Principal Amount</span>
+                  <span className="font-semibold">₹{Number(principal).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div className="bg-teal-500 h-2 rounded-full transition-all duration-300" style={{ width: `${(principal / 1000000) * 100}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Interest Rate</span>
+                  <span className="font-semibold">{rate}% p.a.</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${(rate / 20) * 100}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Time Period</span>
+                  <span className="font-semibold">{years} years</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div className="bg-purple-500 h-2 rounded-full transition-all duration-300" style={{ width: `${(years / 20) * 100}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Compounding</span>
+                  <span className="font-semibold">{frequency}</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">Adjust sliders below to see live updates</p>
+          </div>
+
+          {/* Live Calculation Results */}
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <h4 className="font-semibold text-gray-700 mb-3">Live Results</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Initial Investment</span>
+                <span className="text-sm font-semibold text-gray-800">₹{Number(principal).toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Future Value</span>
+                <span className="text-sm font-semibold text-green-600">
+                  ₹{calculateReturns(Number(principal), Number(rate), Number(years), frequency).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Total Gains</span>
+                <span className="text-sm font-semibold text-teal-600">
+                  ₹{(calculateReturns(Number(principal), Number(rate), Number(years), frequency) - Number(principal)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Growth Multiple</span>
+                <span className="text-sm font-semibold text-purple-600">
+                  {(calculateReturns(Number(principal), Number(rate), Number(years), frequency) / Number(principal)).toFixed(2)}x
+                </span>
+              </div>
+              <div className="mt-3">
+                <div className="text-xs text-gray-500 mb-1">Growth Visualization</div>
+                <div className="flex items-end gap-1 h-8">
+                  {(() => {
+                    const steps = 5;
+                    const maxValue = calculateReturns(Number(principal), Number(rate), Number(years), frequency);
+                    return Array.from({ length: steps }, (_, i) => {
+                      const yearStep = (Number(years) / (steps - 1)) * i;
+                      const value = calculateReturns(Number(principal), Number(rate), yearStep, frequency);
+                      const height = Math.max(8, (value / maxValue) * 32);
+                      const colorIntensity = 300 + (i * 100);
+                      return (
+                        <div 
+                          key={i}
+                          className={`bg-teal-${colorIntensity} w-2 rounded-t transition-all duration-500`}
+                          style={{ height: `${height}px` }}
+                          title={`Year ${Math.round(yearStep)}: ₹${value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                        ></div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">Updates in real-time as you adjust parameters</p>
+          </div>
+        </div>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            ⚡ <strong>Live calculations:</strong> Compound interest • Real-time updates • Interactive charts • Multiple scenarios
+          </p>
+        </div>
+      </div>
+
       <form className="grid grid-cols-1 gap-4 mb-6" onSubmit={handleSimulate}>
         <div>
           <label className="block text-gray-700 font-medium mb-1">Principal (₹)</label>

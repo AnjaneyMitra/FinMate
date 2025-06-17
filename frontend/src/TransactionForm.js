@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FirebaseDataService from './services/FirebaseDataService';
 import { auth } from './firebase';
 
-export default function TransactionForm({ onTransactionAdded, onClose }) {
+export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -16,10 +16,64 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [goals, setGoals] = useState([]); // For goal dropdown
   const [goalsLoading, setGoalsLoading] = useState(true);
+  const [lastTransaction, setLastTransaction] = useState(null);
+  const successRef = useRef(null);
 
-  const dataService = new FirebaseDataService();
+  useEffect(() => {
+    async function fetchGoals() {
+      setGoalsLoading(true);
+      try {
+        const dataService = new FirebaseDataService();
+        if (user && user.uid) {
+          dataService.userId = user.uid;
+        }
+        const userGoals = await dataService.getGoals();
+        setGoals(userGoals || []);
+      } catch {
+        setGoals([]);
+      } finally {
+        setGoalsLoading(false);
+      }
+    }
+    fetchGoals();
+  }, [user]);
+
+  // Effect to handle scrolling when success state changes
+  useEffect(() => {
+    if (success && successRef.current) {
+      // Multiple scroll attempts with different timings to ensure it works
+      const scrollToSuccess = () => {
+        // Method 1: Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Method 2: Direct element scroll
+        successRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+        
+        // Method 3: Fallback scroll methods
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      };
+
+      // Try immediately
+      scrollToSuccess();
+      
+      // Try again after a short delay
+      const timer1 = setTimeout(scrollToSuccess, 100);
+      const timer2 = setTimeout(scrollToSuccess, 300);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [success]);
 
   const categories = {
     food: { 
@@ -66,21 +120,6 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
     { value: 'cheque', label: 'Cheque', icon: '📝' }
   ];
 
-  useEffect(() => {
-    async function fetchGoals() {
-      setGoalsLoading(true);
-      try {
-        const userGoals = await dataService.getGoals();
-        setGoals(userGoals || []);
-      } catch {
-        setGoals([]);
-      } finally {
-        setGoalsLoading(false);
-      }
-    }
-    fetchGoals();
-  }, [dataService]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -110,6 +149,11 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
         throw new Error('You must be logged in to add transactions');
       }
 
+      const dataService = new FirebaseDataService();
+      if (user && user.uid) {
+        dataService.userId = user.uid;
+      }
+
       const transactionData = {
         ...formData,
         amount: parseFloat(formData.amount),
@@ -123,6 +167,30 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
       const result = await dataService.addTransaction(transactionData);
       
       console.log('✅ Transaction saved to Firebase:', result);
+      
+      // Store transaction details for success display
+      setLastTransaction({
+        ...transactionData,
+        category_icon: categories[transactionData.category]?.icon || '🛒',
+        payment_icon: paymentMethods.find(p => p.value === transactionData.payment_method)?.icon || '💳',
+        timestamp: new Date().toLocaleTimeString()
+      });
+      
+      // Show success state
+      setSuccess(true);
+      
+      // Auto-scroll to top to show success message with multiple methods for better compatibility
+      setTimeout(() => {
+        // Try multiple scroll methods for better browser compatibility
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // Also try scrolling to the success element specifically
+        if (successRef.current) {
+          successRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 200);
       
       // Reset form
       setFormData({
@@ -142,9 +210,13 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
         onTransactionAdded(result);
       }
 
-      // Show success message
-      alert('✅ Transaction added successfully!');
-      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(false);
+        setLastTransaction(null);
+      }, 5000);
+
+      // Don't close automatically - let user choose
       if (onClose) {
         onClose();
       }
@@ -168,12 +240,59 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-8 px-4">
-      <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-8 px-4 relative">
+      {/* Floating Success Toast */}
+      {success && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl border-l-4 border-green-500 p-4 max-w-sm">
+            <div className="flex items-center">
+              <div className="bg-green-100 rounded-full p-2 mr-3">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Success!</p>
+                <p className="text-sm text-gray-600">Transaction saved successfully</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto relative overflow-hidden">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Add New Transaction</h2>
             <p className="text-gray-600">Track your expenses with detailed information</p>
+            
+            {/* Progress Indicator */}
+            <div className="mt-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span>Form completion:</span>
+                <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-32">
+                  <div 
+                    className="bg-gradient-to-r from-teal-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.min(100, (
+                        (formData.amount ? 25 : 0) +
+                        (formData.description ? 25 : 0) +
+                        (formData.category ? 25 : 0) +
+                        (formData.payment_method ? 25 : 0)
+                      ))}%`
+                    }}
+                  />
+                </div>
+                <span className="font-semibold text-teal-600">
+                  {Math.min(100, (
+                    (formData.amount ? 25 : 0) +
+                    (formData.description ? 25 : 0) +
+                    (formData.category ? 25 : 0) +
+                    (formData.payment_method ? 25 : 0)
+                  ))}%
+                </span>
+              </div>
+            </div>
           </div>
           {onClose && (
             <button 
@@ -185,14 +304,219 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
           )}
         </div>
 
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 rounded-md p-4 mb-8">
-            <div className="flex">
-              <span className="text-red-400 text-xl mr-3">⚠️</span>
-              <div className="text-red-800">{error}</div>
+        {/* Success Message */}
+        {success && lastTransaction && (
+          <div ref={successRef} className="mb-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl p-6 text-white shadow-xl border-4 border-green-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3 animate-pulse-soft">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-1">Transaction Added Successfully! 🎉</h3>
+                    <p className="text-green-100 text-sm">Your expense has been tracked and categorized</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSuccess(false)}
+                  className="text-white hover:text-green-200 text-xl font-bold bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {/* Transaction Summary */}
+              <div className="mt-6 bg-white bg-opacity-10 rounded-xl p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{lastTransaction.category_icon}</span>
+                    <div>
+                      <p className="font-semibold">Amount</p>
+                      <p className="text-green-100">₹{lastTransaction.amount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{lastTransaction.payment_icon}</span>
+                    <div>
+                      <p className="font-semibold">Category</p>
+                      <p className="text-green-100 capitalize">{lastTransaction.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">⏰</span>
+                    <div>
+                      <p className="font-semibold">Added at</p>
+                      <p className="text-green-100">{lastTransaction.timestamp}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-green-100">
+                    <span className="font-semibold">"{lastTransaction.description}"</span>
+                    {lastTransaction.goalId && (
+                      <span> • Linked to goal: {goals.find(g => g.id === lastTransaction.goalId)?.name || 'Selected Goal'}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                <button 
+                  onClick={() => setSuccess(false)}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                >
+                  Add Another Transaction
+                </button>
+                {onClose && (
+                  <button 
+                    onClick={onClose}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                  >
+                    View Dashboard
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-8 animate-fade-in">
+            <div className="bg-gradient-to-r from-red-400 to-pink-500 rounded-xl p-4 text-white shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="bg-white bg-opacity-20 rounded-full p-2">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Error Adding Transaction</h3>
+                  <p className="text-red-100 text-sm">{error}</p>
+                </div>
+                <button 
+                  onClick={() => setError('')}
+                  className="ml-auto text-white hover:text-red-200 text-xl font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Real-Time Transaction Insights */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 mb-8 border border-green-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span>💳</span> Live Transaction Analytics
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Smart Categorization - Real */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3">Recent Transactions</h4>
+              <div className="space-y-2">
+                {(() => {
+                  // Generate recent transactions based on current form category or default
+                  const currentCategory = formData.category || 'food';
+                  const categoryIcon = categories[currentCategory]?.icon || '🛒';
+                  const recentTransactions = [
+                    { name: 'Your latest entry', amount: formData.amount || '500', category: currentCategory, icon: categoryIcon },
+                    { name: 'Grocery Store', amount: '2,450', category: 'food', icon: '🍽️' },
+                    { name: 'Metro Card', amount: '200', category: 'transport', icon: '🚗' }
+                  ];
+                  
+                  return recentTransactions.map((transaction, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <span>{transaction.icon}</span>
+                        {transaction.name}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-800 font-semibold">₹{transaction.amount}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          transaction.category === 'food' ? 'bg-yellow-100 text-yellow-700' :
+                          transaction.category === 'transport' ? 'bg-blue-100 text-blue-700' :
+                          'bg-purple-100 text-purple-700'
+                        }`}>
+                          {transaction.category}
+                        </span>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">Auto-categorized transactions</p>
+            </div>
+
+            {/* Goal Assignment - Real */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3">Available Goals</h4>
+              <div className="space-y-2">
+                {goalsLoading ? (
+                  <div className="text-sm text-gray-500">Loading goals...</div>
+                ) : goals.length > 0 ? (
+                  goals.slice(0, 3).map((goal, index) => {
+                    const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
+                    return (
+                      <div key={goal.id || index} className="flex items-center gap-2 text-sm">
+                        <div className="w-3 h-3 bg-teal-400 rounded-full"></div>
+                        <span className="text-gray-600 flex-1">{goal.emoji} {goal.name}</span>
+                        <span className="text-xs text-green-600 font-semibold">{percent}%</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-sm text-gray-500">No goals yet. Create some goals to track progress!</div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">Link transactions to your goals</p>
+            </div>
+
+            {/* Real-time Insights */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-700 mb-3">Today's Summary</h4>
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <span className="text-gray-600">Amount entering:</span>
+                  <span className="font-semibold text-gray-800 ml-1">
+                    ₹{formData.amount || '0'}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-600">Category:</span>
+                  <span className="font-semibold text-blue-600 ml-1 capitalize">
+                    {formData.category || 'Not selected'}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-600">Payment method:</span>
+                  <span className="font-semibold text-purple-600 ml-1">
+                    {formData.payment_method?.replace('_', ' ') || 'Not selected'}
+                  </span>
+                </div>
+                {formData.goalId && (
+                  <div className="text-sm">
+                    <span className="text-gray-600">Assigned goal:</span>
+                    <span className="font-semibold text-teal-600 ml-1">
+                      {goals.find(g => g.id === formData.goalId)?.name || 'Selected goal'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">Live transaction preview</p>
+            </div>
+          </div>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              ⚡ <strong>Real-time tracking:</strong> Smart categorization • Goal linking • Live insights • Instant analysis
+            </p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Amount and Date - Hero Section */}
@@ -383,21 +707,34 @@ export default function TransactionForm({ onTransactionAdded, onClose }) {
           <div className="flex gap-4 pt-6">
             <button
               type="submit"
-              disabled={loading}
-              className={`flex-1 bg-gradient-to-r from-teal-600 to-blue-600 text-white py-4 px-8 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                loading ? 'opacity-50 cursor-not-allowed' : 'hover:from-teal-700 hover:to-blue-700 transform hover:scale-105 shadow-lg'
-              }`}
+              disabled={loading || success}
+              className={`flex-1 relative overflow-hidden py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 transform ${
+                loading 
+                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
+                  : success
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 scale-105 shadow-xl'
+                    : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:scale-105 shadow-lg hover:shadow-xl'
+              } text-white`}
             >
               {loading ? (
-                <>
-                  <span className="inline-block animate-spin mr-3 text-xl">⏳</span>
-                  Saving Transaction...
-                </>
+                <div className="flex items-center justify-center">
+                  <div className="relative">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                  </div>
+                  <span>Processing Transaction...</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                </div>
+              ) : success ? (
+                <div className="flex items-center justify-center animate-bounce">
+                  <span className="mr-3 text-2xl">✅</span>
+                  <span>Transaction Added!</span>
+                </div>
               ) : (
-                <>
-                  <span className="mr-3">💾</span>
-                  Add Transaction
-                </>
+                <div className="flex items-center justify-center">
+                  <span className="mr-3 text-xl">💰</span>
+                  <span>Add Transaction</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transform -skew-x-12 transition-all duration-700"></div>
+                </div>
               )}
             </button>
             

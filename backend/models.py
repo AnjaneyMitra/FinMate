@@ -18,6 +18,7 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     description = Column(String)
+    category = Column(String, default="uncategorized")
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     user_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship('User', back_populates='expenses')

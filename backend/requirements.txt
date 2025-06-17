@@ -9,3 +9,6 @@ numpy
 pandas
 statsmodels
 prophet
+google-cloud-firestore
+python-dotenv
+google-generativeai
