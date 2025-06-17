@@ -192,3 +192,17 @@ class FirestoreService:
         except Exception as e:
             print(f"Error getting available months: {e}")
             return []
+    
+    def save_user_profile(self, user_id: str, profile_data: Dict) -> bool:
+        """
+        Save or update a user profile in Firestore
+        """
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        try:
+            # Save profile data to 'user_profiles' collection, document ID = user_id
+            self.db.collection('user_profiles').document(user_id).set(profile_data, merge=True)
+            return True
+        except Exception as e:
+            print(f"Error saving user profile: {e}")
+            return False
