@@ -394,30 +394,43 @@ export default function InvestmentLearningPath() {
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                 <button 
                   onClick={() => {
-                    // Always start with first topic, regardless of profile status
+                    // Always start with first topic, default (non-personalized) content
                     const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
                     const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
-                    generatePersonalizedContent(selectedLevel, firstTopic);
+                    // Use default profile for non-personalized content
+                    setContentLoading(true);
+                    setSelectedTopic(firstTopic);
+                    learningService.getContentWithFallback(levelName, firstTopic, learningService.createDefaultProfile())
+                      .then(content => setTopicContent(content))
+                      .catch(() => setTopicContent({
+                        title: `${firstTopic}`,
+                        introduction: "Error loading content. Please try again.",
+                        main_content: "We're having trouble loading content right now.",
+                        key_takeaways: ["Please try again later"],
+                        source: 'error'
+                      }))
+                      .finally(() => setContentLoading(false));
                   }}
                   className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors flex items-center justify-center space-x-2"
                 >
                   <BookOpen className="w-4 h-4" />
                   <span>Start Learning</span>
                 </button>
-                {!userProfile ? (
-                  <button 
-                    onClick={() => setShowProfileSetup(true)}
-                    className="border border-blue-600 text-blue-600 px-6 py-2 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Get Personalized Content</span>
-                  </button>
-                ) : (
-                  <div className="bg-green-100 text-green-800 px-6 py-2 rounded-md flex items-center justify-center space-x-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Profile Ready - Click topics for personalized content!</span>
-                  </div>
-                )}
+                <button 
+                  onClick={() => {
+                    const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
+                    const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
+                    if (!userProfile) {
+                      setShowProfileSetup(true);
+                    } else {
+                      generatePersonalizedContent(selectedLevel, firstTopic);
+                    }
+                  }}
+                  className="border border-blue-600 text-blue-600 px-6 py-2 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Personalized Content</span>
+                </button>
               </div>
             </div>
           )}
