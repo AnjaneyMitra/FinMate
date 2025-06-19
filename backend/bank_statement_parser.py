@@ -446,11 +446,20 @@ class BankStatementParser:
         transactions = []
         
         print(f"DEBUG: Starting table extraction for {bank_type}")
+        print(f"DEBUG: Total tables to process: {len(tables)}")
         
         for table_idx, table in enumerate(tables):
             if not table:  # Skip completely empty tables
                 print(f"DEBUG: Skipping table {table_idx} - completely empty")
                 continue
+            
+            print(f"DEBUG: Examining table {table_idx}: {len(table)} rows")
+            print(f"DEBUG: Table {table_idx} first row: {table[0] if table else 'None'}")
+            if len(table) > 1:
+                print(f"DEBUG: Table {table_idx} second row: {table[1]}")
+            
+            # Count transactions before processing this table
+            initial_count = len(transactions)
             
             # For HDFC, we need to handle single-row tables that contain concatenated data
             if bank_type == 'hdfc' and len(table) == 1:
@@ -467,13 +476,27 @@ class BankStatementParser:
                         print(f"DEBUG: Error processing single-row table {table_idx}: {e}")
                         continue
                 else:
-                    print(f"DEBUG: Skipping table {table_idx} - single row without concatenated data")
-                    continue
+                    print(f"DEBUG: Processing HDFC single-row table {table_idx} as lone transaction")
+                    # Try to extract as a single transaction (e.g., last transaction on a page)
+                    try:
+                        transaction = self._extract_single_hdfc_transaction(row, table_idx, 0)
+                        if transaction:
+                            if isinstance(transaction, list):
+                                transactions.extend(transaction)
+                            else:
+                                transactions.append(transaction)
+                            print(f"DEBUG: Successfully extracted lone transaction from table {table_idx}")
+                        else:
+                            print(f"DEBUG: No valid transaction found in lone row table {table_idx}")
+                        continue
+                    except Exception as e:
+                        print(f"DEBUG: Error processing lone transaction table {table_idx}: {e}")
+                        continue
             elif len(table) < 2:  # Skip tables that are too small for other banks
-                print(f"DEBUG: Skipping table {table_idx} - too small")
+                print(f"DEBUG: Skipping table {table_idx} - too small (non-HDFC)")
                 continue
             
-            print(f"DEBUG: Processing table {table_idx} with {len(table)} rows")
+            print(f"DEBUG: Processing multi-row table {table_idx} with {len(table)} rows")
             
             # For HDFC, look for specific table structures
             if bank_type == 'hdfc':
@@ -481,9 +504,16 @@ class BankStatementParser:
                 # The key issue: Multiple transactions are concatenated in single cells with '\n' separators
                 
                 for row_idx, row in enumerate(table):
-                    if row_idx == 0:  # Header row
+                    # For HDFC, don't automatically skip the first row as headers - check if it contains transaction data
+                    if row_idx == 0:
                         print(f"DEBUG: Table {table_idx} headers: {row}")
-                        continue
+                        # Check if first row looks like actual transaction data (has date in first column)
+                        if row and len(row) > 0 and row[0] and re.match(r'\d{2}/\d{2}/\d{2,4}', str(row[0]).strip()):
+                            print(f"DEBUG: First row appears to contain transaction data, not headers")
+                            # Process this row as transaction data, don't skip it
+                        else:
+                            # This looks like actual headers, skip it
+                            continue
                     
                     if not row or len(row) < 4:  # Need at least 4 columns
                         continue
@@ -499,11 +529,20 @@ class BankStatementParser:
                             # Split concatenated data into individual transactions
                             transactions_from_row = self._extract_hdfc_concatenated_transactions(row, table_idx, row_idx)
                             transactions.extend(transactions_from_row)
+                            print(f"DEBUG: Added {len(transactions_from_row)} concatenated transactions from row {row_idx}")
                         else:
                             # Regular single transaction per row
+                            print(f"DEBUG: Processing single transaction row {row_idx}")
                             transaction = self._extract_single_hdfc_transaction(row, table_idx, row_idx)
                             if transaction:
-                                transactions.append(transaction)
+                                if isinstance(transaction, list):
+                                    transactions.extend(transaction)
+                                    print(f"DEBUG: Added {len(transaction)} transactions from single row {row_idx}")
+                                else:
+                                    transactions.append(transaction)
+                                    print(f"DEBUG: Added 1 transaction from single row {row_idx}")
+                            else:
+                                print(f"DEBUG: No transaction extracted from row {row_idx}")
                     
                     except Exception as e:
                         print(f"DEBUG: Error processing table row {row_idx}: {e}")
@@ -522,9 +561,28 @@ class BankStatementParser:
                     
                 except Exception as e:
                     print(f"DEBUG: Error processing table {table_idx}: {e}")
-                    continue
+            
+            # Show how many transactions were added from this table
+            transactions_added = len(transactions) - initial_count
+            print(f"DEBUG: Table {table_idx} contributed {transactions_added} transactions")
         
         print(f"DEBUG: Table extraction completed. Found {len(transactions)} transactions")
+        
+        # Final debug: show summary of transaction sources and dates
+        sources = {}
+        dates_found = set()
+        for t in transactions:
+            source = t.get('source', 'unknown')
+            sources[source] = sources.get(source, 0) + 1
+            if 'date' in t:
+                # Extract just the date part (YYYY-MM-DD)
+                date_part = t['date'][:10] if len(t['date']) >= 10 else t['date']
+                dates_found.add(date_part)
+        
+        print(f"DEBUG: Transaction sources: {sources}")
+        print(f"DEBUG: Unique dates found: {sorted(dates_found)}")
+        print(f"DEBUG: Date range: {min(dates_found)} to {max(dates_found)}" if dates_found else "DEBUG: No dates found")
+        
         return transactions
     
     def _extract_transactions_from_pdf_text(self, text: str, bank_type: str) -> List[Dict]:
@@ -739,8 +797,12 @@ class BankStatementParser:
                 cell_parts = str(cell).split('\n')
                 
                 if col_idx == 0:  # Date column
-                    # Filter out non-date entries
-                    dates = [part.strip() for part in cell_parts if part.strip() and re.match(r'\d{2}/\d{2}/\d{2}', part.strip())]
+                    # Filter out non-date entries with more flexible date matching
+                    dates = []
+                    for part in cell_parts:
+                        part = part.strip()
+                        if part and (re.match(r'\d{2}/\d{2}/\d{2,4}', part) or re.match(r'\d{1,2}/\d{1,2}/\d{2,4}', part)):
+                            dates.append(part)
                 elif col_idx == 1:  # Narration/Description column
                     descriptions = [part.strip() for part in cell_parts if part.strip()]
                 elif col_idx == 2:  # Ref number column
@@ -807,6 +869,7 @@ class BankStatementParser:
                     if withdrawal_amount > 0:
                         transaction_date = self._parse_date(date_str)
                         if transaction_date:
+                            print(f"DEBUG: Creating withdrawal transaction - Date: {date_str}, Amount: {withdrawal_amount}, Desc: {description[:30]}...")
                             transactions.append({
                                 'date': transaction_date.isoformat(),
                                 'description': description,
@@ -825,10 +888,13 @@ class BankStatementParser:
                                     'raw_amount': withdrawal_amounts[i]
                                 }
                             })
+                        else:
+                            print(f"DEBUG: Failed to parse date for withdrawal: {date_str}")
                     # Income transaction (deposit)
                     if deposit_amount > 0:
                         transaction_date = self._parse_date(date_str)
                         if transaction_date:
+                            print(f"DEBUG: Creating deposit transaction - Date: {date_str}, Amount: {deposit_amount}, Desc: {description[:30]}...")
                             transactions.append({
                                 'date': transaction_date.isoformat(),
                                 'description': description,
@@ -847,6 +913,8 @@ class BankStatementParser:
                                     'raw_amount': deposit_amounts[i]
                                 }
                             })
+                        else:
+                            print(f"DEBUG: Failed to parse date for deposit: {date_str}")
                 except Exception as e:
                     print(f"DEBUG: Error processing concatenated transaction {i}: {e}")
                     continue
@@ -861,16 +929,17 @@ class BankStatementParser:
     def _extract_single_hdfc_transaction(self, row: List, table_idx: int, row_idx: int) -> Optional[Dict]:
         """Extract a single transaction from HDFC table row"""
         try:
+            print(f"DEBUG: Extracting single HDFC transaction from row: {row}")
+            
             # Try to identify date, description, and amount columns
             date_str = None
             description = ""
-            amount = 0.0
             withdrawal_amount = 0.0
             deposit_amount = 0.0
-            transaction_type = "expense"
             transactions = []
-            # Look for date in first few columns
-            for i, cell in enumerate(row[:3]):
+            
+            # Look for date in first few columns (more flexible search)
+            for i, cell in enumerate(row[:4]):  # Check first 4 columns for date
                 if cell and re.match(r'\d{2}/\d{2}/\d{2,4}', str(cell).strip()):
                     date_str = str(cell).strip()
                     # Convert DD/MM/YY to DD/MM/YYYY if needed
@@ -878,56 +947,111 @@ class BankStatementParser:
                         parts = date_str.split('/')
                         year = '20' + parts[2]  # Assume 2000s
                         date_str = f"{parts[0]}/{parts[1]}/{year}"
+                    print(f"DEBUG: Found date '{date_str}' in column {i}")
                     break
+            
             if not date_str:
+                print(f"DEBUG: No valid date found in row: {[str(cell)[:20] if cell else None for cell in row[:4]]}")
                 return None
-            # Description is usually in column 1 or 2
-            if len(row) > 1 and row[1]:
-                description = str(row[1]).strip()
-            # Amount is usually in withdrawal or deposit columns (last few columns)
-            # Check withdrawal amount first (typically column 4), then deposit (column 5)
+            
+            # Description is usually in column 1 or 2, but be more flexible
+            for i in range(1, min(4, len(row))):  # Check columns 1-3 for description
+                if row[i] and str(row[i]).strip() and not re.match(r'^\d+$', str(row[i]).strip()):
+                    # Found a non-numeric cell that could be description
+                    candidate_desc = str(row[i]).strip()
+                    if len(candidate_desc) > 3:  # Reasonable description length
+                        description = candidate_desc
+                        print(f"DEBUG: Found description '{description[:30]}...' in column {i}")
+                        break
+            
+            if not description:
+                print(f"DEBUG: No valid description found")
+                return None
+            
+            # Amount columns - check more columns for withdrawal/deposit amounts
             withdrawal_present = False
             deposit_present = False
-            if len(row) > 4 and row[4] and str(row[4]).strip():
-                try:
-                    withdrawal_amount = self._parse_amount(str(row[4]).strip())
-                    withdrawal_present = withdrawal_amount > 0
-                except:
-                    pass
-            if len(row) > 5 and row[5] and str(row[5]).strip():
-                try:
-                    deposit_amount = self._parse_amount(str(row[5]).strip())
-                    deposit_present = deposit_amount > 0
-                except:
-                    pass
+            
+            # Check all remaining columns for amounts (more flexible)
+            for i in range(len(row)):
+                if row[i] and str(row[i]).strip():
+                    cell_value = str(row[i]).strip()
+                    # Skip if it's the date or description we already found
+                    if cell_value == date_str or cell_value == description:
+                        continue
+                    
+                    # Try to parse as amount
+                    try:
+                        parsed_amount = self._parse_amount(cell_value)
+                        if parsed_amount > 0:
+                            print(f"DEBUG: Found amount {parsed_amount} in column {i}")
+                            
+                            # Heuristic: columns 4-5 are typically withdrawal/deposit
+                            # But also check based on position and context
+                            if i >= 4 and not withdrawal_present:  # Likely withdrawal column
+                                withdrawal_amount = parsed_amount
+                                withdrawal_present = True
+                                print(f"DEBUG: Treating as withdrawal amount: {withdrawal_amount}")
+                            elif i >= 5 and not deposit_present:  # Likely deposit column
+                                deposit_amount = parsed_amount
+                                deposit_present = True
+                                print(f"DEBUG: Treating as deposit amount: {deposit_amount}")
+                            elif not withdrawal_present and not deposit_present:
+                                # First amount found, default to withdrawal (expense)
+                                withdrawal_amount = parsed_amount
+                                withdrawal_present = True
+                                print(f"DEBUG: Treating as withdrawal amount (default): {withdrawal_amount}")
+                    except:
+                        continue
+            
+            if not withdrawal_present and not deposit_present:
+                print(f"DEBUG: No valid amounts found in row")
+                return None
+            
             transaction_date = self._parse_date(date_str)
-            if transaction_date and description:
-                if withdrawal_present:
-                    transactions.append({
-                        'date': transaction_date.isoformat(),
-                        'description': description,
-                        'amount': withdrawal_amount,
-                        'withdrawal_amount': withdrawal_amount,
-                        'deposit_amount': 0.0,
-                        'transaction_type': 'expense',
-                        'category': self._categorize_transaction(description),
-                        'source': 'hdfc_pdf_table_single',
-                        'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
-                    })
-                if deposit_present:
-                    transactions.append({
-                        'date': transaction_date.isoformat(),
-                        'description': description,
-                        'amount': deposit_amount,
-                        'withdrawal_amount': 0.0,
-                        'deposit_amount': deposit_amount,
-                        'transaction_type': 'income',
-                        'category': self._categorize_transaction(description),
-                        'source': 'hdfc_pdf_table_single',
-                        'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
-                    })
-                if transactions:
-                    return transactions if len(transactions) > 1 else transactions[0]
+            if not transaction_date:
+                print(f"DEBUG: Could not parse date: {date_str}")
+                return None
+            
+            print(f"DEBUG: Creating transactions - withdrawal: {withdrawal_present}, deposit: {deposit_present}")
+            
+            # Create transactions based on what we found
+            if withdrawal_present:
+                transactions.append({
+                    'date': transaction_date.isoformat(),
+                    'description': description,
+                    'amount': withdrawal_amount,
+                    'withdrawal_amount': withdrawal_amount,
+                    'deposit_amount': 0.0,
+                    'transaction_type': 'expense',
+                    'category': self._categorize_transaction(description),
+                    'source': 'hdfc_pdf_table_single',
+                    'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
+                })
+                print(f"DEBUG: Added withdrawal transaction: {withdrawal_amount}")
+                
+            if deposit_present:
+                transactions.append({
+                    'date': transaction_date.isoformat(),
+                    'description': description,
+                    'amount': deposit_amount,
+                    'withdrawal_amount': 0.0,
+                    'deposit_amount': deposit_amount,
+                    'transaction_type': 'income',
+                    'category': self._categorize_transaction(description),
+                    'source': 'hdfc_pdf_table_single',
+                    'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
+                })
+                print(f"DEBUG: Added deposit transaction: {deposit_amount}")
+            
+            if transactions:
+                result = transactions if len(transactions) > 1 else transactions[0]
+                print(f"DEBUG: Successfully extracted {len(transactions) if isinstance(transactions, list) else 1} transaction(s)")
+                return result
+            
         except Exception as e:
             print(f"DEBUG: Error processing single HDFC transaction: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            
         return None
