@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Upload } from 'lucide-react';
 import FirebaseDataService from './services/FirebaseDataService';
+import BankStatementUpload from './components/BankStatementUpload';
 import { auth } from './firebase';
 
 export default function TransactionForm({ onTransactionAdded, onClose, user }) {
@@ -17,6 +19,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showBankUpload, setShowBankUpload] = useState(false);
   const [goals, setGoals] = useState([]); // For goal dropdown
   const [goalsLoading, setGoalsLoading] = useState(true);
   const [lastTransaction, setLastTransaction] = useState(null);
@@ -294,14 +297,24 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               </div>
             </div>
           </div>
-          {onClose && (
-            <button 
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setShowBankUpload(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              ✕
+              <Upload className="w-5 h-5 mr-2" />
+              Upload Statement
             </button>
-          )}
+            {onClose && (
+              <button 
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Success Message */}
@@ -788,6 +801,22 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
           </div>
         </div>
       </div>
+
+      {/* Bank Statement Upload Modal */}
+      {showBankUpload && (
+        <BankStatementUpload
+          user={user || auth.currentUser}
+          onTransactionsImported={(result) => {
+            setShowBankUpload(false);
+            setSuccess(true);
+            setError('');
+            if (onTransactionAdded) {
+              onTransactionAdded(result);
+            }
+          }}
+          onClose={() => setShowBankUpload(false)}
+        />
+      )}
     </div>
   );
 }

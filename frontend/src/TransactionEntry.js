@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { Upload, Plus } from 'lucide-react';
+import { auth } from './firebase';
+import BankStatementUpload from './components/BankStatementUpload';
 
 // Transaction categories with icons and subcategories
 const TRANSACTION_CATEGORIES = {
@@ -85,6 +88,7 @@ export default function TransactionEntry({ userId }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [suggestedCategory, setSuggestedCategory] = useState(null);
+  const [showBankUpload, setShowBankUpload] = useState(false);
 
   // Auto-categorize based on description/merchant
   useEffect(() => {
@@ -234,8 +238,20 @@ export default function TransactionEntry({ userId }) {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Add Transaction</h2>
-        <p className="text-gray-600">Record your expenses and income manually with detailed categorization</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Add Transaction</h2>
+            <p className="text-gray-600">Record your expenses and income manually with detailed categorization</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowBankUpload(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <Upload className="w-5 h-5 mr-2" />
+            Upload Bank Statement
+          </button>
+        </div>
       </div>
 
       {/* Success Message */}
@@ -548,6 +564,20 @@ export default function TransactionEntry({ userId }) {
           </button>
         </div>
       </form>
+
+      {/* Bank Statement Upload Modal */}
+      {showBankUpload && (
+        <BankStatementUpload
+          user={auth.currentUser}
+          onTransactionsImported={(result) => {
+            setShowBankUpload(false);
+            setSuccess(true);
+            setError('');
+            // Optionally refresh the page or update transactions list
+          }}
+          onClose={() => setShowBankUpload(false)}
+        />
+      )}
     </div>
   );
 }

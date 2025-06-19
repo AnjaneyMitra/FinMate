@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Header
+from fastapi import FastAPI, Depends, Header, UploadFile, File
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 import models, database
-from models import Expense, User
+from models import Expense, User, BankStatementUploadResponse, TransactionImportRequest, TransactionImportResponse, SupportedBankInfo
 import os
 import requests
 from fastapi import HTTPException, status, Depends
@@ -23,6 +23,7 @@ from expense_forecast import forecast_expense_trend
 from spending_analysis_service import SpendingAnalysisService
 from firestore_service import FirestoreService
 from gemini_content_service import gemini_service, UserProfile, ContentRequest
+from bank_statement_parser import BankStatementParser
 import logging
 
 load_dotenv()
@@ -39,6 +40,14 @@ except Exception as e:
     print(f"⚠️  Firestore service initialization failed: {e}")
     print("📝 The app will use mock data for AI features")
     firestore_service = None
+
+# Initialize bank statement parser
+try:
+    bank_parser = BankStatementParser()
+    print("✅ Bank statement parser initialized successfully")
+except Exception as e:
+    print(f"⚠️  Bank statement parser initialization failed: {e}")
+    bank_parser = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1317,5 +1326,144 @@ def list_user_expenses(user_id: str, db: Session = Depends(get_db)):
                 "timestamp": exp.timestamp.isoformat()
             }
             for exp in expenses
+        ]
+    }
+
+# Bank Statement Upload Endpoints
+
+@app.post("/api/transactions/upload-statement", response_model=BankStatementUploadResponse)
+async def upload_bank_statement(file: UploadFile = File(...)):
+    """
+    Upload and parse bank statement (CSV or PDF)
+    Returns parsed transactions for review before import
+    """
+    if not bank_parser:
+        raise HTTPException(status_code=503, detail="Bank statement parser not available")
+    
+    try:
+        # Validate file format
+        file_extension = os.path.splitext(file.filename.lower())[1]
+        if file_extension not in bank_parser.supported_formats:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unsupported file format. Supported formats: {', '.join(bank_parser.supported_formats)}"
+            )
+        
+        # Read file content
+        content = await file.read()
+        
+        # Reset file pointer and read again if content is empty
+        if len(content) == 0:
+            await file.seek(0)
+            content = await file.read()
+        
+        # Parse the bank statement
+        parsed_result = bank_parser.parse_file(content, file.filename, "user")
+        
+        return BankStatementUploadResponse(
+            success=True,
+            message=f"Successfully parsed {len(parsed_result['transactions'])} transactions",
+            transactions=parsed_result['transactions'],
+            total_transactions=len(parsed_result['transactions']),
+            bank_detected=parsed_result.get('bank_detected'),
+            file_format=file_extension,
+            parsing_errors=parsed_result.get('errors', [])
+        )
+        
+    except Exception as e:
+        logger.error(f"Error parsing bank statement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to parse bank statement: {str(e)}")
+
+@app.post("/api/transactions/import-parsed", response_model=TransactionImportResponse)
+async def import_parsed_transactions(request: TransactionImportRequest):
+    """
+    Import validated transactions to Firestore
+    """
+    if not firestore_service:
+        raise HTTPException(status_code=503, detail="Firestore service not available")
+    
+    try:
+        imported_count = 0
+        failed_count = 0
+        errors = []
+        
+        for transaction_data in request.transactions:
+            try:
+                # Convert transaction data to proper format
+                transaction = {
+                    'amount': float(transaction_data['amount']),
+                    'description': transaction_data['description'],
+                    'category': transaction_data.get('category', 'other'),
+                    'subcategory': transaction_data.get('subcategory', ''),
+                    'payment_method': transaction_data.get('payment_method', 'bank_transfer'),
+                    'date': transaction_data['date'],
+                    'merchant_name': transaction_data.get('merchant_name', ''),
+                    'notes': f"Imported from bank statement - {transaction_data.get('transaction_type', 'transaction')}",
+                    'goalId': None,
+                    'created_at': datetime.now().isoformat(),
+                    'updated_at': datetime.now().isoformat()
+                }
+                
+                # Add transaction to Firestore
+                firestore_service.add_transaction(request.user_id, transaction)
+                imported_count += 1
+                
+            except Exception as e:
+                failed_count += 1
+                errors.append(f"Failed to import transaction '{transaction_data.get('description', 'Unknown')}': {str(e)}")
+                logger.error(f"Error importing transaction: {e}")
+        
+        return TransactionImportResponse(
+            success=True,
+            message=f"Successfully imported {imported_count} transactions",
+            imported_count=imported_count,
+            failed_count=failed_count,
+            errors=errors
+        )
+        
+    except Exception as e:
+        logger.error(f"Error importing transactions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to import transactions: {str(e)}")
+
+@app.get("/api/transactions/supported-banks")
+async def get_supported_banks():
+    """
+    Get list of supported banks and their features
+    """
+    if not bank_parser:
+        raise HTTPException(status_code=503, detail="Bank statement parser not available")
+    
+    return {
+        "banks": [
+            SupportedBankInfo(
+                name="State Bank of India",
+                code="sbi",
+                supported_formats=[".csv", ".pdf"],
+                features=["CSV parsing", "PDF parsing", "Auto-categorization"]
+            ),
+            SupportedBankInfo(
+                name="ICICI Bank",
+                code="icici",
+                supported_formats=[".csv", ".pdf"],
+                features=["CSV parsing", "PDF parsing", "Auto-categorization"]
+            ),
+            SupportedBankInfo(
+                name="HDFC Bank",
+                code="hdfc",
+                supported_formats=[".csv", ".pdf"],
+                features=["CSV parsing", "PDF parsing", "Auto-categorization"]
+            ),
+            SupportedBankInfo(
+                name="Axis Bank",
+                code="axis",
+                supported_formats=[".csv", ".pdf"],
+                features=["CSV parsing", "PDF parsing", "Auto-categorization"]
+            ),
+            SupportedBankInfo(
+                name="Generic Bank",
+                code="generic",
+                supported_formats=[".csv"],
+                features=["CSV parsing", "Auto-categorization"]
+            )
         ]
     }

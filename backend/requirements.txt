@@ -12,3 +12,8 @@ prophet
 google-cloud-firestore
 python-dotenv
 google-generativeai
+pdfplumber
+PyPDF2
+python-multipart
+openpyxl
+chardet
