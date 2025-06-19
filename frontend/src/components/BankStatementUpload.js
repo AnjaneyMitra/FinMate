@@ -421,16 +421,18 @@ const BankStatementUpload = ({ user, onTransactionsImported, onClose }) => {
                             </span>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end justify-center">
                           <p className="text-sm font-medium text-gray-700">Amount</p>
-                          <p className={`text-sm font-semibold ${
-                            transaction.transaction_type === 'credit' 
-                              ? 'text-green-600' 
-                              : 'text-red-600'
-                          }`}>
-                            {transaction.transaction_type === 'credit' ? '+' : '-'}
-                            {formatCurrency(transaction.amount)}
-                          </p>
+                          <span className="inline-flex items-center text-sm font-semibold">
+                            {transaction.transaction_type === 'income' ? (
+                              <span className="text-green-600 mr-1" title="Deposit">+{/* plus icon */}</span>
+                            ) : (
+                              <span className="text-red-600 mr-1" title="Withdrawal">-{/* minus icon */}</span>
+                            )}
+                            <span className={transaction.transaction_type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                              {formatCurrency(transaction.amount)}
+                            </span>
+                          </span>
                         </div>
                       </div>
                     </div>

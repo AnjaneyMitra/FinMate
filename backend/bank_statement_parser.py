@@ -795,40 +795,58 @@ class BankStatementParser:
                         description = re.sub(r'-\d+$', '', description)  # Remove trailing numbers
                         description = description.strip()
                     
-                    # Get amount (prefer withdrawal, then deposit)
-                    amount = 0.0
-                    transaction_type = "expense"
-                    
+                    # Get withdrawal and deposit amounts for this index
+                    withdrawal_amount = 0.0
+                    deposit_amount = 0.0
                     if i < len(withdrawal_amounts) and withdrawal_amounts[i]:
-                        amount = self._parse_amount(withdrawal_amounts[i])
-                        transaction_type = "expense"
-                    elif i < len(deposit_amounts) and deposit_amounts[i]:
-                        amount = self._parse_amount(deposit_amounts[i])
-                        transaction_type = "income"
+                        withdrawal_amount = self._parse_amount(withdrawal_amounts[i])
+                    if i < len(deposit_amounts) and deposit_amounts[i]:
+                        deposit_amount = self._parse_amount(deposit_amounts[i])
                     
-                    # Validate transaction
-                    if amount > 0 and description and len(description) > 2:
+                    # Expense transaction (withdrawal)
+                    if withdrawal_amount > 0:
                         transaction_date = self._parse_date(date_str)
                         if transaction_date:
-                            transaction = {
+                            transactions.append({
                                 'date': transaction_date.isoformat(),
                                 'description': description,
-                                'amount': amount,
-                                'transaction_type': transaction_type,
+                                'amount': withdrawal_amount,
+                                'withdrawal_amount': withdrawal_amount,
+                                'deposit_amount': 0.0,
+                                'transaction_type': 'expense',
                                 'category': self._categorize_transaction(description),
                                 'source': 'hdfc_pdf_table_concatenated',
                                 'raw_data': {
-                                    'table': table_idx, 
-                                    'row': row_idx, 
+                                    'table': table_idx,
+                                    'row': row_idx,
                                     'transaction_index': i,
                                     'raw_date': dates[i % len(dates)] if dates else None,
                                     'raw_description': descriptions[i] if i < len(descriptions) else None,
-                                    'raw_amount': withdrawal_amounts[i] if i < len(withdrawal_amounts) and withdrawal_amounts[i] else (deposit_amounts[i] if i < len(deposit_amounts) else None)
+                                    'raw_amount': withdrawal_amounts[i]
                                 }
-                            }
-                            transactions.append(transaction)
-                            print(f"DEBUG: Extracted concatenated transaction {i+1}: {date_str} | {amount} | {description[:50]}...")
-                
+                            })
+                    # Income transaction (deposit)
+                    if deposit_amount > 0:
+                        transaction_date = self._parse_date(date_str)
+                        if transaction_date:
+                            transactions.append({
+                                'date': transaction_date.isoformat(),
+                                'description': description,
+                                'amount': deposit_amount,
+                                'withdrawal_amount': 0.0,
+                                'deposit_amount': deposit_amount,
+                                'transaction_type': 'income',
+                                'category': self._categorize_transaction(description),
+                                'source': 'hdfc_pdf_table_concatenated',
+                                'raw_data': {
+                                    'table': table_idx,
+                                    'row': row_idx,
+                                    'transaction_index': i,
+                                    'raw_date': dates[i % len(dates)] if dates else None,
+                                    'raw_description': descriptions[i] if i < len(descriptions) else None,
+                                    'raw_amount': deposit_amounts[i]
+                                }
+                            })
                 except Exception as e:
                     print(f"DEBUG: Error processing concatenated transaction {i}: {e}")
                     continue
@@ -847,8 +865,10 @@ class BankStatementParser:
             date_str = None
             description = ""
             amount = 0.0
+            withdrawal_amount = 0.0
+            deposit_amount = 0.0
             transaction_type = "expense"
-            
+            transactions = []
             # Look for date in first few columns
             for i, cell in enumerate(row[:3]):
                 if cell and re.match(r'\d{2}/\d{2}/\d{2,4}', str(cell).strip()):
@@ -859,46 +879,55 @@ class BankStatementParser:
                         year = '20' + parts[2]  # Assume 2000s
                         date_str = f"{parts[0]}/{parts[1]}/{year}"
                     break
-            
             if not date_str:
                 return None
-                
             # Description is usually in column 1 or 2
             if len(row) > 1 and row[1]:
                 description = str(row[1]).strip()
-            
             # Amount is usually in withdrawal or deposit columns (last few columns)
             # Check withdrawal amount first (typically column 4), then deposit (column 5)
+            withdrawal_present = False
+            deposit_present = False
             if len(row) > 4 and row[4] and str(row[4]).strip():
                 try:
-                    amount = self._parse_amount(str(row[4]).strip())
-                    transaction_type = "expense"
+                    withdrawal_amount = self._parse_amount(str(row[4]).strip())
+                    withdrawal_present = withdrawal_amount > 0
                 except:
                     pass
-            
-            if amount == 0 and len(row) > 5 and row[5] and str(row[5]).strip():
+            if len(row) > 5 and row[5] and str(row[5]).strip():
                 try:
-                    amount = self._parse_amount(str(row[5]).strip())
-                    transaction_type = "income"
+                    deposit_amount = self._parse_amount(str(row[5]).strip())
+                    deposit_present = deposit_amount > 0
                 except:
                     pass
-            
-            if amount > 0 and description:
-                transaction_date = self._parse_date(date_str)
-                if transaction_date:
-                    transaction = {
+            transaction_date = self._parse_date(date_str)
+            if transaction_date and description:
+                if withdrawal_present:
+                    transactions.append({
                         'date': transaction_date.isoformat(),
                         'description': description,
-                        'amount': amount,
-                        'transaction_type': transaction_type,
+                        'amount': withdrawal_amount,
+                        'withdrawal_amount': withdrawal_amount,
+                        'deposit_amount': 0.0,
+                        'transaction_type': 'expense',
                         'category': self._categorize_transaction(description),
                         'source': 'hdfc_pdf_table_single',
                         'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
-                    }
-                    print(f"DEBUG: Single transaction extracted: {date_str} | {amount} | {description[:50]}...")
-                    return transaction
-            
+                    })
+                if deposit_present:
+                    transactions.append({
+                        'date': transaction_date.isoformat(),
+                        'description': description,
+                        'amount': deposit_amount,
+                        'withdrawal_amount': 0.0,
+                        'deposit_amount': deposit_amount,
+                        'transaction_type': 'income',
+                        'category': self._categorize_transaction(description),
+                        'source': 'hdfc_pdf_table_single',
+                        'raw_data': {'table': table_idx, 'row': row_idx, 'data': row}
+                    })
+                if transactions:
+                    return transactions if len(transactions) > 1 else transactions[0]
         except Exception as e:
             print(f"DEBUG: Error processing single HDFC transaction: {e}")
-        
         return None
