@@ -9,6 +9,7 @@ const sidebarItems = [
   { label: 'Analytics', icon: '📊', path: '/dashboard/spending' },
   { label: 'AI Predictions', icon: '🔮', path: '/dashboard/predictions' },
   { label: 'Month Comparison', icon: '📈', path: '/dashboard/comparison' },
+  { label: 'Tax Filing', icon: '📋', path: '/tax-filing' },
   { label: 'Settings', icon: '⚙️', path: '/dashboard/settings' },
 ];
 

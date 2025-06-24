@@ -113,6 +113,7 @@ function Dashboard({ user, setUser }) {
     { path: '/dashboard/transactions', name: 'Add Transaction', icon: '➕' },
     { path: '/dashboard/spending', name: 'Spending Analysis', icon: '📊' },
     { path: '/dashboard/tax', name: 'Tax Breakdown', icon: '🧾' },
+    { path: '/tax-filing', name: 'Tax Filing System', icon: '📋' },
     { path: '/dashboard/learning', name: 'Investment Learning', icon: '📚' },
     { path: '/dashboard/simulation', name: 'Investment Simulation', icon: '🧮' },
     { path: '/dashboard/risk', name: 'Risk Profiler', icon: '🧑‍💼' },
@@ -295,6 +296,68 @@ function Dashboard({ user, setUser }) {
           </div>
         </div>
 
+        {/* Featured Tax Filing System */}
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl p-8 mb-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-indigo-700/20"></div>
+          <div className="absolute top-4 right-4 opacity-20">
+            <span className="text-6xl">📋</span>
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-2xl">🚀</span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">AI-Powered Tax Filing System</h3>
+                    <p className="text-blue-100">New Feature Available!</p>
+                  </div>
+                </div>
+                <p className="text-lg mb-6 text-blue-50 leading-relaxed max-w-2xl">
+                  Experience the future of tax filing with our comprehensive Indian Tax Return system. 
+                  Get smart form recommendations, AI assistance, and seamless document management all in one place.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-blue-100">Smart Form Discovery</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-blue-100">AI Tax Assistant</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-blue-100">Document OCR Processing</span>
+                  </div>
+                </div>
+                <Link
+                  to="/tax-filing"
+                  className="inline-flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-3 px-6 rounded-xl backdrop-blur-sm transition-all duration-300 border border-white border-opacity-20 hover:border-opacity-40"
+                >
+                  <span>Start Filing Your Taxes</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Live Dashboard Analytics */}
         <div className="bg-white rounded-lg shadow p-6 mb-8 animate-fade-in">
           <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -393,6 +456,17 @@ function Dashboard({ user, setUser }) {
               <div>
                 <p className="font-medium text-teal-700">Plan Budget</p>
                 <p className="text-sm text-teal-600">Create monthly budget</p>
+              </div>
+            </Link>
+
+            <Link
+              to="/tax-filing"
+              className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <span className="text-2xl mr-3">📋</span>
+              <div>
+                <p className="font-medium text-purple-700">File Tax Returns</p>
+                <p className="text-sm text-purple-600">AI-powered tax filing</p>
               </div>
             </Link>
 

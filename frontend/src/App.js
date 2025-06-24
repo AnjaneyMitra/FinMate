@@ -4,6 +4,7 @@ import './App.css';
 import { auth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from './firebase';
 import Dashboard from './Dashboard';
 import LandingPage from './LandingPage';
+import TaxFilingDashboard from './components/TaxFilingDashboard';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -90,6 +91,16 @@ function App() {
             element={
               user ? (
                 <Dashboard user={user} setUser={setUser} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
+          <Route 
+            path="/tax-filing/*" 
+            element={
+              user ? (
+                <TaxFilingDashboard user={user} />
               ) : (
                 <Navigate to="/login" replace />
               )

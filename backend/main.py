@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends, Header, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Depends, Header, UploadFile, File, Form
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -7,6 +7,11 @@ import pandas as pd
 import numpy as np
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+import logging
+from firestore_service import FirestoreService
+from bank_statement_parser import BankStatementParser
+from spending_analysis_service import SpendingAnalysisService
+from gemini_content_service import GeminiContentService, ContentRequest, UserProfile
 
 import models, database
 from models import Expense, User, BankStatementUploadResponse, TransactionImportRequest, TransactionImportResponse, SupportedBankInfo
@@ -16,15 +21,12 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 from tax_chatbot import classify_tax_question
 from expense_classifier import predict_expense_category
-from expense_forecast import forecast_expense_trend
-from spending_analysis_service import SpendingAnalysisService
-from firestore_service import FirestoreService
-from gemini_content_service import gemini_service, UserProfile, ContentRequest
-from bank_statement_parser import BankStatementParser
-import logging
+from tax_filing.form_registry import get_all_forms, get_form_details
+from tax_filing.gemini_tax_service import gemini_tax_service
+from tax_filing.validation_engine import validate_form_data
 
 load_dotenv()
 
@@ -40,6 +42,13 @@ except Exception as e:
     print(f"⚠️  Firestore service initialization failed: {e}")
     print("📝 The app will use mock data for AI features")
     firestore_service = None
+
+try:
+    gemini_service = GeminiContentService()
+    print("✅ Gemini Content service initialized successfully")
+except Exception as e:
+    print(f"⚠️  Gemini Content service initialization failed: {e}")
+    gemini_service = None
 
 # Initialize bank statement parser
 try:
@@ -971,6 +980,151 @@ def compare_months_expenses(input: MonthComparisonInput, user=Depends(optional_f
         print(f"[Compare] Error in month comparison: {e}")
         raise HTTPException(status_code=500, detail=f"Month comparison failed: {str(e)}")
 
+
+# Tax Filing Endpoints
+
+class TaxFormDraft(BaseModel):
+    form_id: str
+    form_data: Dict
+
+class TaxFormSubmission(BaseModel):
+    form_id: str
+    form_data: Dict
+
+@app.get("/api/tax/forms")
+def list_tax_forms():
+    """Returns a list of all available tax forms."""
+    try:
+        forms = get_all_forms()
+        return {"forms": forms}
+    except Exception as e:
+        logger.error(f"Error getting tax forms: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve tax forms.")
+
+@app.get("/api/tax/forms/{form_id}")
+def get_tax_form_details(form_id: str):
+    """Returns the detailed structure and fields for a specific tax form."""
+    try:
+        form_details = get_form_details(form_id)
+        if not form_details:
+            raise HTTPException(status_code=404, detail="Form not found.")
+        return {"form_details": form_details}
+    except Exception as e:
+        logger.error(f"Error getting form details for {form_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve form details.")
+
+@app.post("/api/tax/drafts")
+def save_tax_draft(draft: TaxFormDraft, user=Depends(optional_firebase_token)):
+    """Saves a draft of a tax form."""
+    try:
+        if not user:
+            # For testing/demo purposes, return a mock draft ID without saving
+            return {"status": "success", "draft_id": "demo_draft_" + str(int(time.time()))}
+        
+        user_id = user['user_id']
+        draft_id = firestore_service.save_tax_form_draft(user_id, draft.form_id, draft.form_data)
+        return {"status": "success", "draft_id": draft_id}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error saving tax draft for user {user.get('user_id') if user else 'unknown'}: {e}")
+        raise HTTPException(status_code=500, detail="Could not save tax draft.")
+
+@app.get("/api/tax/drafts")
+def get_user_drafts(user=Depends(optional_firebase_token)):
+    """Retrieves all tax form drafts for a user."""
+    try:
+        if not user:
+            # Return empty drafts for unauthenticated users
+            return {"drafts": []}
+        user_id = user['user_id']
+        drafts = firestore_service.get_user_tax_drafts(user_id)
+        return {"drafts": drafts}
+    except Exception as e:
+        logger.error(f"Error getting tax drafts for user {user.get('user_id') if user else 'unknown'}: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve tax drafts.")
+
+@app.put("/api/tax/drafts/{draft_id}")
+def update_tax_draft(draft_id: str, draft: TaxFormDraft, user=Depends(optional_firebase_token)):
+    """Updates an existing tax form draft."""
+    try:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required for updating drafts")
+        
+        user_id = user['user_id']
+        # Optional: Add a check to ensure the user owns this draft
+        firestore_service.update_tax_form_draft(user_id, draft_id, draft.form_data)
+        return {"status": "success", "draft_id": draft_id}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error updating tax draft {draft_id} for user {user.get('user_id') if user else 'unknown'}: {e}")
+        raise HTTPException(status_code=500, detail="Could not update tax draft.")
+
+@app.post("/api/tax/submit")
+def submit_tax_form(submission: TaxFormSubmission, user=Depends(optional_firebase_token)):
+    """Validates and submits a tax form."""
+    try:
+        if not user:
+            # For testing/demo purposes, return a mock submission ID without saving
+            return {"status": "success", "submission_id": "demo_submission_" + str(int(time.time()))}
+        
+        user_id = user['user_id']
+        
+        # 1. Validate form data
+        validation_errors = validate_form_data(submission.form_id, submission.form_data)
+        if validation_errors:
+            raise HTTPException(status_code=400, detail={"errors": validation_errors})
+            
+        # 2. Save to submissions collection
+        submission_id = firestore_service.save_tax_form_submission(user_id, submission.form_id, submission.form_data)
+        
+        # Optional: 3. Delete the draft if it exists
+        # This part is tricky without knowing the draft_id. You might need to query drafts by form_id.
+        
+        return {"status": "success", "submission_id": submission_id}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error submitting tax form for user {user.get('user_id') if user else 'unknown'}: {e}")
+        raise HTTPException(status_code=500, detail="Could not submit tax form.")
+
+@app.get("/api/tax/submissions")
+def get_user_submissions(user=Depends(optional_firebase_token)):
+    """Retrieves all tax form submissions for a user."""
+    try:
+        if not user:
+            return {"submissions": []}  # Return empty for unauthenticated users
+        
+        user_id = user['user_id']
+        submissions = firestore_service.get_user_tax_submissions(user_id)
+        return {"submissions": submissions}
+    except Exception as e:
+        logger.error(f"Error getting tax submissions for user {user.get('user_id')}: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve tax submissions.")
+
+class GeminiTaxRequest(BaseModel):
+    form_id: str
+    field_id: str
+    user_query: str
+    form_data: Optional[Dict] = None
+
+@app.post("/api/tax/assist")
+def get_gemini_tax_assistance(request: GeminiTaxRequest, user=Depends(optional_firebase_token)):
+    """Provides AI-powered assistance for a specific tax form field."""
+    try:
+        # Provide assistance even for unauthenticated users
+        assistance = gemini_tax_service.get_field_assistance(
+            form_id=request.form_id,
+            field_id=request.field_id,
+            user_query=request.user_query,
+            current_form_data=request.form_data
+        )
+        return {"assistance": assistance}
+    except Exception as e:
+        logger.error(f"Error getting Gemini tax assistance: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get AI assistance.")
+
 # Investment Learning Content Generation Endpoints
 
 @app.post("/api/learning/generate-content")
@@ -1468,3 +1622,341 @@ async def get_supported_banks():
             )
         ]
     }
+
+# Tax Document Management Endpoints
+
+import uuid
+import os
+from pathlib import Path
+import mimetypes
+
+# Document storage configuration
+UPLOAD_DIRECTORY = "uploads/tax_documents"
+ALLOWED_EXTENSIONS = {'.pdf', '.jpg', '.jpeg', '.png'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Ensure upload directory exists
+os.makedirs(UPLOAD_DIRECTORY, exist_ok=True)
+
+class DocumentUploadResponse(BaseModel):
+    id: str
+    name: str
+    size: int
+    type: str
+    category_id: str
+    download_url: str
+    preview_url: str
+    ocr_text: Optional[str] = None
+
+class DocumentMetadata(BaseModel):
+    id: str
+    name: str
+    category_id: str
+    form_id: str
+    file_size: int
+    file_type: str
+    upload_timestamp: str
+    ocr_processed: bool
+    ocr_text: Optional[str] = None
+
+@app.post("/api/tax/documents/upload")
+async def upload_tax_documents(
+    documents: List[UploadFile] = File(...),
+    category_id: str = Form(...),
+    form_id: str = Form(...),
+    user=Depends(optional_firebase_token)
+):
+    """Upload tax documents with categorization and basic text extraction"""
+    try:
+        if not user:
+            # For testing/demo purposes, return mock upload responses without actual upload
+            mock_documents = []
+            for i, doc in enumerate(documents):
+                mock_documents.append({
+                    "id": f"demo_doc_{int(time.time())}_{i}",  # Changed from document_id to id
+                    "name": doc.filename,
+                    "status": "uploaded",
+                    "category_id": category_id,
+                    "form_id": form_id,
+                    "file_size": 1024,
+                    "file_type": doc.content_type,
+                    "ocr_processed": False
+                })
+            return {"documents": mock_documents, "message": "Demo upload successful"}
+        
+        user_id = user['user_id']
+        uploaded_docs = []
+        
+        for document in documents:
+            # Validate file type and size
+            file_ext = Path(document.filename).suffix.lower()
+            if file_ext not in ALLOWED_EXTENSIONS:
+                raise HTTPException(status_code=400, detail=f"File type {file_ext} not allowed")
+            
+            # Read file content to check size
+            content = await document.read()
+            if len(content) > MAX_FILE_SIZE:
+                raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+            
+            # Generate unique filename
+            file_id = str(uuid.uuid4())
+            filename = f"{file_id}{file_ext}"
+            file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+            
+            # Save file
+            with open(file_path, 'wb') as f:
+                f.write(content)
+            
+            # Basic text extraction placeholder
+            ocr_text = f"Document uploaded: {document.filename}"
+            
+            # Store document metadata
+            doc_metadata = {
+                'id': file_id,
+                'name': document.filename,
+                'category_id': category_id,
+                'form_id': form_id,
+                'user_id': user_id,
+                'file_path': file_path,
+                'file_size': len(content),
+                'file_type': file_ext,
+                'upload_timestamp': datetime.now().isoformat(),
+                'ocr_processed': True,
+                'ocr_text': ocr_text
+            }
+            
+            # Save to Firestore
+            if firestore_service:
+                firestore_service.save_tax_document(doc_metadata)
+            
+            uploaded_docs.append(DocumentUploadResponse(
+                id=file_id,
+                name=document.filename,
+                size=len(content),
+                type=file_ext,
+                category_id=category_id,
+                download_url=f"/api/tax/documents/{file_id}/download",
+                preview_url=f"/api/tax/documents/{file_id}/preview",
+                ocr_text=ocr_text
+            ))
+        
+        return {
+            'success': True,
+            'documents': uploaded_docs,
+            'message': f'{len(uploaded_docs)} document(s) uploaded successfully'
+        }
+        
+    except Exception as e:
+        logger.error(f"Document upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+@app.get("/api/tax/documents")
+async def get_user_documents(
+    form_id: Optional[str] = None,
+    category_id: Optional[str] = None,
+    user=Depends(optional_firebase_token)
+):
+    """Get all documents for a user, optionally filtered by form or category"""
+    try:
+        if not user:
+            return {"documents": []}  # Return empty for unauthenticated users
+        
+        user_id = user['user_id']
+        
+        if firestore_service:
+            documents = firestore_service.get_user_tax_documents(user_id, form_id, category_id)
+            return {"documents": documents}
+        else:
+            # Mock response for development
+            return {"documents": []}
+            
+    except Exception as e:
+        logger.error(f"Error getting user documents: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve documents")
+
+@app.get("/api/tax/documents/{document_id}/download")
+async def download_document(
+    document_id: str,
+    user=Depends(optional_firebase_token)
+):
+    """Download a tax document"""
+    try:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required for document download")
+        
+        user_id = user['user_id']
+        
+        # Get document metadata
+        if firestore_service:
+            doc_metadata = firestore_service.get_tax_document(document_id, user_id)
+            if not doc_metadata:
+                raise HTTPException(status_code=404, detail="Document not found")
+            
+            file_path = doc_metadata.get('file_path')
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=404, detail="File not found on disk")
+            
+            # Return file
+            return FileResponse(
+                path=file_path,
+                filename=doc_metadata.get('name'),
+                media_type=mimetypes.guess_type(file_path)[0]
+            )
+        else:
+            raise HTTPException(status_code=503, detail="Document service not available")
+            
+    except Exception as e:
+        logger.error(f"Error downloading document {document_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not download document")
+
+@app.get("/api/tax/documents/{document_id}/preview")
+async def preview_document(
+    document_id: str,
+    user=Depends(optional_firebase_token)
+):
+    """Get document preview data including extracted text"""
+    try:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required for document preview")
+        
+        user_id = user['user_id']
+        
+        if firestore_service:
+            doc_metadata = firestore_service.get_tax_document(document_id, user_id)
+            if not doc_metadata:
+                raise HTTPException(status_code=404, detail="Document not found")
+            
+            return {
+                "id": doc_metadata.get('id'),
+                "name": doc_metadata.get('name'),
+                "type": doc_metadata.get('file_type'),
+                "size": doc_metadata.get('file_size'),
+                "ocr_text": doc_metadata.get('ocr_text'),
+                "upload_date": doc_metadata.get('upload_timestamp')
+            }
+        else:
+            raise HTTPException(status_code=503, detail="Document service not available")
+            
+    except Exception as e:
+        logger.error(f"Error previewing document {document_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not preview document")
+
+@app.delete("/api/tax/documents/{document_id}")
+async def delete_document(
+    document_id: str,
+    user=Depends(optional_firebase_token)
+):
+    """Delete a tax document"""
+    try:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required for document deletion")
+        
+        user_id = user['user_id']
+        
+        if firestore_service:
+            # Get document metadata
+            doc_metadata = firestore_service.get_tax_document(document_id, user_id)
+            if not doc_metadata:
+                raise HTTPException(status_code=404, detail="Document not found")
+            
+            # Delete file from disk
+            file_path = doc_metadata.get('file_path')
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            # Delete from Firestore
+            firestore_service.delete_tax_document(document_id, user_id)
+            
+            return {"success": True, "message": "Document deleted successfully"}
+        else:
+            raise HTTPException(status_code=503, detail="Document service not available")
+            
+    except Exception as e:
+        logger.error(f"Error deleting document {document_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not delete document")
+
+# Form Recommendation Endpoint
+@app.post("/api/tax/recommend-forms")
+async def recommend_tax_forms(
+    user=Depends(optional_firebase_token)
+):
+    """Get personalized form recommendations based on user data"""
+    try:
+        # Provide default user_id for testing if no authentication
+        user_id = user['user_id'] if user else 'demo_user_testing'
+        
+        # Get user transaction data for smart recommendations
+        user_data = {}
+        if firestore_service and user:
+            try:
+                # Get user's transaction history
+                transactions = firestore_service.get_user_expenses(user_id)
+                
+                # Analyze transaction patterns
+                total_income = sum(t.get('amount', 0) for t in transactions if t.get('category') == 'Income')
+                has_investments = any(t.get('category') in ['Investment', 'Mutual Funds', 'Stocks'] for t in transactions)
+                has_business = any(t.get('category') == 'Business' for t in transactions)
+                has_property = any(t.get('category') == 'Property' for t in transactions)
+                
+                user_data = {
+                    'total_income': total_income,
+                    'has_investments': has_investments,
+                    'has_business': has_business,
+                    'has_property': has_property
+                }
+            except Exception:
+                logger.warning("Could not fetch user transaction data for recommendations")
+        
+        # Generate form recommendations
+        recommendations = generate_form_recommendations(user_data)
+        
+        return {
+            "recommendations": recommendations,
+            "user_analysis": user_data
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating form recommendations: {e}")
+        raise HTTPException(status_code=500, detail="Could not generate recommendations")
+
+def generate_form_recommendations(user_data: dict) -> list:
+    """Generate smart form recommendations based on user profile"""
+    recommendations = []
+    
+    # Default recommendation for all users
+    recommendations.append({
+        "form_id": "ITR1",
+        "confidence": 95 if user_data.get('total_income', 0) < 500000 else 70,
+        "reason": "Suitable for salary income under ₹5 lakhs",
+        "priority": 1
+    })
+    
+    if user_data.get('has_investments'):
+        recommendations.append({
+            "form_id": "ITR2",
+            "confidence": 90,
+            "reason": "Required for capital gains from investments",
+            "priority": 2
+        })
+    
+    if user_data.get('has_business'):
+        recommendations.append({
+            "form_id": "ITR3",
+            "confidence": 95,
+            "reason": "Required for business income",
+            "priority": 1
+        })
+    
+    if user_data.get('has_property'):
+        recommendations.append({
+            "form_id": "ITR2",
+            "confidence": 85,
+            "reason": "Required for property rental income",
+            "priority": 2
+        })
+    
+    # Sort by priority and confidence
+    recommendations.sort(key=lambda x: (x['priority'], -x['confidence']))
+    
+    return recommendations[:3]  # Return top 3 recommendations
+

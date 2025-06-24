@@ -339,3 +339,273 @@ class FirestoreService:
         except Exception as e:
             print(f"Error in bulk import: {e}")
             raise e
+
+    # Tax Filing Data Management
+    def save_tax_form_draft(self, user_id: str, form_type: str, form_data: Dict, progress: float = 0.0) -> str:
+        """
+        Save tax form draft for later completion
+        """
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        
+        try:
+            draft_data = {
+                'userId': user_id,
+                'formType': form_type,
+                'formData': form_data,
+                'progress': progress,
+                'lastSaved': firestore.SERVER_TIMESTAMP,
+                'status': 'draft'
+            }
+            
+            # Save to tax_form_drafts collection
+            doc_ref = self.db.collection('taxFormDrafts').document()
+            doc_ref.set(draft_data)
+            
+            print(f"✅ Tax form draft saved with ID: {doc_ref.id}")
+            return doc_ref.id
+            
+        except Exception as e:
+            print(f"❌ Error saving tax form draft: {e}")
+            raise e
+    
+    def get_user_tax_drafts(self, user_id: str) -> List[Dict]:
+        """
+        Get all tax form drafts for a user
+        """
+        try:
+            query = self.db.collection('taxFormDrafts').where('userId', '==', user_id).order_by('lastSaved', direction=firestore.Query.DESCENDING)
+            docs = query.stream()
+            
+            drafts = []
+            for doc in docs:
+                data = doc.to_dict()
+                drafts.append({
+                    'id': doc.id,
+                    'formType': data.get('formType'),
+                    'progress': data.get('progress', 0),
+                    'lastSaved': data.get('lastSaved'),
+                    'status': data.get('status', 'draft'),
+                    'formData': data.get('formData', {})
+                })
+            
+            print(f"✅ Retrieved {len(drafts)} tax drafts for user {user_id}")
+            return drafts
+            
+        except Exception as e:
+            print(f"❌ Error retrieving tax drafts: {e}")
+            return []
+    
+    def update_tax_form_draft(self, draft_id: str, form_data: Dict, progress: float = None) -> bool:
+        """
+        Update existing tax form draft
+        """
+        try:
+            update_data = {
+                'formData': form_data,
+                'lastSaved': firestore.SERVER_TIMESTAMP
+            }
+            
+            if progress is not None:
+                update_data['progress'] = progress
+
+            self.db.collection('taxFormDrafts').document(draft_id).update(update_data)
+            print(f"✅ Tax form draft {draft_id} updated successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error updating tax form draft: {e}")
+            return False
+    
+    def save_tax_form_submission(self, user_id: str, form_type: str, form_data: Dict, 
+                                acknowledgment_number: str = None) -> str:
+        """
+        Save completed tax form submission
+        """
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        
+        try:
+            submission_data = {
+                'userId': user_id,
+                'formType': form_type,
+                'formData': form_data,
+                'submittedAt': firestore.SERVER_TIMESTAMP,
+                'acknowledgmentNumber': acknowledgment_number,
+                'status': 'submitted'
+            }
+            
+            doc_ref = self.db.collection('taxFormSubmissions').document()
+            doc_ref.set(submission_data)
+            
+            print(f"✅ Tax form submission saved with ID: {doc_ref.id}")
+            return doc_ref.id
+            
+        except Exception as e:
+            print(f"❌ Error saving tax form submission: {e}")
+            raise e
+    
+    def get_user_tax_submissions(self, user_id: str) -> List[Dict]:
+        """
+        Get all tax form submissions for a user
+        """
+        try:
+            query = self.db.collection('taxFormSubmissions').where('userId', '==', user_id).order_by('submittedAt', direction=firestore.Query.DESCENDING)
+            docs = query.stream()
+            
+            submissions = []
+            for doc in docs:
+                data = doc.to_dict()
+                submissions.append({
+                    'id': doc.id,
+                    'formType': data.get('formType'),
+                    'submittedAt': data.get('submittedAt'),
+                    'acknowledgmentNumber': data.get('acknowledgmentNumber'),
+                    'status': data.get('status', 'submitted')
+                })
+            
+            print(f"✅ Retrieved {len(submissions)} tax submissions for user {user_id}")
+            return submissions
+            
+        except Exception as e:
+            print(f"❌ Error retrieving tax submissions: {e}")
+            return []
+    
+    # Tax Document Management Methods
+    
+    def save_tax_document(self, doc_metadata: Dict) -> str:
+        """
+        Save tax document metadata to Firestore
+        """
+        try:
+            if not self.db:
+                raise Exception("Firestore client not initialized")
+            
+            # Add document to tax_documents collection
+            doc_ref = self.db.collection('tax_documents').add(doc_metadata)
+            document_id = doc_ref[1].id
+            
+            print(f"✅ Tax document saved with ID: {document_id}")
+            return document_id
+            
+        except Exception as e:
+            print(f"❌ Error saving tax document: {e}")
+            raise e
+    
+    def get_user_tax_documents(self, user_id: str, form_id: str = None, category_id: str = None) -> List[Dict]:
+        """
+        Get all tax documents for a user, optionally filtered by form or category
+        """
+        try:
+            if not self.db:
+                raise Exception("Firestore client not initialized")
+            
+            # Start with basic query
+            query = self.db.collection('tax_documents').where('user_id', '==', user_id)
+            
+            # Apply filters if provided
+            if form_id:
+                query = query.where('form_id', '==', form_id)
+            
+            if category_id:
+                query = query.where('category_id', '==', category_id)
+            
+            # Order by upload timestamp
+            try:
+                query = query.order_by('upload_timestamp', direction=firestore.Query.DESCENDING)
+            except Exception:
+                # Continue without ordering if it fails
+                pass
+            
+            docs = query.stream()
+            documents = []
+            
+            for doc in docs:
+                data = doc.to_dict()
+                data['id'] = doc.id  # Add document ID
+                documents.append(data)
+            
+            print(f"✅ Retrieved {len(documents)} tax documents for user {user_id}")
+            return documents
+            
+        except Exception as e:
+            print(f"❌ Error retrieving tax documents: {e}")
+            return []
+    
+    def get_tax_document(self, document_id: str, user_id: str) -> Optional[Dict]:
+        """
+        Get a specific tax document by ID for a user
+        """
+        try:
+            if not self.db:
+                raise Exception("Firestore client not initialized")
+            
+            doc = self.db.collection('tax_documents').document(document_id).get()
+            
+            if doc.exists:
+                data = doc.to_dict()
+                
+                # Verify ownership
+                if data.get('user_id') == user_id:
+                    data['id'] = doc.id
+                    return data
+                else:
+                    print(f"Document {document_id} does not belong to user {user_id}")
+                    return None
+            else:
+                print(f"Document {document_id} not found")
+                return None
+                
+        except Exception as e:
+            print(f"❌ Error retrieving tax document {document_id}: {e}")
+            return None
+    
+    def delete_tax_document(self, document_id: str, user_id: str) -> bool:
+        """
+        Delete a tax document
+        """
+        try:
+            if not self.db:
+                raise Exception("Firestore client not initialized")
+            
+            # First verify ownership
+            doc_metadata = self.get_tax_document(document_id, user_id)
+            if not doc_metadata:
+                return False
+            
+            # Delete the document
+            self.db.collection('tax_documents').document(document_id).delete()
+            
+            print(f"✅ Tax document {document_id} deleted successfully")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error deleting tax document {document_id}: {e}")
+            return False
+    
+    def update_tax_document_ocr(self, document_id: str, user_id: str, ocr_text: str) -> bool:
+        """
+        Update OCR text for a tax document
+        """
+        try:
+            if not self.db:
+                raise Exception("Firestore client not initialized")
+            
+            # Verify ownership first
+            doc_metadata = self.get_tax_document(document_id, user_id)
+            if not doc_metadata:
+                return False
+            
+            # Update OCR data
+            self.db.collection('tax_documents').document(document_id).update({
+                'ocr_text': ocr_text,
+                'ocr_processed': True,
+                'ocr_updated_at': firestore.SERVER_TIMESTAMP
+            })
+            
+            print(f"✅ OCR data updated for document {document_id}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error updating OCR data for document {document_id}: {e}")
+            return False
