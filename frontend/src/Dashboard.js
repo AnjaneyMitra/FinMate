@@ -32,42 +32,75 @@ function Dashboard({ user, setUser }) {
     loading: true
   });
 
-  useEffect(() => {
-    async function fetchDashboardStats() {
-      if (!user) return;
-      setDashboardStats((s) => ({ ...s, loading: true }));
-      const dataService = new FirebaseDataService();
-      try {
-        // Fetch budget
-        const budget = await dataService.getBudget();
-        // Fetch user preferences (for goals)
-        const prefs = await dataService.getUserPreferences();
-        // Fetch spending summary
-        const summary = await dataService.fetchSpendingSummary('month');
-        // Calculate savings (budget - spent)
-        const monthlyBudget = budget?.monthlyBudget || 0;
-        const spent = summary?.total_spent || 0;
-        const savings = monthlyBudget > 0 ? Math.max(monthlyBudget - spent, 0) : null;
-        // Goals progress (mock: if prefs.goalsProgress exists, else percent of budget used)
-        let goalsProgress = null;
-        if (prefs && typeof prefs.goalsProgress === 'number') {
-          goalsProgress = prefs.goalsProgress;
-        } else if (monthlyBudget > 0) {
-          goalsProgress = Math.round((spent / monthlyBudget) * 100);
-        }
-        setDashboardStats({
-          monthlyBudget,
-          savings,
-          spent,
-          goalsProgress,
-          loading: false
-        });
-      } catch (err) {
-        setDashboardStats((s) => ({ ...s, loading: false }));
+  // --- Import Notification State ---
+  const [importNotification, setImportNotification] = useState(null);
+  
+  // --- Refresh key for components that need to update on transaction changes ---
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Create reusable function for fetching dashboard stats
+  const fetchDashboardStats = async () => {
+    if (!user) return;
+    setDashboardStats((s) => ({ ...s, loading: true }));
+    const dataService = new FirebaseDataService();
+    try {
+      // Fetch budget
+      const budget = await dataService.getBudget();
+      // Fetch user preferences (for goals)
+      const prefs = await dataService.getUserPreferences();
+      // Fetch spending summary
+      const summary = await dataService.fetchSpendingSummary('month');
+      // Calculate savings (budget - spent)
+      const monthlyBudget = budget?.monthlyBudget || 0;
+      const spent = summary?.total_spent || 0;
+      const savings = monthlyBudget > 0 ? Math.max(monthlyBudget - spent, 0) : null;
+      // Goals progress (mock: if prefs.goalsProgress exists, else percent of budget used)
+      let goalsProgress = null;
+      if (prefs && typeof prefs.goalsProgress === 'number') {
+        goalsProgress = prefs.goalsProgress;
+      } else if (monthlyBudget > 0) {
+        goalsProgress = Math.round((spent / monthlyBudget) * 100);
       }
+      setDashboardStats({
+        monthlyBudget,
+        savings,
+        spent,
+        goalsProgress,
+        loading: false
+      });
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      setDashboardStats((s) => ({ ...s, loading: false }));
     }
+  };
+
+  useEffect(() => {
     fetchDashboardStats();
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle transaction imports (from bank statements or manual entry)
+  const handleTransactionsImported = async (result) => {
+    console.log('Transactions imported:', result);
+    
+    // Show success notification
+    const importedCount = result.imported_count || result.count || 1;
+    setImportNotification({
+      type: 'success',
+      message: `Successfully imported ${importedCount} transaction${importedCount !== 1 ? 's' : ''}`,
+      description: 'Your dashboard has been updated with the latest data.'
+    });
+
+    // Refresh dashboard data
+    await fetchDashboardStats();
+    
+    // Trigger refresh for other components
+    setRefreshKey(prev => prev + 1);
+
+    // Auto-hide notification after 5 seconds
+    setTimeout(() => {
+      setImportNotification(null);
+    }, 5000);
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -129,12 +162,22 @@ function Dashboard({ user, setUser }) {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.email?.split('@')[0]}! 👋
-          </h2>
-          <p className="text-gray-600">
-            Here's your financial overview for today.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome back, {user.email?.split('@')[0]}! 👋
+              </h2>
+              <p className="text-gray-600">
+                Here's your financial overview for today.
+              </p>
+            </div>
+            {loading && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span className="text-sm">Updating...</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Quick Stats Cards */}
@@ -483,15 +526,47 @@ function Dashboard({ user, setUser }) {
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={user} />
+        
+        {/* Import Success Notification */}
+        {importNotification && (
+          <div className={`mx-8 mt-4 p-4 rounded-lg border animate-slide-down ${
+            importNotification.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">
+                  {importNotification.type === 'success' ? '✅' : '❌'}
+                </span>
+                <div>
+                  <h4 className="font-semibold">{importNotification.message}</h4>
+                  {importNotification.description && (
+                    <p className="text-sm mt-1 opacity-75">{importNotification.description}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setImportNotification(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="flex-1 overflow-y-auto">
           <div className="p-8">
             <Routes>
               <Route path="/" element={<DashboardHome user={user} />} />
               <Route path="/budget" element={<BudgetForm />} />
-              <Route path="/transactions" element={<TransactionForm user={user} />} />
-              <Route path="/spending" element={<RealSpendingAnalysis userId={user?.uid} />} />
-              <Route path="/predictions" element={<FutureExpensePrediction />} />
-              <Route path="/comparison" element={<MonthComparison />} />
+              <Route path="/transactions" element={<TransactionForm user={user} onTransactionAdded={handleTransactionsImported} />} />
+              <Route path="/spending" element={<RealSpendingAnalysis key={refreshKey} userId={user?.uid} />} />
+              <Route path="/predictions" element={<FutureExpensePrediction key={refreshKey} />} />
+              <Route path="/comparison" element={<MonthComparison key={refreshKey} />} />
               <Route path="/tax" element={<TaxBreakdown />} />
               <Route path="/learning" element={<InvestmentLearningPath />} />
               <Route path="/simulation" element={<InvestmentSimulation />} />

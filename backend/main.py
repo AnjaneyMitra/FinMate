@@ -1400,8 +1400,9 @@ async def import_parsed_transactions(request: TransactionImportRequest):
                     'merchant_name': transaction_data.get('merchant_name', ''),
                     'notes': f"Imported from bank statement - {transaction_data.get('transaction_type', 'transaction')}",
                     'goalId': None,
-                    'created_at': datetime.now().isoformat(),
-                    'updated_at': datetime.now().isoformat()
+                    'userId': request.user_id,
+                    'createdAt': datetime.now().isoformat(),
+                    'updatedAt': datetime.now().isoformat()
                 }
                 
                 # Add transaction to Firestore
