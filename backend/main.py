@@ -21,7 +21,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from tax_chatbot import classify_tax_question
 from expense_classifier import predict_expense_category
 from tax_filing.form_registry import get_all_forms, get_form_details
@@ -1125,6 +1125,194 @@ def get_gemini_tax_assistance(request: GeminiTaxRequest, user=Depends(optional_f
         logger.error(f"Error getting Gemini tax assistance: {e}")
         raise HTTPException(status_code=500, detail="Failed to get AI assistance.")
 
+# Gemini Form Search Endpoints
+
+class FormSearchRequest(BaseModel):
+    query: str
+    user_context: Optional[Dict[str, Any]] = None
+    search_type: str = "natural_language"  # "natural_language", "specific_feature", "comparison"
+
+class FormDiscoveryRequest(BaseModel):
+    user_description: str
+    user_profile: Optional[Dict[str, Any]] = None
+
+class FormComparisonRequest(BaseModel):
+    form_ids: List[str]
+    comparison_context: str = ""
+
+class FormFeatureSearchRequest(BaseModel):
+    required_features: List[str]
+    user_context: Optional[Dict[str, Any]] = None
+
+@app.post("/api/tax/search-forms")
+def search_tax_forms_with_ai(request: FormSearchRequest, user=Depends(optional_firebase_token)):
+    """
+    Search tax forms using Gemini AI based on natural language query.
+    
+    This endpoint allows users to search for tax forms using natural language,
+    specific features, or comparison queries. Powered by Gemini AI for intelligent
+    form discovery and recommendation.
+    """
+    from tax_filing import gemini_form_search_service
+    
+    try:
+        # Enhance user context with auth info if available
+        enhanced_context = request.user_context or {}
+        if user:
+            enhanced_context['user_authenticated'] = True
+            enhanced_context['user_id'] = user.get('user_id')
+        
+        # Perform AI-powered form search
+        search_results = gemini_form_search_service.search_forms(
+            query=request.query,
+            user_context=enhanced_context,
+            search_type=request.search_type
+        )
+        
+        return {
+            "success": True,
+            "query": request.query,
+            "search_type": request.search_type,
+            **search_results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in AI form search: {e}")
+        raise HTTPException(status_code=500, detail="Failed to search forms with AI.")
+
+@app.post("/api/tax/discover-forms")
+def discover_forms_by_situation(request: FormDiscoveryRequest, user=Depends(optional_firebase_token)):
+    """
+    Discover tax forms based on user's description of their tax situation.
+    
+    This endpoint analyzes a user's natural description of their tax situation
+    and recommends the most suitable forms with detailed explanations.
+    """
+    from tax_filing import gemini_form_search_service
+    
+    try:
+        # Enhance user profile with auth info if available
+        enhanced_profile = request.user_profile or {}
+        if user:
+            enhanced_profile['user_authenticated'] = True
+            enhanced_profile['user_id'] = user.get('user_id')
+            
+            # TODO: Optionally fetch user's transaction history for better recommendations
+            # This could integrate with existing user data analysis
+        
+        # Perform semantic form discovery
+        discovery_results = gemini_form_search_service.semantic_form_discovery(
+            user_description=request.user_description,
+            user_profile=enhanced_profile
+        )
+        
+        return {
+            "success": True,
+            "user_description": request.user_description,
+            **discovery_results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in form discovery: {e}")
+        raise HTTPException(status_code=500, detail="Failed to discover forms.")
+
+@app.post("/api/tax/forms/compare")
+def compare_tax_forms_with_ai(request: FormComparisonRequest, user=Depends(optional_firebase_token)):
+    """
+    Compare specific tax forms using AI analysis.
+    
+    This endpoint provides detailed AI-powered comparison of specified tax forms,
+    highlighting differences, pros/cons, and when to use each form.
+    """
+    from tax_filing import gemini_form_search_service
+    
+    try:
+        if not request.form_ids or len(request.form_ids) < 2:
+            raise HTTPException(status_code=400, detail="At least 2 forms required for comparison.")
+        
+        if len(request.form_ids) > 4:
+            raise HTTPException(status_code=400, detail="Maximum 4 forms can be compared at once.")
+        
+        # Perform AI-powered form comparison
+        comparison_results = gemini_form_search_service.compare_forms(
+            form_ids=request.form_ids,
+            comparison_context=request.comparison_context
+        )
+        
+        return {
+            "success": True,
+            "compared_forms": request.form_ids,
+            "comparison_context": request.comparison_context,
+            **comparison_results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in form comparison: {e}")
+        raise HTTPException(status_code=500, detail="Failed to compare forms.")
+
+@app.post("/api/tax/forms/find-by-features")
+def find_forms_by_features(request: FormFeatureSearchRequest, user=Depends(optional_firebase_token)):
+    """
+    Find tax forms that support specific features or capabilities.
+    
+    This endpoint finds forms based on required features like capital gains support,
+    foreign asset reporting, business income handling, etc.
+    """
+    from tax_filing import gemini_form_search_service
+    
+    try:
+        if not request.required_features:
+            raise HTTPException(status_code=400, detail="At least one required feature must be specified.")
+        
+        # Enhance user context with auth info if available
+        enhanced_context = request.user_context or {}
+        if user:
+            enhanced_context['user_authenticated'] = True
+            enhanced_context['user_id'] = user.get('user_id')
+        
+        # Find forms by features
+        feature_results = gemini_form_search_service.find_forms_by_features(
+            required_features=request.required_features,
+            user_context=enhanced_context
+        )
+        
+        return {
+            "success": True,
+            "required_features": request.required_features,
+            **feature_results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in feature-based form search: {e}")
+        raise HTTPException(status_code=500, detail="Failed to find forms by features.")
+
+@app.get("/api/tax/search/health")
+def check_form_search_health():
+    """
+    Check the health status of the Gemini form search service.
+    
+    This endpoint verifies that the AI form search service is properly initialized
+    and ready to handle search requests.
+    """
+    from tax_filing import gemini_form_search_service
+    
+    try:
+        return {
+            "service_enabled": gemini_form_search_service.enabled,
+            "forms_in_knowledge_base": len(gemini_form_search_service.form_knowledge_base.split('\n')),
+            "available_search_types": list(gemini_form_search_service.search_prompts.keys()),
+            "status": "healthy" if gemini_form_search_service.enabled else "disabled",
+            "message": "Gemini Form Search Service is ready" if gemini_form_search_service.enabled else "AI search disabled - check GEMINI_API_KEY"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error checking form search health: {e}")
+        return {
+            "service_enabled": False,
+            "status": "error",
+            "message": f"Service error: {str(e)}"
+        }
+
 # Investment Learning Content Generation Endpoints
 
 @app.post("/api/learning/generate-content")
@@ -1959,4 +2147,50 @@ def generate_form_recommendations(user_data: dict) -> list:
     recommendations.sort(key=lambda x: (x['priority'], -x['confidence']))
     
     return recommendations[:3]  # Return top 3 recommendations
+
+@app.get("/api/tax/forms/category/{category}")
+def get_forms_by_category(category: str):
+    """Returns forms filtered by category for tabbed interface."""
+    try:
+        from tax_filing.form_registry import TaxFormRegistry, FormCategory
+        
+        registry = TaxFormRegistry()
+        all_forms = registry.get_all_forms()
+        
+        # Convert string to enum if needed
+        if category == "all_forms":
+            filtered_forms = all_forms
+        else:
+            try:
+                category_enum = FormCategory(category)
+                filtered_forms = [form for form in all_forms if form.category == category_enum]
+            except ValueError:
+                # If category not found, return empty list
+                filtered_forms = []
+        
+        # Convert to dictionary format for JSON response
+        forms_data = []
+        for form in filtered_forms:
+            forms_data.append({
+                "id": form.form_type.value,
+                "name": form.name,
+                "description": form.description,
+                "category": form.category.value,
+                "difficulty": form.difficulty_level,
+                "estimated_time": form.estimated_time,
+                "sections": form.sections,
+                "required_documents": form.required_documents,
+                "common_deductions": form.common_deductions,
+                "official_pdf_link": form.official_pdf_link,
+                "online_filing_link": form.online_filing_link,
+                "help_guide_link": form.help_guide_link,
+                "filing_deadline": form.filing_deadline,
+                "is_popular": form.is_popular,
+                "applicable_assessment_year": form.applicable_assessment_year
+            })
+        
+        return {"forms": forms_data, "category": category, "count": len(forms_data)}
+    except Exception as e:
+        logger.error(f"Error getting forms by category {category}: {e}")
+        raise HTTPException(status_code=500, detail="Could not retrieve forms by category.")
 

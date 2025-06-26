@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TaxFormDiscovery from './TaxFormDiscovery';
 import TaxFilingWizard from './TaxFilingWizard';
+import EnhancedTaxReturnCompletion from './EnhancedTaxReturnCompletion';
 import TaxGlossaryHelp from './TaxGlossaryHelp';
 import TaxDocumentManager from './TaxDocumentManager';
 import { FileText, Compass, HelpCircle, FolderOpen, ArrowLeft, CheckCircle } from 'lucide-react';
@@ -11,6 +12,7 @@ const ComprehensiveTaxFiling = ({ user }) => {
   const [formDetails, setFormDetails] = useState(null);
   const [userProfile, setUserProfile] = useState({});
   const [completedSubmissions, setCompletedSubmissions] = useState([]);
+  const [useEnhancedFiling, setUseEnhancedFiling] = useState(true);
 
   const views = [
     {

@@ -1,0 +1,325 @@
+/* Enhanced Theme Utilities for FinMate */
+
+/* Animation utilities for theme transitions */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Utility classes that work with all themes */
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Theme-aware focus states */
+.theme-focus {
+  @apply focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all;
+}
+
+/* Form field states that work with any theme */
+.field-success {
+  @apply border-green-500 focus:border-green-500 focus:ring-green-200;
+}
+
+.field-error {
+  @apply border-red-500 focus:border-red-500 focus:ring-red-200;
+}
+
+.field-warning {
+  @apply border-yellow-500 focus:border-yellow-500 focus:ring-yellow-200;
+}
+
+/* Interactive states */
+.interactive-scale {
+  @apply transition-transform duration-200 hover:scale-105 active:scale-95;
+}
+
+.interactive-glow {
+  @apply transition-shadow duration-200 hover:shadow-lg;
+}
+
+/* Card elevation levels */
+.elevation-1 {
+  @apply shadow-sm;
+}
+
+.elevation-2 {
+  @apply shadow-md;
+}
+
+.elevation-3 {
+  @apply shadow-lg;
+}
+
+.elevation-4 {
+  @apply shadow-xl;
+}
+
+/* Status indicator patterns */
+.status-dot {
+  @apply w-3 h-3 rounded-full inline-block;
+}
+
+.status-badge {
+  @apply px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1;
+}
+
+/* Layout utilities */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+.flex-start {
+  @apply flex items-center justify-start;
+}
+
+.flex-end {
+  @apply flex items-center justify-end;
+}
+
+/* Grid patterns */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.grid-auto-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Responsive text sizing */
+.text-responsive-xs {
+  @apply text-xs sm:text-sm;
+}
+
+.text-responsive-sm {
+  @apply text-sm sm:text-base;
+}
+
+.text-responsive-base {
+  @apply text-base sm:text-lg;
+}
+
+.text-responsive-lg {
+  @apply text-lg sm:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-xl sm:text-2xl;
+}
+
+/* Theme-aware gradients that work with dark/light modes */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.gradient-error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Glassmorphism effects for modern themes */
+.glass {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth transitions for theme switching */
+.theme-transition {
+  @apply transition-colors duration-300 ease-in-out;
+}
+
+.theme-transition-fast {
+  @apply transition-colors duration-150 ease-in-out;
+}
+
+.theme-transition-slow {
+  @apply transition-colors duration-500 ease-in-out;
+}
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.spinner {
+  @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
+}
+
+/* Mobile-first responsive containers */
+.container-responsive {
+  @apply w-full max-w-sm mx-auto sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl;
+}
+
+.container-wide {
+  @apply w-full max-w-md mx-auto sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl;
+}
+
+/* Form layout utilities */
+.form-grid {
+  @apply grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6;
+}
+
+.form-grid-3 {
+  @apply grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6;
+}
+
+.form-stack {
+  @apply space-y-4 md:space-y-6;
+}
+
+/* Button group utilities */
+.btn-group {
+  @apply flex flex-wrap gap-2 md:gap-3;
+}
+
+.btn-group-vertical {
+  @apply flex flex-col space-y-2;
+}
+
+/* Card grid layouts */
+.card-grid {
+  @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+.card-grid-2 {
+  @apply grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6;
+}
+
+/* Dashboard layout utilities */
+.dashboard-grid {
+  @apply grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+.dashboard-main {
+  @apply col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-3;
+}
+
+.dashboard-sidebar {
+  @apply col-span-1;
+}
+
+/* Navigation utilities */
+.nav-item {
+  @apply flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors;
+}
+
+.nav-brand {
+  @apply flex items-center px-4 py-2 text-xl font-bold;
+}
+
+/* Table utilities */
+.table-auto-responsive {
+  @apply min-w-full divide-y overflow-x-auto;
+}
+
+.table-cell-responsive {
+  @apply px-3 py-2 sm:px-6 sm:py-4;
+}
+
+/* Modal and overlay utilities */
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto;
+}
+
+/* Notification utilities */
+.notification {
+  @apply fixed top-4 right-4 z-50 max-w-sm w-full;
+}
+
+.notification-stack {
+  @apply space-y-2;
+}
+
+/* Accessibility utilities */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+.focus-visible {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+}
+
+/* Print utilities */
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+  
+  .print-visible {
+    display: block !important;
+  }
+}
+
+/* Theme-specific overrides for better visual hierarchy */
+.theme-light {
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --border-color: rgba(0, 0, 0, 0.1);
+}
+
+.theme-dark {
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-cyberpunk {
+  --shadow-color: rgba(0, 255, 255, 0.2);
+  --border-color: rgba(0, 255, 255, 0.3);
+}
+
+.theme-nature {
+  --shadow-color: rgba(0, 100, 0, 0.1);
+  --border-color: rgba(0, 100, 0, 0.2);
+}

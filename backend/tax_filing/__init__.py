@@ -40,6 +40,13 @@ from .gemini_tax_service import (
     gemini_tax_service
 )
 
+from .gemini_form_search_service import (
+    GeminiFormSearchService,
+    FormSearchQuery,
+    FormSearchResult,
+    gemini_form_search_service
+)
+
 __all__ = [
     # Form Registry
     'TaxFormRegistry',
@@ -66,5 +73,11 @@ __all__ = [
     # Gemini Tax Service
     'GeminiTaxService',
     'TaxQueryType',
-    'gemini_tax_service'
+    'gemini_tax_service',
+    
+    # Gemini Form Search Service
+    'GeminiFormSearchService',
+    'FormSearchQuery',
+    'FormSearchResult',
+    'gemini_form_search_service'
 ]

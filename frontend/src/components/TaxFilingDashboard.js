@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
-import TaxFormDiscoveryNew from './TaxFormDiscoveryNew';
-import TaxFilingWizard from './TaxFilingWizard';
+import TaxFormDiscovery from './TaxFormDiscovery';
 import TaxGlossaryHelp from './TaxGlossaryHelp';
 import TaxDocumentManager from './TaxDocumentManager';
+import EnhancedTaxReturnCompletion from './EnhancedTaxReturnCompletion';
 import { 
   FileText, 
   Compass, 
@@ -15,7 +15,6 @@ import {
   LogOut,
   Home,
   BarChart3,
-  Calendar,
   Shield,
   Zap,
   CheckCircle2,
@@ -26,7 +25,7 @@ import {
 
 const TaxFilingDashboard = ({ user }) => {
   const [currentView, setCurrentView] = useState('dashboard');
-  const [selectedFormId, setSelectedFormId] = useState(null);
+  const [selectedForm, setSelectedForm] = useState(null);
   const [userStats, setUserStats] = useState({
     formsCompleted: 0,
     documentsUploaded: 0,
@@ -248,18 +247,31 @@ const TaxFilingDashboard = ({ user }) => {
     </div>
   );
 
+  const handleFormSelection = async (formId) => {
+    try {
+      // Fetch complete form metadata from backend
+      const response = await fetch(`http://localhost:8000/api/tax/forms/${formId}`);
+      const data = await response.json();
+      
+      setSelectedForm(data.form_details || { id: formId, name: `Form ${formId}` });
+      setCurrentView('filing');
+    } catch (error) {
+      console.error('Error fetching form details:', error);
+      // Fallback: use minimal form data
+      setSelectedForm({ id: formId, name: `Form ${formId}` });
+      setCurrentView('filing');
+    }
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
         return renderDashboardView();
       case 'discovery':
         return (
-          <TaxFormDiscoveryNew 
+          <TaxFormDiscovery 
             user={user} 
-            onFormSelected={(formId) => {
-              setSelectedFormId(formId);
-              setCurrentView('filing');
-            }}
+            onFormSelected={handleFormSelection}
           />
         );
       case 'documents':
@@ -268,10 +280,13 @@ const TaxFilingDashboard = ({ user }) => {
         return <TaxGlossaryHelp />;
       case 'filing':
         return (
-          <TaxFilingWizard 
-            user={user} 
-            formId={selectedFormId}
+          <EnhancedTaxReturnCompletion 
+            selectedForm={selectedForm}
             onBack={() => setCurrentView('discovery')}
+            onComplete={() => {
+              // Handle completion - could redirect to dashboard or show success
+              setCurrentView('dashboard');
+            }}
           />
         );
       default:
