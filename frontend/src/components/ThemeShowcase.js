@@ -1,83 +1,48 @@
+// This file previously demonstrated the theme system. It has been rewritten to use only standard React and Tailwind CSS.
 import React from 'react';
-import { useTheme, useThemeStyles, ThemedInput, ThemedButton, ThemedCard, ThemedAlert, ThemedStatus } from '../contexts/ThemeContext';
 
-/**
- * ThemeShowcase - Demonstrates the enhanced theme system capabilities
- * This component shows how easy it is to create consistently themed UI elements
- */
 export default function ThemeShowcase() {
-  const { bg, text, components } = useTheme();
-  const styles = useThemeStyles();
-
   return (
-    <div className={`min-h-screen ${bg.primary} p-8`}>
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        
         {/* Header */}
         <div className="text-center">
-          <h1 className={`text-4xl font-bold ${text.primary} mb-4`}>Enhanced Theme System</h1>
-          <p className={`text-lg ${text.secondary} max-w-2xl mx-auto`}>
-            A comprehensive, semantic approach to theming that automatically adapts all UI components across themes
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">UI Showcase</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Example UI elements using only Tailwind CSS and standard React components.
           </p>
         </div>
 
         {/* Alerts Section */}
-        <ThemedCard variant="base" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Alert Components</h2>
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Alert Components</h2>
           <div className="grid gap-4">
-            <ThemedAlert type="success">
-              ✅ Transaction saved successfully! Your expense has been categorized and added to your budget.
-            </ThemedAlert>
-            <ThemedAlert type="warning">
-              ⚠️ You're approaching your monthly budget limit. Consider reviewing your expenses.
-            </ThemedAlert>
-            <ThemedAlert type="error">
-              ❌ Failed to process transaction. Please check your internet connection and try again.
-            </ThemedAlert>
-            <ThemedAlert type="info">
-              💡 Pro tip: Use detailed descriptions to improve automatic categorization accuracy.
-            </ThemedAlert>
+            <div className="bg-green-100 text-green-800 rounded-lg p-4">✅ Transaction saved successfully! Your expense has been categorized and added to your budget.</div>
+            <div className="bg-yellow-100 text-yellow-800 rounded-lg p-4">⚠️ You're approaching your monthly budget limit. Consider reviewing your expenses.</div>
+            <div className="bg-red-100 text-red-800 rounded-lg p-4">❌ Failed to process transaction. Please check your internet connection and try again.</div>
+            <div className="bg-blue-100 text-blue-800 rounded-lg p-4">💡 Pro tip: Use detailed descriptions to improve automatic categorization accuracy.</div>
           </div>
-        </ThemedCard>
+        </div>
 
         {/* Form Elements */}
-        <ThemedCard variant="elevated" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Form Elements</h2>
-          <div className="form-grid">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Form Elements</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={`block text-sm font-medium ${text.primary} mb-2`}>
-                Standard Input
-              </label>
-              <ThemedInput 
-                placeholder="Enter transaction amount"
-                className="w-full"
-              />
+              <label className="block text-sm font-medium text-gray-900 mb-2">Standard Input</label>
+              <input className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Enter transaction amount" />
             </div>
             <div>
-              <label className={`block text-sm font-medium ${text.primary} mb-2`}>
-                Success State
-              </label>
-              <ThemedInput 
-                state="success"
-                placeholder="Valid input"
-                className="w-full"
-              />
+              <label className="block text-sm font-medium text-gray-900 mb-2">Success State</label>
+              <input className="w-full border border-green-400 rounded-lg px-3 py-2 bg-green-50" placeholder="Valid input" />
             </div>
             <div>
-              <label className={`block text-sm font-medium ${text.primary} mb-2`}>
-                Error State
-              </label>
-              <ThemedInput 
-                state="error"
-                placeholder="Invalid input"
-                className="w-full"
-              />
+              <label className="block text-sm font-medium text-gray-900 mb-2">Error State</label>
+              <input className="w-full border border-red-400 rounded-lg px-3 py-2 bg-red-50" placeholder="Invalid input" />
             </div>
             <div>
-              <label className={`block text-sm font-medium ${text.primary} mb-2`}>
-                Dropdown
-              </label>
-              <select className={styles.input()}>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Dropdown</label>
+              <select className="w-full border border-gray-300 rounded-lg px-3 py-2">
                 <option>Select category</option>
                 <option>Food & Dining</option>
                 <option>Transportation</option>
@@ -85,158 +50,53 @@ export default function ThemeShowcase() {
               </select>
             </div>
           </div>
-        </ThemedCard>
-
-        {/* Button Variants */}
-        <ThemedCard variant="interactive" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Button Variants</h2>
-          <div className="btn-group">
-            <ThemedButton variant="primary">Primary Action</ThemedButton>
-            <ThemedButton variant="secondary">Secondary</ThemedButton>
-            <ThemedButton variant="outline">Outline</ThemedButton>
-            <ThemedButton variant="ghost">Ghost</ThemedButton>
-            <ThemedButton variant="danger">Delete</ThemedButton>
-            <ThemedButton variant="success">Success</ThemedButton>
-            <ThemedButton variant="disabled" disabled>Disabled</ThemedButton>
-          </div>
-        </ThemedCard>
-
-        {/* Status Indicators */}
-        <ThemedCard variant="highlighted" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Status Indicators</h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <ThemedStatus type="success">Completed</ThemedStatus>
-              <ThemedStatus type="warning">Pending Review</ThemedStatus>
-              <ThemedStatus type="error">Failed</ThemedStatus>
-              <ThemedStatus type="info">In Progress</ThemedStatus>
-              <ThemedStatus type="neutral">Draft</ThemedStatus>
-            </div>
-          </div>
-        </ThemedCard>
-
-        {/* Selection States Demo */}
-        <ThemedCard variant="base" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Selection States</h2>
-          <div className="grid-auto-fit">
-            <div className={`${styles.selectable('selected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">💳</span>
-              <span className="text-sm font-medium">Credit Card (Selected)</span>
-            </div>
-            <div className={`${styles.selectable('unselected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">💵</span>
-              <span className="text-sm font-medium">Cash</span>
-            </div>
-            <div className={`${styles.selectable('unselected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">📱</span>
-              <span className="text-sm font-medium">UPI</span>
-            </div>
-            <div className={`${styles.selectable('disabled')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">🏦</span>
-              <span className="text-sm font-medium">Net Banking (Disabled)</span>
-            </div>
-          </div>
-        </ThemedCard>
-
-        {/* Card Variants */}
-        <div className="card-grid">
-          <ThemedCard variant="base" className="p-4">
-            <h3 className={`font-semibold ${text.primary} mb-2`}>Base Card</h3>
-            <p className={`text-sm ${text.secondary}`}>Simple card with basic styling</p>
-          </ThemedCard>
-          
-          <ThemedCard variant="elevated" className="p-4">
-            <h3 className={`font-semibold ${text.primary} mb-2`}>Elevated Card</h3>
-            <p className={`text-sm ${text.secondary}`}>Enhanced shadow for emphasis</p>
-          </ThemedCard>
-          
-          <ThemedCard variant="interactive" className="p-4">
-            <h3 className={`font-semibold ${text.primary} mb-2`}>Interactive Card</h3>
-            <p className={`text-sm ${text.secondary}`}>Hover effects for clickable content</p>
-          </ThemedCard>
-          
-          <ThemedCard variant="highlighted" className="p-4">
-            <h3 className={`font-semibold ${text.primary} mb-2`}>Highlighted Card</h3>
-            <p className={`text-sm ${text.secondary}`}>Accent border for important content</p>
-          </ThemedCard>
         </div>
 
-        {/* Loading States */}
-        <ThemedCard variant="base" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Loading States</h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className={`w-6 h-6 ${components.loading.spinner}`}></div>
-              <span className={text.secondary}>Loading...</span>
-            </div>
-            <div className="space-y-2">
-              <div className={`h-4 ${components.loading.skeleton} w-3/4`}></div>
-              <div className={`h-4 ${components.loading.skeleton} w-1/2`}></div>
-              <div className={`h-4 ${components.loading.skeleton} w-2/3`}></div>
-            </div>
+        {/* Button Variants */}
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Button Variants</h2>
+          <div className="flex flex-wrap gap-4">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700">Primary Action</button>
+            <button className="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-300">Secondary</button>
+            <button className="border border-gray-400 text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100">Outline</button>
+            <button className="bg-transparent text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100">Ghost</button>
+            <button className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700">Delete</button>
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700">Success</button>
+            <button className="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg font-medium cursor-not-allowed" disabled>Disabled</button>
           </div>
-        </ThemedCard>
+        </div>
 
-        {/* Usage Examples */}
-        <ThemedCard variant="base" className="p-6">
-          <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Usage Benefits</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className={`text-lg font-semibold ${text.primary} mb-3`}>🚀 Before (Manual Approach)</h3>
-              <div className={`${bg.secondary} rounded-lg p-4 text-sm ${text.secondary}`}>
-                <code>{`// Manually applying theme colors
-<button className={\`\${
-  theme === 'dark' 
-    ? 'bg-gray-800 text-white border-gray-600' 
-    : 'bg-white text-gray-900 border-gray-200'
-} px-4 py-2 rounded\`}>
-  Submit
-</button>`}</code>
-              </div>
-            </div>
-            <div>
-              <h3 className={`text-lg font-semibold ${text.primary} mb-3`}>✨ After (Enhanced System)</h3>
-              <div className={`${bg.secondary} rounded-lg p-4 text-sm ${text.secondary}`}>
-                <code>{`// Semantic, theme-aware components
-<ThemedButton variant="primary">
-  Submit
-</ThemedButton>
-
-// Or using utility functions
-<button className={styles.button('primary')}>
-  Submit
-</button>`}</code>
-              </div>
-            </div>
+        {/* Status Indicators */}
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Status Indicators</h2>
+          <div className="flex gap-4 flex-wrap">
+            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">Completed</span>
+            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Pending Review</span>
+            <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full">Failed</span>
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">In Progress</span>
+            <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full">Draft</span>
           </div>
-          
-          <div className="mt-6 space-y-3">
-            <h3 className={`text-lg font-semibold ${text.primary}`}>Key Advantages:</h3>
-            <ul className={`space-y-2 ${text.secondary}`}>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span><strong>Automatic theme adaptation:</strong> All components automatically work with any theme</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span><strong>Semantic naming:</strong> Use meaningful names like 'primary', 'success', 'warning' instead of colors</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span><strong>Consistent spacing:</strong> Standardized padding, margins, and sizing across all components</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span><strong>Accessibility built-in:</strong> Focus states, contrast ratios, and interactive feedback included</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span><strong>Developer productivity:</strong> No more manual color combinations or theme switching logic</span>
-              </li>
-            </ul>
-          </div>
-        </ThemedCard>
+        </div>
 
+        {/* Card Variants */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-2">Base Card</h3>
+            <p className="text-sm text-gray-600">Simple card with basic styling</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4 shadow border border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-2">Elevated Card</h3>
+            <p className="text-sm text-gray-600">Enhanced shadow for emphasis</p>
+          </div>
+          <div className="bg-blue-50 rounded-xl p-4 shadow border border-blue-200">
+            <h3 className="font-semibold text-gray-900 mb-2">Interactive Card</h3>
+            <p className="text-sm text-gray-600">Hover effects for clickable content</p>
+          </div>
+          <div className="bg-purple-50 rounded-xl p-4 shadow border border-purple-200">
+            <h3 className="font-semibold text-gray-900 mb-2">Highlighted Card</h3>
+            <p className="text-sm text-gray-600">Accent border for important content</p>
+          </div>
+        </div>
       </div>
     </div>
   );

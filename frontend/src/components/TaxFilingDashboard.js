@@ -95,7 +95,7 @@ const TaxFilingDashboard = ({ user }) => {
   const renderDashboardView = () => (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="glass-card p-8 gradient-primary text-white">
+      <div className="p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
@@ -106,7 +106,7 @@ const TaxFilingDashboard = ({ user }) => {
             </p>
           </div>
           <div className="hidden lg:block">
-            <div className="w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center floating">
+            <div className="w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
               <FileText className="w-16 h-16 text-white" />
             </div>
           </div>
@@ -115,7 +115,7 @@ const TaxFilingDashboard = ({ user }) => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -126,7 +126,7 @@ const TaxFilingDashboard = ({ user }) => {
           <p className="text-sm text-gray-600">Tax forms ready for submission</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
               <FolderOpen className="w-6 h-6 text-blue-600" />
@@ -137,7 +137,7 @@ const TaxFilingDashboard = ({ user }) => {
           <p className="text-sm text-gray-600">Supporting documents processed</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-purple-600" />
@@ -148,7 +148,7 @@ const TaxFilingDashboard = ({ user }) => {
           <p className="text-sm text-gray-600">Based on current information</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
               <Clock className="w-6 h-6 text-orange-600" />
@@ -162,7 +162,7 @@ const TaxFilingDashboard = ({ user }) => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
             {[
@@ -188,7 +188,7 @@ const TaxFilingDashboard = ({ user }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow border border-gray-100">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-4">
             {[

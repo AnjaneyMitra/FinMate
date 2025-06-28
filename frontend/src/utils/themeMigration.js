@@ -223,3 +223,5 @@ export default {
   autoMigrateClasses,
   useThemeMigrationWarnings
 };
+
+// This file previously provided theme migration utilities. It is now deprecated and empty.
