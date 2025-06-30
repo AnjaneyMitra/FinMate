@@ -183,88 +183,79 @@ export default function BudgetForm() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Budget Planner</h2>
-        <p className="text-gray-600">Create a personalized budget based on your income and goals</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Budget Planner</h2>
+        <p className="text-gray-600 dark:text-gray-400">Create a personalized budget based on your income and goals</p>
       </div>
-      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Budget Form */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Your Information</h3>
+        <div className="bg-white dark:bg-neutral-900 p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-300 mb-4">Your Information</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Monthly Income (INR)</label>
+              <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">Monthly Income (INR)</label>
               <input
                 type="number"
                 name="income"
                 value={form.income}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-700 focus:border-transparent bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
                 placeholder="Enter your monthly income"
                 required
               />
             </div>
-            
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Financial Goals</label>
+              <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">Financial Goals</label>
               <input
                 type="text"
                 name="goals"
                 value={form.goals}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-700 focus:border-transparent bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
                 placeholder="e.g. Save for house, travel, emergency fund"
                 required
               />
             </div>
-            
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Location</label>
+              <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">Location</label>
               <input
                 type="text"
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 dark:focus:ring-teal-700 focus:border-transparent bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
                 placeholder="e.g. Mumbai, Delhi, Bangalore"
                 required
               />
             </div>
-            
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:opacity-50"
+              className="w-full bg-teal-600 dark:bg-teal-700 text-white px-4 py-2 rounded-md hover:bg-teal-700 dark:hover:bg-teal-800 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Generating Budget..." : "Get Suggested Budget"}
             </button>
           </form>
         </div>
-
         {/* Budget Results */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Budget Suggestion</h3>
-          
+        <div className="bg-white dark:bg-neutral-900 p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-300 mb-4">Budget Suggestion</h3>
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-              <span className="ml-2 text-gray-600">Calculating your budget...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 dark:border-teal-400"></div>
+              <span className="ml-2 text-gray-600 dark:text-gray-300">Calculating your budget...</span>
             </div>
           )}
-          
           {!loading && !suggestedBudget && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <span className="text-4xl mb-4 block">💰</span>
               <p>Fill out the form to get your personalized budget suggestion</p>
             </div>
           )}
-          
           {suggestedBudget && suggestedBudget.error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="text-red-600">{suggestedBudget.error}</div>
+            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
+              <div className="text-red-600 dark:text-red-300">{suggestedBudget.error}</div>
             </div>
           )}
-          
           {suggestedBudget && !suggestedBudget.error && !editMode && (
             <div className="space-y-6">
               {/* Budget Breakdown */}
@@ -281,66 +272,63 @@ export default function BudgetForm() {
                     const value = suggestedBudget[cat.key] || 0;
                     const percent = Math.round((value / income) * 100);
                     return (
-                      <div key={cat.key} className={`bg-${cat.color}-50 p-4 rounded-lg text-center`}>
-                        <p className={`text-sm text-${cat.color}-600 font-medium`}>{cat.label}</p>
-                        <p className={`text-2xl font-bold text-${cat.color}-700`}>₹{value.toLocaleString("en-IN")}</p>
-                        <p className={`text-xs text-${cat.color}-600`}>{percent}% of income</p>
+                      <div key={cat.key} className={`bg-${cat.color}-50 dark:bg-${cat.color}-900 p-4 rounded-lg text-center`}>
+                        <p className={`text-sm text-${cat.color}-600 dark:text-${cat.color}-300 font-medium`}>{cat.label}</p>
+                        <p className={`text-2xl font-bold text-${cat.color}-700 dark:text-${cat.color}-200`}>₹{value.toLocaleString("en-IN")}</p>
+                        <p className={`text-xs text-${cat.color}-600 dark:text-${cat.color}-300`}>{percent}% of income</p>
                       </div>
                     );
                   });
                 })()}
               </div>
-
               {/* Edit Button */}
               <button
-                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors mb-4"
+                className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors mb-4"
                 onClick={handleEdit}
               >
                 Edit Budget
               </button>
             </div>
           )}
-          
           {editMode && (
             <div className="space-y-4 mb-4">
-              <h4 className="font-semibold text-gray-800 mb-2">Edit Budget Categories</h4>
+              <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Edit Budget Categories</h4>
               {['essentials','savings','discretionary','emergency'].map(cat => (
                 <div key={cat} className="flex items-center gap-4">
-                  <label className="w-32 capitalize">{cat}</label>
+                  <label className="w-32 capitalize text-gray-700 dark:text-gray-200">{cat}</label>
                   <input
                     type="number"
                     min="0"
                     value={editBudget[cat]}
                     onChange={e => handleEditChange(cat, e.target.value)}
-                    className="border rounded px-3 py-1 w-40"
+                    className="border dark:border-gray-700 rounded px-3 py-1 w-40 bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
                   />
                 </div>
               ))}
               <button
-                className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors mt-2"
+                className="bg-teal-600 dark:bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-700 dark:hover:bg-teal-800 transition-colors mt-2"
                 onClick={handleSave}
                 type="button"
               >
                 Save Changes
               </button>
-              {saveStatus === 'saving' && <div className="text-teal-600 mt-2">Saving...</div>}
-              {saveStatus === 'success' && <div className="text-green-600 mt-2">Budget updated!</div>}
-              {saveStatus === 'error' && <div className="text-red-600 mt-2">Failed to save. Try again.</div>}
+              {saveStatus === 'saving' && <div className="text-teal-600 dark:text-teal-300 mt-2">Saving...</div>}
+              {saveStatus === 'success' && <div className="text-green-600 dark:text-green-300 mt-2">Budget updated!</div>}
+              {saveStatus === 'error' && <div className="text-red-600 dark:text-red-300 mt-2">Failed to save. Try again.</div>}
             </div>
           )}
         </div>
       </div>
-
       {/* Real-Time Budget Analytics - Only show when budget exists */}
       {(suggestedBudget && !suggestedBudget.error) && (
-        <div className="bg-gradient-to-br from-teal-50 to-blue-100 rounded-xl p-6 mt-8 border border-teal-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-teal-50 to-blue-100 dark:from-teal-900 dark:to-blue-950 rounded-xl p-6 mt-8 border border-teal-200 dark:border-teal-800">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <span>📊</span> Live Budget Analytics
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Real Spending Progress */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Current Month Progress</h4>
+            <div className="bg-white dark:bg-neutral-900 rounded-lg p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-700 dark:text-gray-100 mb-3">Current Month Progress</h4>
               <div className="space-y-2">
                 {(() => {
                   const categories = [
@@ -364,14 +352,14 @@ export default function BudgetForm() {
                   return categories.map((cat, index) => {
                     const percent = Math.min(100, Math.round((cat.actual / cat.planned) * 100));
                     const isOverBudget = percent > 80;
-                    const colorClass = isOverBudget ? 'bg-red-400' : percent > 60 ? 'bg-yellow-400' : 'bg-green-400';
-                    const textColor = isOverBudget ? 'text-red-600' : percent > 60 ? 'text-yellow-600' : 'text-green-600';
+                    const colorClass = isOverBudget ? 'bg-red-400 dark:bg-red-600' : percent > 60 ? 'bg-yellow-400 dark:bg-yellow-600' : 'bg-green-400 dark:bg-green-600';
+                    const textColor = isOverBudget ? 'text-red-600 dark:text-red-300' : percent > 60 ? 'text-yellow-600 dark:text-yellow-300' : 'text-green-600 dark:text-green-300';
                     
                     return (
                       <div key={cat.name} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{cat.name}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{cat.name}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div className={`${colorClass} h-2 rounded-full progress-bar`} style={{ width: `${percent}%` }}></div>
                           </div>
                           <span className={`text-xs ${textColor} font-semibold`}>{percent}%</span>
@@ -381,20 +369,19 @@ export default function BudgetForm() {
                   });
                 })()}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Real-time budget utilization tracking</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Real-time budget utilization tracking</p>
             </div>
-
             {/* Live Budget vs Actual Comparison */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Budget vs Actual Spending</h4>
+            <div className="bg-white dark:bg-neutral-900 rounded-lg p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-700 dark:text-gray-100 mb-3">Budget vs Actual Spending</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-3 bg-blue-400 rounded"></div>
-                  <span className="text-xs text-gray-600">Planned Budget</span>
+                  <div className="w-12 h-3 bg-blue-400 dark:bg-blue-600 rounded"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">Planned Budget</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-16 h-3 bg-teal-400 rounded"></div>
-                  <span className="text-xs text-gray-600">Actual Spending</span>
+                  <div className="w-16 h-3 bg-teal-400 dark:bg-teal-600 rounded"></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">Actual Spending</span>
                 </div>
                 <div className="mt-4 space-y-2">
                   {(() => {
@@ -408,20 +395,20 @@ export default function BudgetForm() {
                     
                     return budgetComparison.map((item, index) => (
                       <div key={item.name} className="flex items-center gap-2">
-                        <div className="text-xs w-16 text-gray-600">{item.name}</div>
+                        <div className="text-xs w-16 text-gray-600 dark:text-gray-300">{item.name}</div>
                         <div className="flex gap-1">
                           <div 
-                            className="h-2 bg-blue-400 rounded"
+                            className="h-2 bg-blue-400 dark:bg-blue-600 rounded"
                             style={{ width: `${Math.max(8, (item.planned / maxAmount) * 40)}px` }}
                             title={`Planned: ₹${item.planned.toLocaleString('en-IN')}`}
                           ></div>
                           <div 
-                            className="h-2 bg-teal-400 rounded"
+                            className="h-2 bg-teal-400 dark:bg-teal-600 rounded"
                             style={{ width: `${Math.max(8, (item.actual / maxAmount) * 40)}px` }}
                             title={`Actual: ₹${item.actual.toLocaleString('en-IN')}`}
                           ></div>
                         </div>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                           {item.actual > item.planned ? '+' : ''}₹{(item.actual - item.planned).toLocaleString('en-IN')}
                         </span>
                       </div>
@@ -429,28 +416,28 @@ export default function BudgetForm() {
                   })()}
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Live comparison with your set budget</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Live comparison with your set budget</p>
             </div>
           </div>
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               ⚡ <strong>Real-time data:</strong> Budget tracking • Spending alerts • Progress monitoring • Smart insights
             </p>
           </div>
         </div>
       )}
-
       {/* Planned vs Actual Spend Chart */}
       {(suggestedBudget && !suggestedBudget.error) && (
-        <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Planned vs. Actual Spend</h3>
+        <div className="bg-white dark:bg-neutral-900 p-6 rounded-lg shadow-md mt-8">
+          <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-300 mb-4">Planned vs. Actual Spend</h3>
           <div style={{ height: 260 }}>
             <ResponsiveBar
-              data={plannedVsActualData
-                .filter(d => d.Planned > 0 || d.Actual > 0)
-                .sort((a, b) => (b.Actual || 0) - (a.Actual || 0))
-                .slice(0, 6)
-              }
+              data={(
+                plannedVsActualData
+                  .filter(d => d.Planned > 0 || d.Actual > 0)
+                  .sort((a, b) => (b.Actual || 0) - (a.Actual || 0))
+                  .slice(0, 6)
+              )}
               keys={['Planned', 'Actual']}
               indexBy="category"
               layout="horizontal"
@@ -470,10 +457,10 @@ export default function BudgetForm() {
               enableGridY={false}
               enableLabel={false}
               tooltip={({ id, value, indexValue, data }) => (
-                <div className="bg-white p-2 rounded shadow text-xs text-gray-800">
+                <div className="bg-white dark:bg-neutral-900 p-2 rounded shadow text-xs text-gray-800 dark:text-gray-100">
                   <b>{indexValue}</b><br />{id}: ₹{value.toLocaleString('en-IN')}
                   {id === 'Actual' && data.Planned > 0 && (
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
                       {((value - data.Planned) >= 0 ? '+' : '') + (value - data.Planned).toLocaleString('en-IN')} vs plan
                     </div>
                   )}
@@ -484,7 +471,7 @@ export default function BudgetForm() {
                 tooltip: { container: { fontSize: 13 } }
               }}
             />
-            <div className="flex justify-end text-xs text-gray-400 mt-1">
+            <div className="flex justify-end text-xs text-gray-400 dark:text-gray-500 mt-1">
               <span>Top 6 categories by spend</span>
             </div>
           </div>

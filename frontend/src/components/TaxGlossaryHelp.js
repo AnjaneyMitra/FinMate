@@ -193,50 +193,45 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
 
   const TermDetailModal = ({ term, onClose }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{term.term}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{term.term}</h2>
+            <button onClick={onClose} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 text-2xl">×</button>
           </div>
         </div>
-        
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Definition</h3>
-            <p className="text-gray-700">{term.definition}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Definition</h3>
+            <p className="text-gray-700 dark:text-gray-300">{term.definition}</p>
           </div>
-
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Detailed Explanation</h3>
-            <p className="text-gray-700">{term.detailedExplanation}</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Detailed Explanation</h3>
+            <p className="text-gray-700 dark:text-gray-300">{term.detailedExplanation}</p>
           </div>
-
           {term.examples && term.examples.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Examples</h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Examples</h3>
+              <ul className="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
                 {term.examples.map((example, index) => (
                   <li key={index}>{example}</li>
                 ))}
               </ul>
             </div>
           )}
-
           {term.commonMistakes && term.commonMistakes.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">⚠️ Common Mistakes</h3>
-              <ul className="list-disc list-inside space-y-1 text-red-700 bg-red-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">⚠️ Common Mistakes</h3>
+              <ul className="list-disc list-inside space-y-1 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900 p-4 rounded-lg">
                 {term.commonMistakes.map((mistake, index) => (
                   <li key={index}>{mistake}</li>
                 ))}
               </ul>
             </div>
           )}
-
           {term.relatedTerms && term.relatedTerms.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Related Terms</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Related Terms</h3>
               <div className="flex flex-wrap gap-2">
                 {term.relatedTerms.map((relatedTerm, index) => (
                   <button
@@ -247,7 +242,7 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
                         setSelectedTerm(related);
                       }
                     }}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition-colors"
+                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                   >
                     {relatedTerm}
                   </button>
@@ -255,15 +250,14 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
               </div>
             </div>
           )}
-
           {term.videoUrl && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">📹 Video Explanation</h3>
-              <button className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">📹 Video Explanation</h3>
+              <a href={term.videoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
                 <Video className="w-4 h-4" />
                 Watch Video Tutorial
                 <ExternalLink className="w-4 h-4" />
-              </button>
+              </a>
             </div>
           )}
         </div>
@@ -273,15 +267,14 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
 
   const ChatbotModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full h-[600px] flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl max-w-2xl w-full h-[600px] flex flex-col border border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">🤖 Tax Assistant</h2>
-            <button onClick={() => setShowChatbot(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">🤖 Tax Assistant</h2>
+            <button onClick={() => setShowChatbot(false)} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 text-xl">×</button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Ask me anything about Indian tax laws and procedures</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Ask me anything about Indian tax laws and procedures</p>
         </div>
-        
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {chatMessages.length === 0 && (
             <div className="text-center text-gray-500 py-8">
@@ -306,25 +299,23 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
               </div>
             </div>
           )}
-          
           {chatMessages.map((message, index) => (
             <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] p-3 rounded-lg ${
                 message.type === 'user' 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 text-gray-900'
+                  : 'bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-gray-100'
               }`}>
                 <p>{message.text}</p>
                 {message.actionableAdvice && (
-                  <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                    <p className="text-sm font-medium text-blue-900">💡 Actionable Advice:</p>
-                    <p className="text-sm text-blue-800">{message.actionableAdvice}</p>
+                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900 rounded border-l-4 border-blue-400 dark:border-blue-600">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200">💡 Actionable Advice:</p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300">{message.actionableAdvice}</p>
                   </div>
                 )}
               </div>
             </div>
           ))}
-          
           {loadingAnswer && (
             <div className="flex justify-start">
               <div className="bg-gray-100 p-3 rounded-lg">
@@ -336,15 +327,14 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
             </div>
           )}
         </div>
-        
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex gap-2">
             <input
               type="text"
               value={userQuestion}
               onChange={(e) => setUserQuestion(e.target.value)}
               placeholder="Ask your tax question..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
               onKeyPress={(e) => e.key === 'Enter' && handleAskAI()}
             />
             <button
@@ -361,13 +351,12 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-white dark:bg-neutral-900 rounded-2xl shadow border border-gray-100 dark:border-gray-800">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tax Glossary & Help Center</h1>
-        <p className="text-gray-600">Comprehensive explanations of tax terms, procedures, and interactive AI assistance</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Tax Glossary & Help Center</h1>
+        <p className="text-gray-600 dark:text-gray-400">Comprehensive explanations of tax terms, procedures, and interactive AI assistance</p>
       </div>
-
       {/* Search and Tools */}
       <div className="mb-8 space-y-4">
         <div className="relative">
@@ -377,20 +366,19 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
             placeholder="Search tax terms, definitions, or ask a question..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
           />
         </div>
-
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2">
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
                   selectedCategory === category.id
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                    : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-neutral-700'
                 }`}
               >
                 <span className="mr-2">{category.icon}</span>
@@ -398,7 +386,6 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
               </button>
             ))}
           </div>
-
           <button
             onClick={() => setShowChatbot(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -408,16 +395,15 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Glossary Terms */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Tax Terms {filteredTerms.length > 0 && `(${filteredTerms.length})`}
             </h2>
             <select 
-              className="px-3 py-1 border border-gray-300 rounded text-sm"
+              className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
               onChange={(e) => {
                 const sortBy = e.target.value;
                 // Add sorting logic here if needed
@@ -428,53 +414,50 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
               <option value="category">By Category</option>
             </select>
           </div>
-
           <div className="space-y-4">
             {filteredTerms.map(term => (
               <div
                 key={term.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-neutral-900"
                 onClick={() => setSelectedTerm(term)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{term.term}</h3>
+                      <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">{term.term}</h3>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">{term.popularity}%</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{term.popularity}%</span>
                       </div>
                     </div>
-                    <p className="text-gray-700 mb-3">{term.definition}</p>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">{term.definition}</p>
                     <div className="flex flex-wrap gap-2">
                       {term.relatedTerms.slice(0, 3).map((related, index) => (
-                        <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                        <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 text-xs rounded">
                           {related}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
+                  <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 ml-4 flex-shrink-0" />
                 </div>
               </div>
             ))}
-
             {filteredTerms.length === 0 && (
               <div className="text-center py-12">
                 <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No terms found</h3>
-                <p className="text-gray-600">Try adjusting your search or browse by category</p>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No terms found</h3>
+                <p className="text-gray-600 dark:text-gray-400">Try adjusting your search or browse by category</p>
               </div>
             )}
           </div>
         </div>
-
         {/* Video Tutorials Sidebar */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📹 Video Tutorials</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">📹 Video Tutorials</h2>
           <div className="space-y-4">
             {featuredVideos.map(video => (
-              <div key={video.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+              <div key={video.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-neutral-900">
                 <div className="relative">
                   <img 
                     src={video.thumbnail} 
@@ -486,9 +469,9 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
                   </div>
                 </div>
                 <div className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1 text-sm">{video.title}</h3>
-                  <p className="text-xs text-gray-600 mb-2">{video.description}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1 text-sm">{video.title}</h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">{video.description}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
                       {video.views}
@@ -502,24 +485,23 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
               </div>
             ))}
           </div>
-
           {/* Quick Links */}
           <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🔗 Quick Links</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">🔗 Quick Links</h3>
             <div className="space-y-2">
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
+              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded">
                 <FileText className="w-4 h-4" />
                 Income Tax Act
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
+              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded">
                 <ExternalLink className="w-4 h-4" />
                 Official IT Portal
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
+              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded">
                 <BookOpen className="w-4 h-4" />
                 Tax Calendar 2024
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
+              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded">
                 <FileText className="w-4 h-4" />
                 Form Downloads
               </a>
@@ -527,12 +509,10 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
           </div>
         </div>
       </div>
-
       {/* Modals */}
       {selectedTerm && (
         <TermDetailModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />
       )}
-
       {showChatbot && <ChatbotModal />}
     </div>
   );

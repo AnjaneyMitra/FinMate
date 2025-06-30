@@ -38,6 +38,30 @@ function Dashboard({ user, setUser }) {
   // --- Refresh key for components that need to update on transaction changes ---
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // On mount, sync dark mode with localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('finmate-dark-mode');
+      if (stored === 'true') {
+        document.documentElement.classList.add('dark');
+      } else if (stored === 'false') {
+        document.documentElement.classList.remove('dark');
+      }
+      // Listen for dark mode changes from Topbar
+      const handleStorage = (e) => {
+        if (e.key === 'finmate-dark-mode') {
+          if (e.newValue === 'true') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      };
+      window.addEventListener('storage', handleStorage);
+      return () => window.removeEventListener('storage', handleStorage);
+    }
+  }, []);
+
   // Create reusable function for fetching dashboard stats
   const fetchDashboardStats = async () => {
     if (!user) return;
@@ -165,26 +189,28 @@ function Dashboard({ user, setUser }) {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 Welcome back, {user.email?.split('@')[0]}! 👋
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Here's your financial overview for today.
               </p>
             </div>
-            {loading && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                <span className="text-sm">Updating...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {loading && (
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-300">
+                  <div className="animate-spin w-4 h-4 border-2 border-blue-600 dark:border-blue-300 border-t-transparent rounded-full"></div>
+                  <span className="text-sm">Updating...</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Quick Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Monthly Budget Card with Inline Edit */}
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6 border-l-4 border-blue-500 dark:border-blue-700">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-2xl">💰</span>
@@ -238,7 +264,7 @@ function Dashboard({ user, setUser }) {
                   </form>
                 ) : (
                   <button
-                    className="flex items-center gap-1 group bg-transparent border-none p-0 m-0 text-2xl font-semibold text-gray-900 hover:text-blue-600 focus:outline-none"
+                    className="flex items-center gap-1 group bg-transparent border-none p-0 m-0 text-2xl font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
                     onClick={handleBudgetEdit}
                     aria-label="Edit budget"
                   >
@@ -250,14 +276,14 @@ function Dashboard({ user, setUser }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6 border-l-4 border-green-500 dark:border-green-700">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-2xl">📈</span>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Savings</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                   {loading ? <span className="text-gray-400">Loading...</span> :
                     savings !== null ? `₹${savings.toLocaleString('en-IN')}` : 'N/A'}
                 </p>
@@ -265,14 +291,14 @@ function Dashboard({ user, setUser }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6 border-l-4 border-yellow-500 dark:border-yellow-700">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-2xl">🛒</span>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">This Month Spent</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                   {loading ? <span className="text-gray-400">Loading...</span> :
                     spent !== null ? `₹${spent.toLocaleString('en-IN')}` : 'N/A'}
                 </p>
@@ -280,14 +306,14 @@ function Dashboard({ user, setUser }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6 border-l-4 border-red-500 dark:border-red-700">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <span className="text-2xl">🎯</span>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Goals Progress</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                   {loading ? <span className="text-gray-400">Loading...</span> :
                     goalsProgress !== null ? `${goalsProgress}%` : 'N/A'}
                 </p>
@@ -297,7 +323,7 @@ function Dashboard({ user, setUser }) {
         </div>
 
         {/* Featured Tax Filing System */}
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl p-8 mb-8 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 dark:from-purple-900 dark:via-blue-900 dark:to-indigo-950 rounded-2xl shadow-2xl p-8 mb-8 text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-indigo-700/20"></div>
           <div className="absolute top-4 right-4 opacity-20">
             <span className="text-6xl">📋</span>
@@ -359,14 +385,14 @@ function Dashboard({ user, setUser }) {
         </div>
 
         {/* Live Dashboard Analytics */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8 animate-fade-in">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6 mb-8 animate-fade-in">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <span>📊</span> Real-Time Analytics
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Spending Trend Chart */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-4 preview-card">
-              <h4 className="font-semibold text-gray-800 mb-3">Monthly Spending Trends</h4>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 rounded-lg p-4 preview-card">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Monthly Spending Trends</h4>
               <div className="flex items-end gap-2 h-32">
                 {/* Dynamic bars based on actual spending data */}
                 {(() => {
@@ -381,7 +407,7 @@ function Dashboard({ user, setUser }) {
                     return (
                       <div 
                         key={month}
-                        className={`bg-blue-${400 + (index % 3) * 100} rounded-t w-8 flex items-end justify-center text-xs text-white pb-1 animate-slide-in`}
+                        className={`bg-blue-${400 + (index % 3) * 100} dark:bg-blue-${700 + (index % 3) * 100} rounded-t w-8 flex items-end justify-center text-xs text-white pb-1 animate-slide-in`}
                         style={{
                           height: `${Math.max(16, heightPercent)}%`,
                           animationDelay: `${delay}s`
@@ -394,14 +420,14 @@ function Dashboard({ user, setUser }) {
                   });
                 })()}
               </div>
-              <p className="text-xs text-gray-600 mt-2">
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
                 {loading ? 'Loading...' : `Current month spending: ₹${(spent || 0).toLocaleString('en-IN')}`}
               </p>
             </div>
 
             {/* Category Breakdown - Real Data */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-4 preview-card">
-              <h4 className="font-semibold text-gray-800 mb-3">Category Breakdown</h4>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-900 rounded-lg p-4 preview-card">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Category Breakdown</h4>
               <div className="space-y-2">
                 {(() => {
                   const categories = [
@@ -418,7 +444,7 @@ function Dashboard({ user, setUser }) {
                       style={{animationDelay: `${(index + 1) * 0.1}s`}}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 bg-${category.color}-500 rounded-full animate-pulse-soft`}></div>
+                        <div className={`w-3 h-3 bg-${category.color}-500 dark:bg-${category.color}-400 rounded-full animate-pulse-soft`}></div>
                         <span className="text-sm">{category.name}</span>
                       </div>
                       <span className="text-sm font-semibold">₹{category.amount.toLocaleString('en-IN')}</span>
@@ -426,7 +452,7 @@ function Dashboard({ user, setUser }) {
                   ));
                 })()}
               </div>
-              <p className="text-xs text-gray-600 mt-3">
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-3">
                 {loading ? 'Loading categories...' : 'Live category breakdown from your transactions'}
               </p>
             </div>
@@ -434,61 +460,61 @@ function Dashboard({ user, setUser }) {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="bg-white dark:bg-neutral-900 rounded-lg shadow p-6">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Link
               to="/dashboard/transactions"
-              className="flex items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+              className="flex items-center p-4 bg-orange-50 dark:bg-orange-900 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
             >
               <span className="text-2xl mr-3">➕</span>
               <div>
-                <p className="font-medium text-orange-700">Add Transaction</p>
-                <p className="text-sm text-orange-600">Record new expense</p>
+                <p className="font-medium text-orange-700 dark:text-orange-300">Add Transaction</p>
+                <p className="text-sm text-orange-600 dark:text-orange-200">Record new expense</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/budget"
-              className="flex items-center p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+              className="flex items-center p-4 bg-teal-50 dark:bg-teal-900 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-800 transition-colors"
             >
               <span className="text-2xl mr-3">💰</span>
               <div>
-                <p className="font-medium text-teal-700">Plan Budget</p>
-                <p className="text-sm text-teal-600">Create monthly budget</p>
+                <p className="font-medium text-teal-700 dark:text-teal-300">Plan Budget</p>
+                <p className="text-sm text-teal-600 dark:text-teal-200">Create monthly budget</p>
               </div>
             </Link>
 
             <Link
               to="/tax-filing"
-              className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+              className="flex items-center p-4 bg-purple-50 dark:bg-purple-900 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-colors"
             >
               <span className="text-2xl mr-3">📋</span>
               <div>
-                <p className="font-medium text-purple-700">File Tax Returns</p>
-                <p className="text-sm text-purple-600">AI-powered tax filing</p>
+                <p className="font-medium text-purple-700 dark:text-purple-300">File Tax Returns</p>
+                <p className="text-sm text-purple-600 dark:text-purple-200">AI-powered tax filing</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/spending"
-              className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex items-center p-4 bg-blue-50 dark:bg-blue-900 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
             >
               <span className="text-2xl mr-3">📊</span>
               <div>
-                <p className="font-medium text-blue-700">Spending Analysis</p>
-                <p className="text-sm text-blue-600">Analyze your expenses</p>
+                <p className="font-medium text-blue-700 dark:text-blue-300">Spending Analysis</p>
+                <p className="text-sm text-blue-600 dark:text-blue-200">Analyze your expenses</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/predictions"
-              className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg hover:from-purple-100 hover:to-indigo-100 transition-all duration-300 border border-purple-200 shadow-md"
+              className="flex items-center p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900 dark:to-indigo-900 rounded-lg hover:from-purple-100 hover:to-indigo-100 transition-all duration-300 border border-purple-200 shadow-md"
             >
               <span className="text-2xl mr-3">🔮</span>
               <div>
-                <p className="font-medium text-purple-700">AI Predictions</p>
-                <p className="text-sm text-purple-600">Future spending forecasts</p>
+                <p className="font-medium text-purple-700 dark:text-purple-300">AI Predictions</p>
+                <p className="text-sm text-purple-600 dark:text-purple-200">Future spending forecasts</p>
               </div>
               <div className="ml-auto">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800 font-medium">
@@ -499,12 +525,12 @@ function Dashboard({ user, setUser }) {
 
             <Link
               to="/dashboard/comparison"
-              className="flex items-center p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg hover:from-indigo-100 hover:to-blue-100 transition-all duration-300 border border-indigo-200 shadow-md"
+              className="flex items-center p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900 dark:to-blue-900 rounded-lg hover:from-indigo-100 hover:to-blue-100 transition-all duration-300 border border-indigo-200 shadow-md"
             >
               <span className="text-2xl mr-3">📈</span>
               <div>
-                <p className="font-medium text-indigo-700">Month Comparison</p>
-                <p className="text-sm text-indigo-600">Compare monthly spending</p>
+                <p className="font-medium text-indigo-700 dark:text-indigo-300">Month Comparison</p>
+                <p className="text-sm text-indigo-600 dark:text-indigo-200">Compare monthly spending</p>
               </div>
               <div className="ml-auto">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800 font-medium">
@@ -515,78 +541,78 @@ function Dashboard({ user, setUser }) {
 
             <Link
               to="/dashboard/learning"
-              className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+              className="flex items-center p-4 bg-purple-50 dark:bg-purple-900 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-colors"
             >
               <span className="text-2xl mr-3">📚</span>
               <div>
-                <p className="font-medium text-purple-700">Learn Investing</p>
-                <p className="text-sm text-purple-600">Investment guides</p>
+                <p className="font-medium text-purple-700 dark:text-purple-300">Learn Investing</p>
+                <p className="text-sm text-purple-600 dark:text-purple-200">Investment guides</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/simulation"
-              className="flex items-center p-4 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors"
+              className="flex items-center p-4 bg-pink-50 dark:bg-pink-900 rounded-lg hover:bg-pink-100 dark:hover:bg-pink-800 transition-colors"
             >
               <span className="text-2xl mr-3">🧮</span>
               <div>
-                <p className="font-medium text-pink-700">Simulate Investment</p>
-                <p className="text-sm text-pink-600">Try returns calculator</p>
+                <p className="font-medium text-pink-700 dark:text-pink-300">Simulate Investment</p>
+                <p className="text-sm text-pink-600 dark:text-pink-200">Try returns calculator</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/risk"
-              className="flex items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+              className="flex items-center p-4 bg-indigo-50 dark:bg-indigo-900 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
             >
               <span className="text-2xl mr-3">🧑‍💼</span>
               <div>
-                <p className="font-medium text-indigo-700">Risk Profiler</p>
-                <p className="text-sm text-indigo-600">Assess your risk profile</p>
+                <p className="font-medium text-indigo-700 dark:text-indigo-300">Risk Profiler</p>
+                <p className="text-sm text-indigo-600 dark:text-indigo-200">Assess your risk profile</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/settings"
-              className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <span className="text-2xl mr-3">⚙️</span>
               <div>
-                <p className="font-medium text-gray-700">Settings</p>
-                <p className="text-sm text-gray-600">Manage data & preferences</p>
+                <p className="font-medium text-gray-700 dark:text-gray-300">Settings</p>
+                <p className="text-sm text-gray-600 dark:text-gray-200">Manage data & preferences</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/tax"
-              className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+              className="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors"
             >
               <span className="text-2xl mr-3">🧾</span>
               <div>
-                <p className="font-medium text-yellow-700">Tax Breakdown</p>
-                <p className="text-sm text-yellow-600">View your tax summary</p>
+                <p className="font-medium text-yellow-700 dark:text-yellow-300">Tax Breakdown</p>
+                <p className="text-sm text-yellow-600 dark:text-yellow-200">View your tax summary</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/tax/estimator"
-              className="flex items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+              className="flex items-center p-4 bg-orange-50 dark:bg-orange-900 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
             >
               <span className="text-2xl mr-3">🧮</span>
               <div>
-                <p className="font-medium text-orange-700">Tax Estimator</p>
-                <p className="text-sm text-orange-600">Estimate your income tax</p>
+                <p className="font-medium text-orange-700 dark:text-orange-300">Tax Estimator</p>
+                <p className="text-sm text-orange-600 dark:text-orange-200">Estimate your income tax</p>
               </div>
             </Link>
 
             <Link
               to="/dashboard/goals"
-              className="flex items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              className="flex items-center p-4 bg-red-50 dark:bg-red-900 rounded-lg hover:bg-red-100 dark:hover:bg-red-800 transition-colors"
             >
               <span className="text-2xl mr-3">🎯</span>
               <div>
-                <p className="font-medium text-red-700">View Goals</p>
-                <p className="text-sm text-red-600">Check your financial goals</p>
+                <p className="font-medium text-red-700 dark:text-red-300">View Goals</p>
+                <p className="text-sm text-red-600 dark:text-red-200">Check your financial goals</p>
               </div>
             </Link>
           </div>
@@ -596,7 +622,7 @@ function Dashboard({ user, setUser }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-black">
       <Sidebar user={user} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={user} />
