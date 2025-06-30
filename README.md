@@ -83,7 +83,7 @@ FinMate/
 
 - `GET /health` - Health check endpoint
 - Additional endpoints documented in backend/
-
+b
 ## Contributing
 
 1. Fork the repository
