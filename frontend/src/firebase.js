@@ -5,13 +5,13 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyChEmy98kxsPneCwXKaE2PDlOx9I2JhwE0",
+  authDomain: "fintech-f6f51.firebaseapp.com",
+  projectId: "fintech-f6f51",
+  storageBucket: "fintech-f6f51.appspot.com",
+  messagingSenderId: "331684385229",
+  appId: "1:331684385229:web:ee4908d594ca05e487f484",
+  measurementId: "G-F614J0TCT8"
 };
 
 // Initialize Firebase

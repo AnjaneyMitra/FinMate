@@ -95,9 +95,9 @@ export default function Goals() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-8 px-10 border border-gray-100 dark:border-gray-700">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <span>🎯</span> My Financial Goals
         </h2>
         <button
@@ -110,22 +110,22 @@ export default function Goals() {
       {/* Popout Add Goal Form */}
       {showGoalForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-pop-in">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-pop-in border border-gray-200 dark:border-gray-800">
             <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold focus:outline-none"
+              className="absolute top-3 right-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold focus:outline-none"
               onClick={() => setShowGoalForm(false)}
               aria-label="Close add goal form"
             >
               ×
             </button>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span>🎯</span> Add Financial Goal
             </h3>
             <form onSubmit={handleGoalSubmit} className="flex flex-col gap-3">
               <input
                 type="text"
                 placeholder="Goal name (e.g. Vacation)"
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.name}
                 onChange={e => setGoalForm({ ...goalForm, name: e.target.value })}
                 required
@@ -134,21 +134,21 @@ export default function Goals() {
                 type="number"
                 min="1"
                 placeholder="Target (₹)"
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.target}
                 onChange={e => setGoalForm({ ...goalForm, target: e.target.value })}
                 required
               />
               <input
                 type="date"
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.date}
                 onChange={e => setGoalForm({ ...goalForm, date: e.target.value })}
               />
               <input
                 type="text"
                 maxLength={2}
-                className="border rounded px-3 py-2 w-full text-center"
+                className="border rounded px-3 py-2 w-full text-center bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.emoji}
                 onChange={e => setGoalForm({ ...goalForm, emoji: e.target.value })}
                 placeholder="🎯"
@@ -156,12 +156,12 @@ export default function Goals() {
               <input
                 type="text"
                 placeholder="Category (optional)"
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.category}
                 onChange={e => setGoalForm({ ...goalForm, category: e.target.value })}
               />
               <select
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full bg-white dark:bg-gray-900 dark:text-white border-gray-300 dark:border-gray-700"
                 value={goalForm.color || ''}
                 onChange={e => setGoalForm({ ...goalForm, color: e.target.value })}
                 required
@@ -173,13 +173,13 @@ export default function Goals() {
               </select>
               <button
                 type="submit"
-                className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors font-semibold mt-2"
+                className="bg-teal-600 dark:bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-700 dark:hover:bg-teal-900 transition-colors font-semibold mt-2"
                 disabled={goalSaveStatus === 'saving'}
               >
                 {goalSaveStatus === 'saving' ? 'Saving...' : 'Save Goal'}
               </button>
-              {goalSaveStatus === 'success' && <span className="text-xs text-green-600 ml-2">Saved!</span>}
-              {goalSaveStatus === 'error' && <span className="text-xs text-red-600 ml-2">Error</span>}
+              {goalSaveStatus === 'success' && <span className="text-xs text-green-600 dark:text-green-400 ml-2">Saved!</span>}
+              {goalSaveStatus === 'error' && <span className="text-xs text-red-600 dark:text-red-400 ml-2">Error</span>}
             </form>
           </div>
         </div>
@@ -200,14 +200,14 @@ export default function Goals() {
       </div>
 
       {/* Real Goals Analytics Section */}
-      <div className="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-xl p-6 mb-6 border border-teal-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-gray-900 dark:to-black rounded-xl p-6 mb-6 border border-teal-200 dark:border-gray-800">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
           <span>🎯</span> Goals Analytics Dashboard
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Goals Summary */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h4 className="font-semibold text-gray-700 mb-3">Goals Summary</h4>
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Goals Summary</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Total Goals</span>
@@ -244,12 +244,12 @@ export default function Goals() {
                 </span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3">Live goals progress tracking</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Live goals progress tracking</p>
           </div>
 
           {/* Progress Distribution */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h4 className="font-semibold text-gray-700 mb-3">Progress Distribution</h4>
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Progress Distribution</h4>
             <div className="space-y-2">
               {(() => {
                 const progressRanges = [
@@ -271,25 +271,25 @@ export default function Goals() {
                     <div key={range.label} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 bg-${range.color}-400 rounded-full`}></div>
-                        <span className="text-sm text-gray-600">{range.label}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{range.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-12 bg-gray-200 rounded-full h-2">
+                        <div className="w-12 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div className={`bg-${range.color}-400 h-2 rounded-full progress-bar`} style={{ width: `${percentage}%` }}></div>
                         </div>
-                        <span className="text-xs font-semibold text-gray-700">{count}</span>
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{count}</span>
                       </div>
                     </div>
                   );
                 });
               })()}
             </div>
-            <p className="text-xs text-gray-500 mt-3">Goal completion distribution</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Goal completion distribution</p>
           </div>
 
           {/* Monthly Progress */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h4 className="font-semibold text-gray-700 mb-3">Recent Activity</h4>
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Recent Activity</h4>
             <div className="space-y-2">
               {goals.slice(0, 4).map((goal, index) => {
                 const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
@@ -301,7 +301,7 @@ export default function Goals() {
                       <span className="text-gray-600 truncate">{goal.emoji} {goal.name}</span>
                       <span className="text-green-600 font-semibold">+₹{recentChange.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
                       <div 
                         className={`h-1 rounded-full progress-bar ${
                           goal.color ? colorOptions.find(opt => opt.value === goal.color)?.class.replace('bg-', 'bg-') : 'bg-teal-400'
@@ -313,11 +313,11 @@ export default function Goals() {
                 );
               })}
             </div>
-            <p className="text-xs text-gray-500 mt-3">Latest goal contributions</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Latest goal contributions</p>
           </div>
         </div>
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             ⚡ <strong>Real-time data:</strong> Live progress • Achievement tracking • Smart insights • Goal analytics
           </p>
         </div>
@@ -427,10 +427,12 @@ export default function Goals() {
           return (
             <div
               key={goal.id}
-              className={`${bgGradient} rounded-xl p-5 shadow flex flex-col gap-2 relative ${borderColor} hover:shadow-xl transition-shadow duration-200`}
+              className={`bg-white dark:bg-gray-900 rounded-xl p-5 shadow flex flex-col gap-2 relative ${borderColor} hover:shadow-xl transition-shadow duration-200 border border-gray-100 dark:border-gray-700`}
               style={{ minHeight: 180 }}
             >
-              <div className="flex items-center gap-2 text-3xl font-bold drop-shadow-sm">{goal.emoji || '🎯'} <span className="text-lg font-semibold text-gray-800">{goal.name}</span>
+              <div className="flex items-center gap-2 text-3xl font-bold drop-shadow-sm">
+                <span className="text-white dark:text-white">{goal.emoji || '🎯'}</span> 
+                <span className="text-lg font-semibold text-white dark:text-white">{goal.name}</span>
                 {goal.color && <span className={`ml-2 w-4 h-4 rounded-full inline-block border border-white shadow ${colorOptions.find(opt => opt.value === goal.color)?.class}`}></span>}
                 <button
                   className="ml-auto text-xs text-gray-400 hover:text-teal-600 px-2 py-1 rounded focus:outline-none"
@@ -440,20 +442,20 @@ export default function Goals() {
                   ✏️
                 </button>
               </div>
-              <div className="text-sm text-gray-700 font-medium">Target: <span className="font-bold text-gray-900">₹{Number(goal.target).toLocaleString('en-IN')}</span></div>
-              <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+              <div className="text-sm text-gray-300 font-medium">Target: <span className="font-bold text-white">₹{Number(goal.target).toLocaleString('en-IN')}</span></div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mt-1">
                 <div
                   className={`h-3 rounded-full transition-all duration-300 ${goal.color ? colorOptions.find(opt => opt.value === goal.color)?.class : 'bg-teal-400'}`}
                   style={{ width: `${percent}%` }}
                 ></div>
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-gray-800">Progress: <span className="font-semibold">₹{Number(goal.saved).toLocaleString('en-IN')}</span> / ₹{Number(goal.target).toLocaleString('en-IN')} ({percent}%)</span>
+                <span className="text-xs text-gray-200">Progress: <span className="font-semibold text-white">₹{Number(goal.saved).toLocaleString('en-IN')}</span> / ₹{Number(goal.target).toLocaleString('en-IN')} ({percent}%)</span>
                 <span className={`text-xs font-semibold ${color} px-2 py-1 rounded-full flex items-center gap-1 shadow-sm`}>
                   {icon} {level}
                 </span>
               </div>
-              {goal.date && <div className="text-xs text-gray-500">By: {goal.date}</div>}
+              {goal.date && <div className="text-xs text-gray-400">By: {goal.date}</div>}
               {percent === 100 && <div className="absolute top-2 right-2 text-green-600 text-2xl animate-bounce">🎉</div>}
             </div>
           );

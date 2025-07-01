@@ -145,7 +145,7 @@ const FutureExpensePrediction = () => {
 
   const PredictionCard = ({ children, className = "", borderColor = "blue" }) => (
     <div className={`
-      bg-white rounded-lg shadow-md border-l-4 border-${borderColor}-500 
+      bg-white dark:bg-gray-900 rounded-lg shadow-md border-l-4 border-${borderColor}-500 dark:border-${borderColor}-700
       hover:shadow-lg transition-all duration-300 ${className}
     `}>
       <div className="p-6">
@@ -157,13 +157,13 @@ const FutureExpensePrediction = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-gray-300 rounded-lg p-4 shadow-xl">
-          <p className="text-gray-900 font-semibold">{label}</p>
-          <p className="text-blue-600">
+        <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-4 shadow-xl">
+          <p className="text-gray-900 dark:text-gray-100 font-semibold">{label}</p>
+          <p className="text-blue-600 dark:text-blue-400">
             Predicted: ₹{payload[0]?.value?.toFixed(2)}
           </p>
           {payload[0]?.payload?.confidence && (
-            <p className="text-green-600 text-sm">
+            <p className="text-green-600 dark:text-green-400 text-sm">
               Confidence: {(payload[0].payload.confidence * 100).toFixed(0)}%
             </p>
           )}
@@ -175,16 +175,16 @@ const FutureExpensePrediction = () => {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-black min-h-screen">
         <div className="text-center py-12">
           <div className="relative inline-block">
-            <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin">
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-blue-500 rounded-full animate-pulse"></div>
+            <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-900 rounded-full animate-spin">
+              <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-blue-500 dark:border-t-blue-400 rounded-full animate-pulse"></div>
             </div>
-            <Brain className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-blue-500 animate-pulse" />
+            <Brain className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400 animate-pulse" />
           </div>
-          <p className="text-gray-900 mt-4 text-lg font-medium">AI is analyzing your spending patterns...</p>
-          <p className="text-gray-600 mt-2">Generating future predictions</p>
+          <p className="text-gray-900 dark:text-gray-100 mt-4 text-lg font-medium">AI is analyzing your spending patterns...</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Generating future predictions</p>
         </div>
       </div>
     );
@@ -192,15 +192,15 @@ const FutureExpensePrediction = () => {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
-        <div className="bg-white rounded-lg shadow p-8 border-l-4 border-red-500">
+      <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-black min-h-screen">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-8 border-l-4 border-red-500 dark:border-red-700">
           <div className="text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-gray-900 text-xl font-bold mb-2">Prediction Error</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <AlertTriangle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <h2 className="text-gray-900 dark:text-gray-100 text-xl font-bold mb-2">Prediction Error</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
             <button 
               onClick={fetchPredictions}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="px-6 py-2 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors"
             >
               Retry Analysis
             </button>
@@ -211,43 +211,41 @@ const FutureExpensePrediction = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-6xl mx-auto p-6 bg-gray-50 dark:bg-black min-h-screen">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-xl p-6 border border-blue-200">
+        <div className="bg-gradient-to-br from-blue-900 via-purple-900 to-black dark:from-blue-950 dark:via-purple-950 dark:to-black rounded-xl p-6 border border-blue-200 dark:border-blue-800">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                <Brain className="w-8 h-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-100 dark:text-white mb-2 flex items-center gap-3">
+                <Brain className="w-8 h-8 text-blue-400 dark:text-blue-300" />
                 AI Expense Predictions
-                <Zap className="w-6 h-6 text-yellow-500" />
+                <Zap className="w-6 h-6 text-yellow-400 dark:text-yellow-300" />
               </h1>
-              <p className="text-gray-700">
+              <p className="text-gray-300 dark:text-gray-300">
                 Advanced machine learning insights for your future spending patterns
                 {dataLoadTimestamp && (
-                  <span className="text-sm text-gray-600 ml-2">
+                  <span className="text-sm text-gray-400 dark:text-gray-400 ml-2">
                     • Updated at {dataLoadTimestamp}
                   </span>
                 )}
               </p>
             </div>
-            
             {/* Controls */}
             <div className="flex gap-4">
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"
+                className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-800 shadow-sm"
               >
                 <option value="3">3 Months</option>
                 <option value="6">6 Months</option>
                 <option value="12">12 Months</option>
               </select>
-              
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"
+                className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-800 shadow-sm"
               >
                 <option value="all">All Categories</option>
                 <option value="food">Food & Dining</option>
@@ -267,10 +265,10 @@ const FutureExpensePrediction = () => {
                   <div className={insight.color}>
                     {insight.icon}
                   </div>
-                  <h3 className="text-gray-900 font-semibold">{insight.title}</h3>
+                  <h3 className="text-gray-900 dark:text-white font-semibold">{insight.title}</h3>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 mb-1">{insight.value}</p>
-                <p className="text-gray-600 text-sm">{insight.description}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{insight.value}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{insight.description}</p>
               </PredictionCard>
             ))}
           </div>
@@ -279,7 +277,7 @@ const FutureExpensePrediction = () => {
         {/* Main Prediction Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <PredictionCard className="lg:col-span-2" borderColor="blue">
-            <h2 className="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
+            <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-blue-600" />
               Spending Forecast Timeline
             </h2>
@@ -312,13 +310,13 @@ const FutureExpensePrediction = () => {
             </ResponsiveContainer>
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div className="text-center">
-                <p className="text-gray-600">Total Forecast</p>
-                <p className="text-blue-600 font-bold text-lg">
+                <p className="text-gray-600 dark:text-gray-400">Total Forecast</p>
+                <p className="text-blue-600 dark:text-blue-400 font-bold text-lg">
                   ₹{chartData.reduce((sum, d) => sum + (d.predicted_amount || 0), 0).toFixed(0)}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-gray-600">Trend Direction</p>
+                <p className="text-gray-600 dark:text-gray-400">Trend Direction</p>
                 <p className={`font-bold text-lg flex items-center justify-center gap-1 ${
                   chartData.length > 1 && (chartData[chartData.length - 1].predicted_amount || 0) > (chartData[0].predicted_amount || 0)
                     ? 'text-red-600' : 'text-green-600'
@@ -334,7 +332,7 @@ const FutureExpensePrediction = () => {
 
           {/* Category Breakdown */}
           <PredictionCard borderColor="purple">
-            <h2 className="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
+            <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4 flex items-center gap-2">
               <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
@@ -372,16 +370,16 @@ const FutureExpensePrediction = () => {
                           const data = payload[0].payload;
                           const percentage = ((data.amount / categoryBreakdown.reduce((sum, item) => sum + item.amount, 0)) * 100).toFixed(1);
                           return (
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-lg">
                               <div className="flex items-center gap-2 mb-1">
                                 <div 
                                   className="w-3 h-3 rounded-full" 
                                   style={{ backgroundColor: data.color }}
                                 />
-                                <p className="font-semibold text-gray-900">{data.category}</p>
+                                <p className="font-semibold text-gray-900 dark:text-gray-100">{data.category}</p>
                               </div>
-                              <p className="text-purple-600 font-bold">₹{data.amount.toFixed(0)}</p>
-                              <p className="text-gray-600 text-sm">{percentage}% of total</p>
+                              <p className="text-purple-600 dark:text-purple-400 font-bold">₹{data.amount.toFixed(0)}</p>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm">{percentage}% of total</p>
                             </div>
                           );
                         }
@@ -400,26 +398,26 @@ const FutureExpensePrediction = () => {
                       const percentage = ((category.amount / totalAmount) * 100).toFixed(1);
                       return (
                         <div key={category.category} className="group">
-                          <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-2">
                                 <div 
                                   className="w-4 h-4 rounded-full shadow-sm" 
                                   style={{ backgroundColor: category.color }}
                                 />
-                                <span className="text-gray-700 font-medium">{category.category}</span>
+                                <span className="text-gray-700 dark:text-gray-300 font-medium">{category.category}</span>
                               </div>
-                              <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 px-2 py-1 rounded-full">
                                 #{index + 1}
                               </span>
                             </div>
                             <div className="text-right">
-                              <div className="text-gray-900 font-bold">₹{category.amount.toFixed(0)}</div>
-                              <div className="text-xs text-gray-500">{percentage}%</div>
+                              <div className="text-gray-900 dark:text-gray-100 font-bold">₹{category.amount.toFixed(0)}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{percentage}%</div>
                             </div>
                           </div>
                           {/* Progress bar */}
-                          <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="mt-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
                               className="h-full transition-all duration-500 ease-out"
                               style={{ 
@@ -435,15 +433,15 @@ const FutureExpensePrediction = () => {
                 </div>
                 
                 {/* Summary Stats */}
-                <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="text-center">
-                      <div className="text-purple-600 font-semibold">Total Categories</div>
-                      <div className="text-gray-900 font-bold text-lg">{categoryBreakdown.length}</div>
+                      <div className="text-purple-600 dark:text-purple-400 font-semibold">Total Categories</div>
+                      <div className="text-gray-900 dark:text-gray-100 font-bold text-lg">{categoryBreakdown.length}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-purple-600 font-semibold">Top Category</div>
-                      <div className="text-gray-900 font-bold text-lg">
+                      <div className="text-purple-600 dark:text-purple-400 font-semibold">Top Category</div>
+                      <div className="text-gray-900 dark:text-gray-100 font-bold text-lg">
                         {categoryBreakdown.length > 0 
                           ? categoryBreakdown.reduce((max, item) => item.amount > max.amount ? item : max).category
                           : 'N/A'
@@ -455,13 +453,13 @@ const FutureExpensePrediction = () => {
               </>
             ) : (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <p className="text-gray-500 font-medium">No category data available</p>
-                <p className="text-gray-400 text-sm mt-1">Add some transactions to see category breakdown</p>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">No category data available</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Add some transactions to see category breakdown</p>
               </div>
             )}
           </PredictionCard>
@@ -469,7 +467,7 @@ const FutureExpensePrediction = () => {
 
         {/* Monthly Amount Breakdown */}
         <PredictionCard borderColor="green">
-          <h2 className="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
+          <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-green-600" />
             Monthly Spending Forecast
           </h2>
@@ -497,15 +495,15 @@ const FutureExpensePrediction = () => {
           </ResponsiveContainer>
           <div className="mt-4">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Monthly Forecast Range</span>
-              <span className="text-gray-900">
+              <span className="text-gray-600 dark:text-gray-400">Monthly Forecast Range</span>
+              <span className="text-gray-900 dark:text-gray-100">
                 ₹{Math.min(...chartData.map(d => d.predicted_amount || 0)).toFixed(0)} - 
                 ₹{Math.max(...chartData.map(d => d.predicted_amount || 0)).toFixed(0)}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm mt-2">
-              <span className="text-gray-600">Average Monthly</span>
-              <span className="text-green-600">
+              <span className="text-gray-600 dark:text-gray-400">Average Monthly</span>
+              <span className="text-green-600 dark:text-green-400">
                 ₹{chartData.length > 0 ? (chartData.reduce((sum, d) => sum + (d.predicted_amount || 0), 0) / chartData.length).toFixed(0) : '0'}
               </span>
             </div>
@@ -516,8 +514,8 @@ const FutureExpensePrediction = () => {
         <PredictionCard className="mt-6" borderColor="purple">
           <div className="text-center">
             <Brain className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-            <h3 className="text-gray-900 text-lg font-bold mb-2">Powered by Advanced AI</h3>
-            <p className="text-gray-700 text-sm mb-4">
+            <h3 className="text-gray-900 dark:text-white text-lg font-bold mb-2">Powered by Advanced AI</h3>
+            <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
               Our prediction engine uses Prophet time series forecasting and ARIMA models to analyze your spending patterns 
               and generate accurate future expense predictions with confidence intervals.
             </p>
