@@ -5,6 +5,7 @@ import { auth } from '../firebase';
 
 const sidebarItems = [
   { label: 'Dashboard', icon: '🏠', path: '/dashboard' },
+  { label: 'Quick Actions', icon: '⚡', path: '/dashboard/quick-actions' },
   { label: 'Budget Planner', icon: '💰', path: '/dashboard/budget' },
   { label: 'Transactions', icon: '➕', path: '/dashboard/transactions' },
   { label: 'Goals', icon: '🎯', path: '/dashboard/goals' },
