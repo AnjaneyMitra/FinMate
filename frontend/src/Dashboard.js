@@ -11,7 +11,6 @@ import MonthComparison from './MonthComparison';
 import TransactionForm from './TransactionForm';
 import TransactionHistory from './components/TransactionHistory';
 import Settings from './Settings';
-import FirebaseTest from './FirebaseTest';
 import InvestmentSimulation from './InvestmentSimulation';
 import RiskProfiler from './RiskProfiler';
 import TaxEstimator from './TaxEstimator';
@@ -135,7 +134,6 @@ function Dashboard({ user, setUser }) {
     { path: '/dashboard/simulation', name: 'Investment Simulation', icon: '🧮' },
     { path: '/dashboard/risk', name: 'Risk Profiler', icon: '🧑‍💼' },
     { path: '/dashboard/settings', name: 'Settings', icon: '⚙️' },
-    { path: '/dashboard/firebasetest', name: 'Firebase Test', icon: '🔥' },
     { path: '/dashboard/firestore-test', name: 'Firestore Test Panel', icon: '🗄️' },
   ];
 
@@ -734,7 +732,6 @@ function Dashboard({ user, setUser }) {
               <Route path="/simulation" element={<InvestmentSimulation />} />
               <Route path="/risk" element={<RiskProfiler />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/firebasetest" element={<FirebaseTest />} />
               <Route path="/firestore-test" element={<FirestoreTestPanel />} />
               <Route path="/tax/estimator" element={<TaxEstimator />} />
               <Route path="/goals" element={<Goals />} />
