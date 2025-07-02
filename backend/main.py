@@ -397,7 +397,7 @@ async def get_spending_summary(
     - period: Analysis period (week, month, quarter, year)
     """
     try:
-        analysis_service = SpendingAnalysisService(db)
+        analysis_service = SpendingAnalysisService(db, firestore_service)
         summary = analysis_service.get_spending_summary(user_id, period)
         return {"status": "success", "data": summary}
     except Exception as e:
@@ -412,7 +412,7 @@ async def get_spending_insights(
     Generate personalized spending insights and recommendations
     """
     try:
-        analysis_service = SpendingAnalysisService(db)
+        analysis_service = SpendingAnalysisService(db, firestore_service)
         insights = analysis_service.generate_insights(user_id)
         return {"status": "success", "insights": insights}
     except Exception as e:
@@ -428,7 +428,7 @@ async def get_budget_analysis(
     Analyze spending against budget and provide recommendations
     """
     try:
-        analysis_service = SpendingAnalysisService(db)
+        analysis_service = SpendingAnalysisService(db, firestore_service)
         budget_analysis = analysis_service.get_budget_analysis(user_id, monthly_budget)
         return {"status": "success", "data": budget_analysis}
     except Exception as e:
@@ -593,16 +593,51 @@ def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_fir
                 user_id = user['user_id']
                 print(f"[Forecast] Attempting to use Firestore data for user: {user_id}")
                 
-                # Get historical data from Firestore
-                end_date = datetime.now()
-                start_date = end_date - timedelta(days=365)  # Get last year of data
-                
-                historical_expenses = firestore_service.get_user_expenses(
-                    user_id=user_id,
-                    start_date=start_date,
-                    end_date=end_date,
-                    category=input.category if input.category != "all" else None
-                )
+                # Get historical data from Firestore using simplified query
+                try:
+                    simple_query = firestore_service.db.collection('transactions').where('userId', '==', user_id).limit(1000)
+                    docs = simple_query.stream()
+                    
+                    historical_expenses = []
+                    end_date = datetime.now()
+                    start_date = end_date - timedelta(days=365)  # Get last year of data
+                    
+                    for doc in docs:
+                        data = doc.to_dict()
+                        # Parse date for filtering
+                        date_str = data.get('date', '')
+                        try:
+                            if date_str:
+                                if 'T' in date_str:
+                                    doc_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                                else:
+                                    doc_date = datetime.fromisoformat(date_str)
+                            else:
+                                continue
+                        except:
+                            continue
+                        
+                        # Apply date filter and category filter in memory
+                        if doc_date < start_date or doc_date > end_date:
+                            continue
+                            
+                        if input.category != "all" and data.get('category', '') != input.category:
+                            continue
+                        
+                        historical_expenses.append({
+                            'amount': data.get('amount', 0),
+                            'category': data.get('category', 'uncategorized'),
+                            'date': date_str,
+                            'timestamp': doc_date,
+                            'description': data.get('description', ''),
+                            'type': data.get('type', 'expense')
+                        })
+                    
+                    print(f"[Forecast] Found {len(historical_expenses)} historical transactions")
+                    
+                except Exception as query_error:
+                    print(f"[Forecast] Firestore query failed: {query_error}")
+                    historical_expenses = []
                 
                 # Check if we have sufficient data for forecasting
                 if len(historical_expenses) >= 10:  # Minimum data requirement
@@ -828,49 +863,30 @@ def compare_months_expenses(input: MonthComparisonInput, user=Depends(optional_f
                     year, mon = map(int, month.split("-"))
                     month_name_str = month_name[mon]
                     
-                    # Try to get monthly summary first (optimized)
-                    monthly_summary = firestore_service.get_monthly_summary(user_id, month)
+                    # Always fetch fresh data to ensure accuracy after the fix
+                    expenses = firestore_service.get_monthly_expenses(user_id, year, mon, input.category)
                     
-                    if monthly_summary and monthly_summary.get('transactionCount', 0) > 0:
-                        # Use aggregated data
-                        by_category = monthly_summary.get('categoryBreakdown', {})
-                        total = monthly_summary.get('totalExpenses', 0)
-                        
-                        for category in by_category.keys():
-                            all_categories.add(category)
-                        
-                        results[month] = {
-                            "total": round(total, 2),
-                            "by_category": {k: round(v, 2) for k, v in by_category.items()},
-                            "month_name": month_name_str,
-                            "transaction_count": monthly_summary.get('transactionCount', 0)
-                        }
+                    # Aggregate data by category
+                    by_category = {}
+                    total = 0
+                    for expense in expenses:
+                        category = expense.get('category', 'uncategorized')
+                        all_categories.add(category)
+                        if category not in by_category:
+                            by_category[category] = 0
+                        by_category[category] += expense.get('amount', 0)
+                        total += expense.get('amount', 0)
+                    
+                    # Round amounts for better display
+                    by_category = {k: round(v, 2) for k, v in by_category.items()}
+                    results[month] = {
+                        "total": round(total, 2),
+                        "by_category": by_category,
+                        "month_name": month_name_str,
+                        "transaction_count": len(expenses)
+                    }
+                    if total > 0:
                         data_found = True
-                    else:
-                        # Fall back to individual transaction queries
-                        expenses = firestore_service.get_monthly_expenses(user_id, year, mon, input.category)
-                        
-                        # Aggregate data by category
-                        by_category = {}
-                        total = 0
-                        for expense in expenses:
-                            category = expense.get('category', 'uncategorized')
-                            all_categories.add(category)
-                            if category not in by_category:
-                                by_category[category] = 0
-                            by_category[category] += expense.get('amount', 0)
-                            total += expense.get('amount', 0)
-                        
-                        # Round amounts for better display
-                        by_category = {k: round(v, 2) for k, v in by_category.items()}
-                        results[month] = {
-                            "total": round(total, 2),
-                            "by_category": by_category,
-                            "month_name": month_name_str,
-                            "transaction_count": len(expenses)
-                        }
-                        if total > 0:
-                            data_found = True
                 
                 # If we found real data, return it
                 if data_found:
@@ -1639,7 +1655,36 @@ def list_user_transactions(user_id: str, user=Depends(optional_firebase_token)):
         raise HTTPException(status_code=503, detail="Firestore service not available")
     
     try:
-        transactions = firestore_service.get_user_expenses(user_id)
+        # Use simplified query approach to avoid date comparison issues
+        print(f"📋 Listing transactions for user: {user_id}")
+        
+        # Direct query without date filters to avoid timezone issues
+        simple_query = firestore_service.db.collection('transactions').where('userId', '==', user_id).limit(1000)
+        docs = simple_query.stream()
+        
+        transactions = []
+        for doc in docs:
+            data = doc.to_dict()
+            transactions.append({
+                'id': doc.id,
+                'amount': data.get('amount', 0),
+                'description': data.get('description', ''),
+                'category': data.get('category', 'uncategorized'),
+                'date': data.get('date', ''),
+                'type': data.get('type', 'expense'),
+                'month': data.get('month', ''),
+                'userId': data.get('userId', ''),
+                'payment_method': data.get('payment_method', ''),
+                'merchant_name': data.get('merchant_name', ''),
+                'notes': data.get('notes', ''),
+                'createdAt': data.get('createdAt'),
+                'updatedAt': data.get('updatedAt')
+            })
+        
+        # Sort by date string (works well for ISO format)
+        transactions.sort(key=lambda x: x.get('date', ''), reverse=True)
+        
+        print(f"✅ Successfully listed {len(transactions)} transactions for user {user_id}")
         
         return {
             "transactions": transactions,
@@ -2032,7 +2077,7 @@ async def preview_document(
 @app.delete("/api/tax/documents/{document_id}")
 async def delete_document(
     document_id: str,
-    user=Depends(optional_firebase_token)
+       user=Depends(optional_firebase_token)
 ):
     """Delete a tax document"""
     try:
@@ -2077,8 +2122,18 @@ async def recommend_tax_forms(
         user_data = {}
         if firestore_service and user:
             try:
-                # Get user's transaction history
-                transactions = firestore_service.get_user_expenses(user_id)
+                # Get user's transaction history using simplified query
+                simple_query = firestore_service.db.collection('transactions').where('userId', '==', user_id).limit(500)
+                docs = simple_query.stream()
+                
+                transactions = []
+                for doc in docs:
+                    data = doc.to_dict()
+                    transactions.append({
+                        'amount': data.get('amount', 0),
+                        'category': data.get('category', 'uncategorized'),
+                        'type': data.get('type', 'expense')
+                    })
                 
                 # Analyze transaction patterns
                 total_income = sum(t.get('amount', 0) for t in transactions if t.get('category') == 'Income')

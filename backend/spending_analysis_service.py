@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from models import Expense, User
 import numpy as np
 from collections import defaultdict
+from firestore_service import FirestoreService
 
 class SpendingAnalysisService:
     """
@@ -12,12 +13,13 @@ class SpendingAnalysisService:
     into user financial behavior and patterns.
     """
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, firestore_service: FirestoreService = None):
         self.db = db
+        self.firestore_service = firestore_service
         
     def get_spending_summary(self, user_id: str, period: str = "month") -> Dict:
         """
-        Get comprehensive spending summary for a user
+        Get comprehensive spending summary for a user, using Firestore as the primary data source.
         """
         end_date = datetime.now()
         
@@ -29,12 +31,64 @@ class SpendingAnalysisService:
             start_date = end_date - timedelta(days=90)
         else:  # year
             start_date = end_date - timedelta(days=365)
-            
-        expenses = self.db.query(Expense).filter(
-            Expense.user_id == user_id,
-            Expense.timestamp >= start_date,
-            Expense.timestamp <= end_date
-        ).all()
+
+        expenses = []
+        if self.firestore_service and self.firestore_service.db:
+            # Use simplified Firestore query to avoid date comparison issues
+            try:
+                simple_query = self.firestore_service.db.collection('transactions').where('userId', '==', user_id).limit(1000)
+                docs = simple_query.stream()
+                
+                expenses = []
+                for doc in docs:
+                    data = doc.to_dict()
+                    # Parse date for filtering
+                    date_str = data.get('date', '')
+                    try:
+                        if date_str:
+                            if 'T' in date_str:
+                                doc_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                            else:
+                                doc_date = datetime.fromisoformat(date_str)
+                        else:
+                            continue
+                    except:
+                        continue
+                    
+                    # Apply date filter in memory
+                    if doc_date < start_date or doc_date > end_date:
+                        continue
+                    
+                    expenses.append({
+                        'amount': data.get('amount', 0),
+                        'category': data.get('category', 'uncategorized'),
+                        'date': date_str,
+                        'timestamp': doc_date,
+                        'description': data.get('description', ''),
+                        'type': data.get('type', 'expense')
+                    })
+                
+                print(f"✅ SpendingAnalysisService: Found {len(expenses)} expenses in date range")
+                
+            except Exception as e:
+                print(f"Error in spending analysis Firestore query: {e}")
+                expenses = []
+        else:
+            # Fallback to legacy database if Firestore is not available
+            db_expenses = self.db.query(Expense).filter(
+                Expense.user_id == user_id,
+                Expense.timestamp >= start_date,
+                Expense.timestamp <= end_date
+            ).all()
+            # Convert to dictionary format to match Firestore's output
+            for exp in db_expenses:
+                expenses.append({
+                    'amount': exp.amount,
+                    'category': exp.category,
+                    'date': exp.timestamp.isoformat(),
+                    'description': exp.description,
+                    'timestamp': exp.timestamp
+                })
         
         if not expenses:
             # Return full structure with safe defaults
@@ -49,11 +103,13 @@ class SpendingAnalysisService:
                 "spending_patterns": {}
             }
             
+        # The data from Firestore is a list of dicts, which is what we need.
+        # The fallback logic now also produces a list of dicts.
         df = pd.DataFrame([{
-            'amount': exp.amount,
-            'category': exp.category or 'uncategorized',
-            'date': exp.timestamp,
-            'description': exp.description
+            'amount': exp.get('amount', 0),
+            'category': exp.get('category', 'uncategorized'),
+            'date': exp.get('timestamp', datetime.fromisoformat(exp.get('date').replace('Z', '+00:00')) if isinstance(exp.get('date'), str) else datetime.now()),
+            'description': exp.get('description', '')
         } for exp in expenses])
         
         return {

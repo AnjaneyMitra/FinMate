@@ -124,43 +124,62 @@ export class FirebaseDataService {
   async getTransactions(filters = {}) {
     try {
       const userId = this.getCurrentUserId();
+      
+      // Use simple query without date filters to avoid Firestore index issues
       let q = query(
         collection(db, 'transactions'),
         where('userId', '==', userId),
         orderBy('date', 'desc')
       );
 
-      // Apply filters
+      // Only apply category filter at database level if specified
       if (filters.category && filters.category !== 'all') {
         q = query(q, where('category', '==', filters.category));
       }
 
-      if (filters.startDate) {
-        q = query(q, where('date', '>=', filters.startDate));
-      }
-
-      if (filters.endDate) {
-        q = query(q, where('date', '<=', filters.endDate));
-      }
-
-      if (filters.limit) {
-        q = query(q, limit(filters.limit));
-      }
-
       const querySnapshot = await getDocs(q);
-      const transactions = [];
+      let transactions = [];
       
       querySnapshot.forEach((doc) => {
+        const data = doc.data();
         transactions.push({
           id: doc.id,
-          ...doc.data(),
-          // Convert Firestore timestamps to ISO strings
-          date: doc.data().date?.toDate?.()?.toISOString() || doc.data().date,
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
-          updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString()
+          ...data,
+          // Convert Firestore timestamps to ISO strings for consistent processing
+          date: data.date?.toDate?.()?.toISOString() || data.date,
+          createdAt: data.createdAt?.toDate?.()?.toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString()
         });
       });
 
+      console.log(`📊 FirebaseDataService: Retrieved ${transactions.length} total transactions before filtering`);
+
+      // Apply date filters in memory to avoid Firestore index/timezone issues
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate);
+        transactions = transactions.filter(tx => {
+          const txDate = new Date(tx.date);
+          return txDate >= startDate;
+        });
+        console.log(`📊 FirebaseDataService: ${transactions.length} transactions after startDate filter (${filters.startDate})`);
+      }
+
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        transactions = transactions.filter(tx => {
+          const txDate = new Date(tx.date);
+          return txDate <= endDate;
+        });
+        console.log(`📊 FirebaseDataService: ${transactions.length} transactions after endDate filter (${filters.endDate})`);
+      }
+
+      // Apply limit after all filtering
+      if (filters.limit && transactions.length > filters.limit) {
+        transactions = transactions.slice(0, filters.limit);
+        console.log(`📊 FirebaseDataService: Limited to ${filters.limit} transactions`);
+      }
+
+      console.log(`📊 FirebaseDataService: Returning ${transactions.length} transactions after all filters`);
       return transactions;
     } catch (error) {
       console.error('❌ Error fetching transactions:', error);

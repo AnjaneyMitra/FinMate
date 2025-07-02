@@ -9,6 +9,7 @@ import RealSpendingAnalysis from './RealSpendingAnalysis';
 import FutureExpensePrediction from './FutureExpensePrediction';
 import MonthComparison from './MonthComparison';
 import TransactionForm from './TransactionForm';
+import TransactionHistory from './components/TransactionHistory';
 import Settings from './Settings';
 import FirebaseTest from './FirebaseTest';
 import InvestmentSimulation from './InvestmentSimulation';
@@ -48,23 +49,38 @@ function Dashboard({ user, setUser }) {
       const budget = await dataService.getBudget();
       // Fetch user preferences (for goals)
       const prefs = await dataService.getUserPreferences();
-      // Fetch spending summary
-      const summary = await dataService.fetchSpendingSummary('month');
-      // Calculate savings (budget - spent)
+      
+      // Fetch spending summary for multiple periods to show comprehensive data
+      const currentMonthSummary = await dataService.fetchSpendingSummary('month');
+      const last3MonthsSummary = await dataService.fetchSpendingSummary('3months');
+      const allTimeSummary = await dataService.getTransactions(); // Get all transactions for comprehensive view
+      
+      // Calculate total spending from all transactions
+      const totalAllTimeSpent = allTimeSummary.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+      const totalTransactionCount = allTimeSummary.length;
+      
+      // Use last 3 months as the primary metric (more meaningful than just current month)
+      const spent = last3MonthsSummary?.total_spent || 0;
       const monthlyBudget = budget?.monthlyBudget || 0;
-      const spent = summary?.total_spent || 0;
       const savings = monthlyBudget > 0 ? Math.max(monthlyBudget - spent, 0) : null;
-      // Goals progress (mock: if prefs.goalsProgress exists, else percent of budget used)
+      
+      // Goals progress based on 3-month data
       let goalsProgress = null;
       if (prefs && typeof prefs.goalsProgress === 'number') {
         goalsProgress = prefs.goalsProgress;
       } else if (monthlyBudget > 0) {
-        goalsProgress = Math.round((spent / monthlyBudget) * 100);
+        goalsProgress = Math.round((spent / (monthlyBudget * 3)) * 100); // 3-month budget
       }
+      
       setDashboardStats({
         monthlyBudget,
         savings,
-        spent,
+        spent, // 3-month spending
+        currentMonthSpent: currentMonthSummary?.total_spent || 0,
+        totalAllTimeSpent,
+        totalTransactionCount,
+        currentMonthTransactions: currentMonthSummary?.transaction_count || 0,
+        last3MonthsTransactions: last3MonthsSummary?.transaction_count || 0,
         goalsProgress,
         loading: false
       });
@@ -111,6 +127,7 @@ function Dashboard({ user, setUser }) {
     { path: '/dashboard', name: 'Overview', icon: '🏠' },
     { path: '/dashboard/budget', name: 'Budget Planner', icon: '💰' },
     { path: '/dashboard/transactions', name: 'Add Transaction', icon: '➕' },
+    { path: '/dashboard/history', name: 'Transaction History', icon: '📋' },
     { path: '/dashboard/spending', name: 'Spending Analysis', icon: '📊' },
     { path: '/dashboard/tax', name: 'Tax Breakdown', icon: '🧾' },
     { path: '/tax-filing', name: 'Tax Filing System', icon: '📋' },
@@ -131,7 +148,18 @@ function Dashboard({ user, setUser }) {
 
   // Replace DashboardHome with injected stats
   function DashboardHome({ user }) {
-    const { monthlyBudget, savings, spent, goalsProgress, loading } = dashboardStats;
+    const { 
+      monthlyBudget, 
+      savings, 
+      spent, 
+      currentMonthSpent, 
+      totalAllTimeSpent, 
+      totalTransactionCount, 
+      currentMonthTransactions, 
+      last3MonthsTransactions, 
+      goalsProgress, 
+      loading 
+    } = dashboardStats;
     const [editMode, setEditMode] = useState(false);
     const [budgetInput, setBudgetInput] = useState(monthlyBudget || '');
     const [saveStatus, setSaveStatus] = useState(null);
@@ -271,11 +299,59 @@ function Dashboard({ user, setUser }) {
                 <span className="text-2xl">🛒</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">This Month Spent</p>
+                <p className="text-sm font-medium text-gray-500">Last 3 Months Spent</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {loading ? <span className="text-gray-400">Loading...</span> :
                     spent !== null ? `₹${spent.toLocaleString('en-IN')}` : 'N/A'}
                 </p>
+                {!loading && last3MonthsTransactions > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {last3MonthsTransactions} transactions
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">📊</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total All Time</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {loading ? <span className="text-gray-400">Loading...</span> :
+                    totalAllTimeSpent !== null ? `₹${totalAllTimeSpent.toLocaleString('en-IN')}` : 'N/A'}
+                </p>
+                {!loading && totalTransactionCount > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {totalTransactionCount} total transactions
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">📅</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">This Month</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {loading ? <span className="text-gray-400">Loading...</span> :
+                    currentMonthSpent !== null ? `₹${currentMonthSpent.toLocaleString('en-IN')}` : 'N/A'}
+                </p>
+                {!loading && currentMonthTransactions > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {currentMonthTransactions} transactions
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -449,6 +525,17 @@ function Dashboard({ user, setUser }) {
             </Link>
 
             <Link
+              to="/dashboard/history"
+              className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <span className="text-2xl mr-3">📋</span>
+              <div>
+                <p className="font-medium text-blue-700">View History</p>
+                <p className="text-sm text-blue-600">All transactions</p>
+              </div>
+            </Link>
+
+            <Link
               to="/dashboard/budget"
               className="flex items-center p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
             >
@@ -597,9 +684,9 @@ function Dashboard({ user, setUser }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar user={user} />
+      <Sidebar user={user} setUser={setUser} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar user={user} />
+        <Topbar user={user} setUser={setUser} />
         
         {/* Import Success Notification */}
         {importNotification && (
@@ -638,6 +725,7 @@ function Dashboard({ user, setUser }) {
               <Route path="/" element={<DashboardHome user={user} />} />
               <Route path="/budget" element={<BudgetForm />} />
               <Route path="/transactions" element={<TransactionForm user={user} onTransactionAdded={handleTransactionsImported} />} />
+              <Route path="/history" element={<TransactionHistory />} />
               <Route path="/spending" element={<RealSpendingAnalysis key={refreshKey} userId={user?.uid} />} />
               <Route path="/predictions" element={<FutureExpensePrediction key={refreshKey} />} />
               <Route path="/comparison" element={<MonthComparison key={refreshKey} />} />

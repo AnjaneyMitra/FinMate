@@ -64,105 +64,55 @@ class FirestoreService:
     
     def get_user_expenses(self, user_id: str, start_date: datetime = None, end_date: datetime = None, category: str = None) -> List[Dict]:
         """
-        Get user expenses from the unified root transactions collection only.
-        This eliminates the dual-collection complexity and ensures data consistency.
+        Get user expenses from both root and nested transactions collections.
         """
+        all_expenses = []
+        
+        # 1. Fetch from root-level 'transactions' collection
         try:
-            # Query only the root transactions collection
-            query = self.db.collection('transactions').where('userId', '==', user_id)
-            
-            # Apply date filters - ensure proper string formatting
-            if start_date and end_date:
-                start_str = start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
-                end_str = end_date.isoformat() if isinstance(end_date, datetime) else str(end_date)
-                query = query.where('date', '>=', start_str).where('date', '<=', end_str)
-            elif start_date:
-                start_str = start_date.isoformat() if isinstance(start_date, datetime) else str(start_date)
-                query = query.where('date', '>=', start_str)
-            elif end_date:
-                end_str = end_date.isoformat() if isinstance(end_date, datetime) else str(end_date)
-                query = query.where('date', '<=', end_str)
-            
-            # Apply category filter
+            query_root = self.db.collection('transactions').where('userId', '==', user_id)
+            if start_date:
+                query_root = query_root.where('date', '>=', start_date.isoformat() if isinstance(start_date, datetime) else start_date)
+            if end_date:
+                query_root = query_root.where('date', '<=', end_date.isoformat() if isinstance(end_date, datetime) else end_date)
             if category and category != 'all':
-                query = query.where('category', '==', category)
+                query_root = query_root.where('category', '==', category)
             
-            # Order by date (descending) - skip if filters are complex
-            try:
-                if not (start_date or end_date or category):
-                    query = query.order_by('date', direction=firestore.Query.DESCENDING)
-            except Exception as order_error:
-                print(f"Warning: Could not apply ordering: {order_error}")
-            
-            # Limit results to prevent large queries
-            query = query.limit(1000)
-            
-            # Execute query
-            docs = query.stream()
-            
-            expenses = []
-            for doc in docs:
+            docs_root = query_root.order_by('date', direction=firestore.Query.DESCENDING).stream()
+            for doc in docs_root:
                 data = doc.to_dict()
-                
-                # Parse date properly for sorting
-                date_str = data.get('date', '')
-                try:
-                    if isinstance(date_str, str) and date_str:
-                        # Handle different date formats
-                        if 'T' in date_str:
-                            timestamp = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                        else:
-                            timestamp = datetime.fromisoformat(date_str)
-                    else:
-                        timestamp = datetime.now()
-                except Exception as date_error:
-                    print(f"Date parsing error for '{date_str}': {date_error}")
-                    timestamp = datetime.now()
-                
-                expenses.append({
-                    'id': doc.id,
-                    'amount': data.get('amount', 0),
-                    'description': data.get('description', ''),
-                    'category': data.get('category', 'uncategorized'),
-                    'date': date_str,
-                    'type': data.get('type', 'expense'),
-                    'month': data.get('month', ''),
-                    'timestamp': timestamp
-                })
-            
-            # Sort in memory by timestamp
-            expenses.sort(key=lambda x: x['timestamp'], reverse=True)
-            
-            print(f"✅ Successfully fetched {len(expenses)} expenses for user {user_id} from unified collection")
-            return expenses
-            
+                data['id'] = doc.id
+                all_expenses.append(data)
         except Exception as e:
-            print(f"❌ Error fetching expenses from unified collection: {e}")
-            # Fallback to simple query without filters
-            try:
-                print("🔄 Attempting fallback query...")
-                simple_query = self.db.collection('transactions').where('userId', '==', user_id).limit(100)
-                docs = simple_query.stream()
-                
-                expenses = []
-                for doc in docs:
-                    data = doc.to_dict()
-                    expenses.append({
-                        'id': doc.id,
-                        'amount': data.get('amount', 0),
-                        'description': data.get('description', ''),
-                        'category': data.get('category', 'uncategorized'),
-                        'date': data.get('date', ''),
-                        'type': data.get('type', 'expense'),
-                        'month': data.get('month', ''),
-                        'timestamp': datetime.now()
-                    })
-                
-                print(f"Fallback query returned {len(expenses)} expenses")
-                return expenses
-            except Exception as fallback_error:
-                print(f"Fallback query also failed: {fallback_error}")
-                return []
+            print(f"Could not fetch from root transactions: {e}")
+
+        # 2. Fetch from nested 'transactions' collection within the user's document
+        try:
+            query_nested = self.db.collection('users').document(user_id).collection('transactions')
+            if start_date:
+                query_nested = query_nested.where('date', '>=', start_date.isoformat() if isinstance(start_date, datetime) else start_date)
+            if end_date:
+                query_nested = query_nested.where('date', '<=', end_date.isoformat() if isinstance(end_date, datetime) else end_date)
+            if category and category != 'all':
+                query_nested = query_nested.where('category', '==', category)
+
+            docs_nested = query_nested.order_by('date', direction=firestore.Query.DESCENDING).stream()
+            for doc in docs_nested:
+                data = doc.to_dict()
+                data['id'] = doc.id
+                all_expenses.append(data)
+        except Exception as e:
+            print(f"Could not fetch from nested transactions: {e}")
+
+        # Remove duplicates - assuming a transaction could exist in both places
+        unique_expenses = {exp['id']: exp for exp in all_expenses}.values()
+        
+        # Sort all expenses by date
+        # Handle cases where 'date' might be missing
+        sorted_expenses = sorted(list(unique_expenses), key=lambda x: x.get('date', ''), reverse=True)
+        
+        print(f"✅ Successfully fetched {len(sorted_expenses)} expenses for user {user_id}")
+        return sorted_expenses
 
     def get_monthly_summary(self, user_id: str, month_key: str) -> Dict:
         """
