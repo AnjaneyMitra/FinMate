@@ -5,6 +5,8 @@ import { ResponsiveBar } from '@nivo/bar';
 import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Rectangle } from 'recharts';
 import FirebaseDataService from './services/FirebaseDataService';
 import PinButton from './components/PinButton';
+import TimeSelector from './components/TimeSelector';
+import { periodToApiFormat, getPeriodDescription } from './utils/timeUtils';
 
 // Simple error boundary for runtime errors
 class ErrorBoundary extends React.Component {
@@ -34,6 +36,7 @@ export default function RealSpendingAnalysis({ userId = 'default-user' }) {
   const [trends, setTrends] = useState(null);
   const [insights, setInsights] = useState([]);
   const [budgetAnalysis, setBudgetAnalysis] = useState(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState('3months');
 
   const safeObj = obj => (obj && typeof obj === 'object' ? obj : {});
   const safeArr = arr => (Array.isArray(arr) ? arr : []);
@@ -44,10 +47,11 @@ export default function RealSpendingAnalysis({ userId = 'default-user' }) {
       setError(null);
       try {
         const dataService = new FirebaseDataService();
+        const apiTimeRange = periodToApiFormat(selectedTimeRange);
         const [summary, trendsData, insightsData] = await Promise.all([
-          dataService.fetchSpendingSummary(),
-          dataService.fetchSpendingTrends(),
-          dataService.fetchSpendingInsights(),
+          dataService.fetchSpendingSummary(apiTimeRange),
+          dataService.fetchSpendingTrends(null, apiTimeRange),
+          dataService.fetchSpendingInsights(apiTimeRange),
         ]);
         setSpendingData(summary || {});
         setTrends(trendsData || {});
@@ -65,7 +69,7 @@ export default function RealSpendingAnalysis({ userId = 'default-user' }) {
       }
     }
     fetchData();
-  }, [userId]);
+  }, [userId, selectedTimeRange]); // Add selectedTimeRange to dependencies
 
   // Logging before every map/filter/forEach
   const pieChartData = useMemo(() => {
@@ -150,12 +154,46 @@ export default function RealSpendingAnalysis({ userId = 'default-user' }) {
           <div className="flex items-center gap-4">
             <div>
               <h2 className="text-3xl font-bold">Spending Analysis</h2>
-              <p className="text-gray-600">Live insights into your spending patterns.</p>
+              <p className="text-gray-600">Live insights into your spending patterns for {getPeriodDescription(selectedTimeRange)}.</p>
             </div>
             <PinButton pageId="analytics" />
           </div>
+          <TimeSelector 
+            value={selectedTimeRange}
+            onChange={setSelectedTimeRange}
+            label="Time Period"
+            variant="outlined"
+            className="ml-4"
+          />
         </div>
         
+        {/* Time Selector Component */}
+        <div className="bg-white rounded-lg p-4 shadow-sm mb-8">
+          <h4 className="font-semibold text-gray-700 mb-3">Select Time Period</h4>
+          <TimeSelector 
+            selectedPeriod={selectedTimeRange}
+            onPeriodChange={async (period) => {
+              setSelectedTimeRange(period);
+              setLoading(true);
+              try {
+                const dataService = new FirebaseDataService();
+                // Fetch new data based on selected period
+                const summary = await dataService.fetchSpendingSummary(periodToApiFormat(period));
+                setSpendingData(summary || {});
+                // Update trends and insights if needed
+                const trendsData = await dataService.fetchSpendingTrends(periodToApiFormat(period));
+                setTrends(trendsData || {});
+                const insightsData = await dataService.fetchSpendingInsights(periodToApiFormat(period));
+                setInsights(Array.isArray(insightsData) ? insightsData : []);
+              } catch (err) {
+                setError('Failed to load spending data for the selected period.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          />
+        </div>
+
         {/* Live Spending Analytics */}
         <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6 mb-8 border border-purple-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">

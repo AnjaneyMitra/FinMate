@@ -20,6 +20,8 @@ import Topbar from './components/Topbar';
 import Goals from './Goals';
 import QuickActions from './QuickActions';
 import FirestoreTestPanel from './components/FirestoreTestPanel';
+import TimeSelector from './components/TimeSelector';
+import { periodToApiFormat, getPeriodDescription } from './utils/timeUtils';
 
 function Dashboard({ user, setUser }) {
   const location = useLocation();
@@ -33,6 +35,9 @@ function Dashboard({ user, setUser }) {
     loading: true
   });
 
+  // --- Time period state for analytics ---
+  const [selectedTimeRange, setSelectedTimeRange] = useState('3months');
+
   // --- Import Notification State ---
   const [importNotification, setImportNotification] = useState(null);
   
@@ -40,7 +45,7 @@ function Dashboard({ user, setUser }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Create reusable function for fetching dashboard stats
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (timeRange = selectedTimeRange) => {
     if (!user) return;
     setDashboardStats((s) => ({ ...s, loading: true }));
     const dataService = new FirebaseDataService();
@@ -51,36 +56,42 @@ function Dashboard({ user, setUser }) {
       const prefs = await dataService.getUserPreferences();
       
       // Fetch spending summary for multiple periods to show comprehensive data
+      const apiTimeRange = periodToApiFormat(timeRange);
       const currentMonthSummary = await dataService.fetchSpendingSummary('month');
-      const last3MonthsSummary = await dataService.fetchSpendingSummary('3months');
+      const selectedPeriodSummary = await dataService.fetchSpendingSummary(apiTimeRange);
       const allTimeSummary = await dataService.getTransactions(); // Get all transactions for comprehensive view
       
       // Calculate total spending from all transactions
       const totalAllTimeSpent = allTimeSummary.reduce((sum, tx) => sum + (tx.amount || 0), 0);
       const totalTransactionCount = allTimeSummary.length;
       
-      // Use last 3 months as the primary metric (more meaningful than just current month)
-      const spent = last3MonthsSummary?.total_spent || 0;
+      // Use selected period as the primary metric
+      const spent = selectedPeriodSummary?.total_spent || 0;
       const monthlyBudget = budget?.monthlyBudget || 0;
       const savings = monthlyBudget > 0 ? Math.max(monthlyBudget - spent, 0) : null;
       
-      // Goals progress based on 3-month data
+      // Goals progress based on selected period data
       let goalsProgress = null;
       if (prefs && typeof prefs.goalsProgress === 'number') {
         goalsProgress = prefs.goalsProgress;
       } else if (monthlyBudget > 0) {
-        goalsProgress = Math.round((spent / (monthlyBudget * 3)) * 100); // 3-month budget
+        // Adjust calculation based on time period
+        const periodMultiplier = timeRange === 'lastMonth' ? 1 : 
+                                timeRange === '3months' ? 3 : 
+                                timeRange === '6months' ? 6 : 
+                                timeRange === 'currentYear' ? 12 : 3;
+        goalsProgress = Math.round((spent / (monthlyBudget * periodMultiplier)) * 100);
       }
       
       setDashboardStats({
         monthlyBudget,
         savings,
-        spent, // 3-month spending
+        spent, // Selected period spending
         currentMonthSpent: currentMonthSummary?.total_spent || 0,
         totalAllTimeSpent,
         totalTransactionCount,
         currentMonthTransactions: currentMonthSummary?.transaction_count || 0,
-        last3MonthsTransactions: last3MonthsSummary?.transaction_count || 0,
+        selectedPeriodTransactions: selectedPeriodSummary?.transaction_count || 0,
         goalsProgress,
         loading: false
       });
@@ -92,7 +103,7 @@ function Dashboard({ user, setUser }) {
 
   useEffect(() => {
     fetchDashboardStats();
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, selectedTimeRange]); // Add selectedTimeRange dependency
 
   // Handle transaction imports (from bank statements or manual entry)
   const handleTransactionsImported = async (result) => {
@@ -156,7 +167,7 @@ function Dashboard({ user, setUser }) {
       totalAllTimeSpent, 
       totalTransactionCount, 
       currentMonthTransactions, 
-      last3MonthsTransactions, 
+      selectedPeriodTransactions, 
       goalsProgress, 
       loading 
     } = dashboardStats;
@@ -197,15 +208,27 @@ function Dashboard({ user, setUser }) {
                 Welcome back, {user.email?.split('@')[0]}! 👋
               </h2>
               <p className="text-gray-600">
-                Here's your financial overview for today.
+                Here's your financial overview for {getPeriodDescription(selectedTimeRange)}.
               </p>
             </div>
-            {loading && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                <span className="text-sm">Updating...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              <TimeSelector 
+                value={selectedTimeRange}
+                onChange={(newRange) => {
+                  setSelectedTimeRange(newRange);
+                  fetchDashboardStats(newRange);
+                }}
+                label="Analytics Period"
+                variant="outlined"
+                size="sm"
+              />
+              {loading && (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span className="text-sm">Updating...</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -299,14 +322,14 @@ function Dashboard({ user, setUser }) {
                 <span className="text-2xl">🛒</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Last 3 Months Spent</p>
+                <p className="text-sm font-medium text-gray-500">{getPeriodDescription(selectedTimeRange)} Spent</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {loading ? <span className="text-gray-400">Loading...</span> :
                     spent !== null ? `₹${spent.toLocaleString('en-IN')}` : 'N/A'}
                 </p>
-                {!loading && last3MonthsTransactions > 0 && (
+                {!loading && selectedPeriodTransactions > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
-                    {last3MonthsTransactions} transactions
+                    {selectedPeriodTransactions} transactions
                   </p>
                 )}
               </div>
@@ -409,7 +432,7 @@ function Dashboard({ user, setUser }) {
                 })()}
               </div>
               <p className="text-xs text-gray-600 mt-2">
-                {loading ? 'Loading...' : `Current month spending: ₹${(spent || 0).toLocaleString('en-IN')}`}
+                {loading ? 'Loading...' : `${getPeriodDescription(selectedTimeRange)} spending: ₹${(spent || 0).toLocaleString('en-IN')}`}
               </p>
             </div>
 

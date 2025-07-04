@@ -3,6 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, BarChart3, Calculator } from 'lucide-react';
 import { auth } from './firebase';
 import PinButton from './components/PinButton';
+import TimeSelector from './components/TimeSelector';
+import { getPeriodDescription } from './utils/timeUtils';
 
 const MonthComparison = () => {
   const [comparisonData, setComparisonData] = useState(null);
@@ -10,20 +12,28 @@ const MonthComparison = () => {
   const [error, setError] = useState(null);
   const [selectedMonths, setSelectedMonths] = useState(['2025-05', '2025-06']);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [timeRangeFilter, setTimeRangeFilter] = useState('6months'); // New time range filter
 
-  // Generate month options for the past 12 months
+  // Generate month options based on selected time range
   const monthOptions = useMemo(() => {
     const options = [];
     const currentDate = new Date();
     
-    for (let i = 11; i >= 0; i--) {
+    // Determine how many months to show based on time range
+    const monthsToShow = timeRangeFilter === 'lastMonth' ? 2 :
+                       timeRangeFilter === '3months' ? 4 :
+                       timeRangeFilter === '6months' ? 7 :
+                       timeRangeFilter === 'currentYear' ? 12 :
+                       timeRangeFilter === 'allTime' ? 24 : 12;
+    
+    for (let i = monthsToShow - 1; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       options.push({ value, label });
     }
     return options;
-  }, []);
+  }, [timeRangeFilter]);
 
   const fetchComparison = async () => {
     if (selectedMonths.length < 2) return;
@@ -74,7 +84,7 @@ const MonthComparison = () => {
 
   useEffect(() => {
     fetchComparison();
-  }, [selectedMonths, selectedCategory]);
+  }, [selectedMonths, selectedCategory, timeRangeFilter]); // Add timeRangeFilter dependency
 
   // Prepare chart data for side-by-side comparison
   const chartData = useMemo(() => {
@@ -116,6 +126,43 @@ const MonthComparison = () => {
       const newMonths = selectedMonths.filter((_, i) => i !== index);
       setSelectedMonths(newMonths);
     }
+  };
+
+  const handleTimeRangeChange = (range) => {
+    setTimeRangeFilter(range);
+    
+    const endDate = new Date();
+    let startDate = new Date();
+    
+    switch (range) {
+      case '1week':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '1month':
+        startDate.setMonth(endDate.getMonth() - 1);
+        break;
+      case '3months':
+        startDate.setMonth(endDate.getMonth() - 3);
+        break;
+      case '6months':
+        startDate.setMonth(endDate.getMonth() - 6);
+        break;
+      case '1year':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      default:
+        return;
+    }
+    
+    const newSelectedMonths = [];
+    let currentDate = startDate;
+    while (currentDate <= endDate) {
+      const value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      newSelectedMonths.push(value);
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    setSelectedMonths(newSelectedMonths);
   };
 
   if (loading) {
@@ -171,58 +218,92 @@ const MonthComparison = () => {
           </div>
           
           {/* Controls */}
-          <div className="flex flex-wrap gap-4 items-center">
-            {selectedMonths.map((month, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Month {index + 1}:
-                </label>
-                <select
-                  value={month}
-                  onChange={(e) => handleMonthChange(index, e.target.value)}
-                  className="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 shadow-sm"
-                >
-                  {monthOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {selectedMonths.length > 2 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Time Range Filter */}
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Available Time Range</h3>
+              <TimeSelector 
+                value={timeRangeFilter}
+                onChange={(newRange) => {
+                  setTimeRangeFilter(newRange);
+                  // Reset selected months when time range changes
+                  const newOptions = monthOptions;
+                  if (newOptions.length >= 2) {
+                    setSelectedMonths([newOptions[newOptions.length - 2].value, newOptions[newOptions.length - 1].value]);
+                  }
+                }}
+                label="Show months from"
+                variant="default"
+                size="sm"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Showing months from {getPeriodDescription(timeRangeFilter)}
+              </p>
+            </div>
+
+            {/* Month Selection */}
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Compare Months</h3>
+              <div className="flex flex-wrap gap-4 items-center">
+                {selectedMonths.map((month, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Month {index + 1}:
+                    </label>
+                    <select
+                      value={month}
+                      onChange={(e) => handleMonthChange(index, e.target.value)}
+                      className="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    >
+                      {monthOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedMonths.length > 2 && (
+                      <button
+                        onClick={() => removeMonth(index)}
+                        className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                
+                {selectedMonths.length < 4 && (
                   <button
-                    onClick={() => removeMonth(index)}
-                    className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
+                    onClick={addMonth}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors"
                   >
-                    ✕
+                    + Add Month
                   </button>
                 )}
               </div>
-            ))}
-            
-            {selectedMonths.length < 4 && (
-              <button
-                onClick={addMonth}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors"
+            </div>
+          </div>
+
+          {/* Category Filter */}
+          <div className="mt-4">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Category:</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 shadow-sm"
               >
-                + Add Month
-              </button>
-            )}
-            
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 shadow-sm"
-            >
-              <option value="all">All Categories</option>
-              <option value="food">Food & Dining</option>
-              <option value="transportation">Transportation</option>
-              <option value="entertainment">Entertainment</option>
-              <option value="shopping">Shopping</option>
-              <option value="bills">Bills & Utilities</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="education">Education</option>
-              <option value="travel">Travel</option>
-            </select>
+                <option value="all">All Categories</option>
+                <option value="food">Food & Dining</option>
+                <option value="transportation">Transportation</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="shopping">Shopping</option>
+                <option value="bills">Bills & Utilities</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="education">Education</option>
+                <option value="travel">Travel</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

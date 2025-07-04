@@ -3,6 +3,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, TrendingDown, Calendar, DollarSign, AlertTriangle, Target, Brain, Zap } from 'lucide-react';
 import { auth } from './firebase';
 import PinButton from './components/PinButton';
+import TimeSelector from './components/TimeSelector';
+import { getPeriodDescription } from './utils/timeUtils';
 
 const FutureExpensePrediction = () => {
   const [predictions, setPredictions] = useState(null);
@@ -12,6 +14,7 @@ const FutureExpensePrediction = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [dataLoadTimestamp, setDataLoadTimestamp] = useState(null);
+  const [basePeriod, setBasePeriod] = useState('3months'); // Base period for historical data
 
   // Only run animation once when component first loads
   useEffect(() => {
@@ -237,29 +240,52 @@ const FutureExpensePrediction = () => {
             </div>
             
             {/* Controls */}
-            <div className="flex gap-4">
-              <select 
-                value={selectedTimeframe}
-                onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"
-              >
-                <option value="3">3 Months</option>
-                <option value="6">6 Months</option>
-                <option value="12">12 Months</option>
-              </select>
-              
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"
-              >
-                <option value="all">All Categories</option>
-                <option value="food">Food & Dining</option>
-                <option value="transportation">Transportation</option>
-                <option value="entertainment">Entertainment</option>
-                <option value="shopping">Shopping</option>
-                <option value="bills">Bills & Utilities</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Base Period for Analysis */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Base Analysis Period</label>
+                <TimeSelector 
+                  value={basePeriod}
+                  onChange={setBasePeriod}
+                  showLabel={false}
+                  variant="default"
+                  size="sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Historical data from {getPeriodDescription(basePeriod)}
+                </p>
+              </div>
+
+              {/* Prediction Timeframe */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Forecast Period</label>
+                <select 
+                  value={selectedTimeframe}
+                  onChange={(e) => setSelectedTimeframe(e.target.value)}
+                  className="w-full bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                >
+                  <option value="3">Next 3 Months</option>
+                  <option value="6">Next 6 Months</option>
+                  <option value="12">Next 12 Months</option>
+                </select>
+              </div>
+
+              {/* Category Filter */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Category Focus</label>
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="food">Food & Dining</option>
+                  <option value="transportation">Transportation</option>
+                  <option value="entertainment">Entertainment</option>
+                  <option value="shopping">Shopping</option>
+                  <option value="bills">Bills & Utilities</option>
+                </select>
+              </div>
             </div>
           </div>
 

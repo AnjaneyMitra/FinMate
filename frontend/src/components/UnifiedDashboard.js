@@ -24,6 +24,8 @@ import {
 import { useFinmate } from '../contexts/FinmateContext';
 import { Line, Pie, Bar } from 'react-chartjs-2';
 import { useTheme, useThemeStyles, ThemedButton, ThemedCard, ThemedAlert, ThemedStatus } from '../contexts/ThemeContext';
+import TimeSelector from './TimeSelector';
+import { getPeriodDescription } from '../utils/timeUtils';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -67,7 +69,7 @@ const UnifiedDashboard = () => {
     apiService
   } = useFinmate();
 
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState('3months');
   const [showBalances, setShowBalances] = useState(true);
   const [quickActions, setQuickActions] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -76,7 +78,7 @@ const UnifiedDashboard = () => {
     loadDashboardData();
     loadQuickActions();
     loadRecentActivity();
-  }, []);
+  }, [selectedPeriod]); // Add selectedPeriod dependency
 
   const loadQuickActions = () => {
     setQuickActions([
@@ -379,17 +381,16 @@ const UnifiedDashboard = () => {
             {/* Expense Trend Chart */}
             <div className="${bg.card} rounded-2xl p-6 shadow-sm border ${border.secondary}">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold ${text.primary}">Expense Trends</h3>
-                <select 
+                <h3 className="text-lg font-semibold ${text.primary}">
+                  Expense Trends - {getPeriodDescription(selectedPeriod)}
+                </h3>
+                <TimeSelector 
                   value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="text-sm border ${border.primary} rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="week">Last 7 days</option>
-                  <option value="month">Last 30 days</option>
-                  <option value="quarter">Last 3 months</option>
-                  <option value="year">Last 12 months</option>
-                </select>
+                  onChange={setSelectedPeriod}
+                  showLabel={false}
+                  variant="minimal"
+                  size="sm"
+                />
               </div>
               <div className="h-64">
                 <Line data={trendChartData} options={chartOptions} />
