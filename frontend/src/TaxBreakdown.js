@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import PinButton from './components/PinButton';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -117,9 +118,14 @@ export default function TaxBreakdown() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Tax Calculator</h2>
-        <p className="text-gray-600">Calculate your income tax based on current Indian tax slabs</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tax Calculator</h2>
+            <p className="text-gray-600">Calculate your income tax based on current Indian tax slabs</p>
+          </div>
+          <PinButton pageId="tax-breakdown" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

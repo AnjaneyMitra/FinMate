@@ -5,6 +5,7 @@ import { auth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEma
 import Dashboard from './Dashboard';
 import LandingPage from './LandingPage';
 import TaxFilingDashboard from './components/TaxFilingDashboard';
+import { SidebarProvider } from './contexts/SidebarContext';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -63,56 +64,58 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route 
-            path="/login" 
-            element={
-              user ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <LoginPage 
-                  email={email}
-                  setEmail={setEmail}
-                  password={password}
-                  setPassword={setPassword}
-                  error={error}
-                  isLogin={isLogin}
-                  setIsLogin={setIsLogin}
-                  handleAuth={handleAuth}
-                  handleGoogleAuth={handleGoogleAuth}
-                />
-              )
-            } 
-          />
-          <Route 
-            path="/dashboard/*" 
-            element={
-              user ? (
-                <Dashboard user={user} setUser={setUser} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/tax-filing/*" 
-            element={
-              user ? (
-                <TaxFilingDashboard user={user} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/" 
-            element={<LandingPage />} 
-          />
-        </Routes>
-      </div>
-    </Router>
+    <SidebarProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route 
+              path="/login" 
+              element={
+                user ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <LoginPage 
+                    email={email}
+                    setEmail={setEmail}
+                    password={password}
+                    setPassword={setPassword}
+                    error={error}
+                    isLogin={isLogin}
+                    setIsLogin={setIsLogin}
+                    handleAuth={handleAuth}
+                    handleGoogleAuth={handleGoogleAuth}
+                  />
+                )
+              } 
+            />
+            <Route 
+              path="/dashboard/*" 
+              element={
+                user ? (
+                  <Dashboard user={user} setUser={setUser} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } 
+            />
+            <Route 
+              path="/tax-filing/*" 
+              element={
+                user ? (
+                  <TaxFilingDashboard user={user} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } 
+            />
+            <Route 
+              path="/" 
+              element={<LandingPage />} 
+            />
+          </Routes>
+        </div>
+      </Router>
+    </SidebarProvider>
   );
 }
 

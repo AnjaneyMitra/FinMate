@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, TrendingDown, Calendar, DollarSign, AlertTriangle, Target, Brain, Zap } from 'lucide-react';
 import { auth } from './firebase';
+import PinButton from './components/PinButton';
 
 const FutureExpensePrediction = () => {
   const [predictions, setPredictions] = useState(null);
@@ -216,20 +217,23 @@ const FutureExpensePrediction = () => {
       <div className="mb-8">
         <div className="bg-gradient-to-br from-blue-50 to-purple-100 rounded-xl p-6 border border-blue-200">
           <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                <Brain className="w-8 h-8 text-blue-600" />
-                AI Expense Predictions
-                <Zap className="w-6 h-6 text-yellow-500" />
-              </h1>
-              <p className="text-gray-700">
-                Advanced machine learning insights for your future spending patterns
-                {dataLoadTimestamp && (
-                  <span className="text-sm text-gray-600 ml-2">
-                    • Updated at {dataLoadTimestamp}
-                  </span>
-                )}
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                  <Brain className="w-8 h-8 text-blue-600" />
+                  AI Expense Predictions
+                  <Zap className="w-6 h-6 text-yellow-500" />
+                </h1>
+                <p className="text-gray-700">
+                  Advanced machine learning insights for your future spending patterns
+                  {dataLoadTimestamp && (
+                    <span className="text-sm text-gray-600 ml-2">
+                      • Updated at {dataLoadTimestamp}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <PinButton pageId="predictions" />
             </div>
             
             {/* Controls */}

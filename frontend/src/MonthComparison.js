@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, BarChart3, Calculator } from 'lucide-react';
 import { auth } from './firebase';
+import PinButton from './components/PinButton';
 
 const MonthComparison = () => {
   const [comparisonData, setComparisonData] = useState(null);
@@ -155,14 +156,19 @@ const MonthComparison = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-6 border border-indigo-200">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-indigo-600" />
-            Month-to-Month Comparison
-            <Calculator className="w-6 h-6 text-orange-500" />
-          </h1>
-          <p className="text-gray-700 mb-4">
-            Compare your spending patterns across different months with detailed breakdowns
-          </p>
+          <div className="flex items-center gap-4 mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <BarChart3 className="w-8 h-8 text-indigo-600" />
+                Month-to-Month Comparison
+                <Calculator className="w-6 h-6 text-orange-500" />
+              </h1>
+              <p className="text-gray-700">
+                Compare your spending patterns across different months with detailed breakdowns
+              </p>
+            </div>
+            <PinButton pageId="comparison" />
+          </div>
           
           {/* Controls */}
           <div className="flex flex-wrap gap-4 items-center">

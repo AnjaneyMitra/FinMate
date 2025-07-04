@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PinButton from './components/PinButton';
 
 const questions = [
   {
@@ -110,8 +111,15 @@ export default function RiskProfiler() {
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 mt-8 border border-teal-100 relative overflow-hidden">
       <div className="absolute -top-8 -right-8 opacity-10 text-[10rem] select-none pointer-events-none">🧑‍💼</div>
-      <h2 className="text-3xl font-extrabold mb-2 text-teal-700 text-center drop-shadow">Risk Profiling Tool</h2>
-      <p className="text-gray-600 mb-6 text-center">Answer a few questions to discover your investment risk profile.</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-extrabold text-teal-700 drop-shadow">Risk Profiling Tool</h2>
+            <p className="text-gray-600">Answer a few questions to discover your investment risk profile.</p>
+          </div>
+          <PinButton pageId="risk" />
+        </div>
+      </div>
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
         <div className="bg-teal-500 h-3 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DataMigrationService from './services/DataMigrationService';
 import SampleDataService from './services/SampleDataService';
+import PinButton from './components/PinButton';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('data');
@@ -101,8 +102,15 @@ export default function Settings() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your FinMate preferences and data</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+              <p className="text-gray-600">Manage your FinMate preferences and data</p>
+            </div>
+            <PinButton pageId="settings" />
+          </div>
+        </div>
       </div>
 
       {/* Tab Navigation */}

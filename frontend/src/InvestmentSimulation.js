@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ResponsiveLine } from '@nivo/line';
+import PinButton from './components/PinButton';
 
 // Simple compound interest simulation for demonstration
 function calculateReturns(principal, rate, years, frequency) {
@@ -36,7 +37,12 @@ export default function InvestmentSimulation() {
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
-      <h2 className="text-2xl font-bold mb-4 text-teal-700">Investment Simulation Zone</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-teal-700">Investment Simulation Zone</h2>
+          <PinButton pageId="simulation" />
+        </div>
+      </div>
       
       {/* Live Investment Calculator */}
       <div className="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-xl p-6 mb-6 border border-teal-200">

@@ -1,16 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PinButton from './components/PinButton';
 
 function QuickActions() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          Quick Actions ⚡
-        </h2>
-        <p className="text-gray-600">
-          Access all your financial tools and features in one place.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Quick Actions ⚡
+            </h2>
+            <p className="text-gray-600">
+              Access all your financial tools and features in one place.
+            </p>
+          </div>
+          <PinButton pageId="quick-actions" showLabel={true} />
+        </div>
       </div>
 
       {/* Quick Actions Grid */}

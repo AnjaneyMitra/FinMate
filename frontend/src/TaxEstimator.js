@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import FirebaseDataService from "./services/FirebaseDataService";
+import FirebaseDataService from './services/FirebaseDataService';
+import PinButton from './components/PinButton';
 
 // Simple Indian income tax estimator for FY 2024-25 (old regime, for demo)
 function estimateTax({ income, deductions }) {
@@ -104,8 +105,13 @@ export default function TaxEstimator() {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
-      <h2 className="text-2xl font-bold mb-4 text-teal-700">Income Tax Estimator (India)</h2>
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-teal-700">Income Tax Estimator (India)</h2>
+          <PinButton pageId="tax-estimator" />
+        </div>
+      </div>
       <form className="grid grid-cols-1 gap-4 mb-6" onSubmit={handleSubmit}>
         <div>
           <label className="block text-gray-700 font-medium mb-1">Annual Income (₹)</label>

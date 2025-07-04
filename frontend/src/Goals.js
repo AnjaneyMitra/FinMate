@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FirebaseDataService from './services/FirebaseDataService';
+import PinButton from './components/PinButton';
 
 export default function Goals() {
   const [goals, setGoals] = useState([]);
@@ -97,9 +98,12 @@ export default function Goals() {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <span>🎯</span> My Financial Goals
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <span>🎯</span> My Financial Goals
+          </h2>
+          <PinButton pageId="goals" />
+        </div>
         <button
           className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
           onClick={() => setShowGoalForm(true)}

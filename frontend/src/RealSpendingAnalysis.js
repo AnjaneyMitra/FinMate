@@ -4,6 +4,7 @@ import { ResponsiveLine } from '@nivo/line';
 import { ResponsiveBar } from '@nivo/bar';
 import { ComposedChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Rectangle } from 'recharts';
 import FirebaseDataService from './services/FirebaseDataService';
+import PinButton from './components/PinButton';
 
 // Simple error boundary for runtime errors
 class ErrorBoundary extends React.Component {
@@ -145,8 +146,15 @@ export default function RealSpendingAnalysis({ userId = 'default-user' }) {
   return (
     <ErrorBoundary>
       <div className="max-w-7xl mx-auto p-6">
-        <h2 className="text-3xl font-bold mb-2">Spending Analysis</h2>
-        <p className="text-gray-600 mb-6">Live insights into your spending patterns.</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-3xl font-bold">Spending Analysis</h2>
+              <p className="text-gray-600">Live insights into your spending patterns.</p>
+            </div>
+            <PinButton pageId="analytics" />
+          </div>
+        </div>
         
         {/* Live Spending Analytics */}
         <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl p-6 mb-8 border border-purple-200">

@@ -3,6 +3,7 @@ import { User, BookOpen, Sparkles, CheckCircle, Loader } from 'lucide-react';
 import InvestmentLearningService from './services/InvestmentLearningService';
 import UserProfileSetup from './components/UserProfileSetup';
 import PersonalizedContent from './components/PersonalizedContent';
+import PinButton from './components/PinButton';
 
 const levels = [
   {
@@ -242,9 +243,14 @@ export default function InvestmentLearningPath() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Investment Learning Path</h2>
-        <p className="text-gray-600">Master investing with our structured learning modules</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Investment Learning Path</h2>
+            <p className="text-gray-600">Master investing with our structured learning modules</p>
+          </div>
+          <PinButton pageId="learning" />
+        </div>
       </div>
 
       {/* Progress Overview */}

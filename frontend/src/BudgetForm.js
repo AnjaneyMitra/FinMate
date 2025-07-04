@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FirebaseDataService from './services/FirebaseDataService';
 import { ResponsiveBar } from '@nivo/bar';
+import PinButton from './components/PinButton';
 
 export default function BudgetForm() {
   const [form, setForm] = useState({
@@ -183,8 +184,13 @@ export default function BudgetForm() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Budget Planner</h2>
-        <p className="text-gray-600">Create a personalized budget based on your income and goals</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Budget Planner</h2>
+            <p className="text-gray-600">Create a personalized budget based on your income and goals</p>
+          </div>
+          <PinButton pageId="budget" showLabel={true} />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

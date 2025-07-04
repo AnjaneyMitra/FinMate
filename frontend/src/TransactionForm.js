@@ -3,6 +3,7 @@ import { Upload } from 'lucide-react';
 import FirebaseDataService from './services/FirebaseDataService';
 import BankStatementUpload from './components/BankStatementUpload';
 import { auth } from './firebase';
+import PinButton from './components/PinButton';
 
 export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   const [formData, setFormData] = useState({
@@ -298,6 +299,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <PinButton pageId="transactions" showLabel={false} />
             <button
               type="button"
               onClick={() => setShowBankUpload(true)}
