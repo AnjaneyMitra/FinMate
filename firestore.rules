@@ -1,52 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow users to read/write their own profile data
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // User profile document
-      match /profile {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User settings document
-      match /settings {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // User transactions collection
-      match /transactions/{transactionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Validate transaction data structure
-        allow create: if request.auth != null 
-          && request.auth.uid == userId
-          && validateTransaction(request.resource.data);
-          
-        allow update: if request.auth != null 
-          && request.auth.uid == userId
-          && validateTransaction(request.resource.data);
-      }
-      
-      // Monthly aggregated data collection
-      match /monthlyData/{monthKey} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        
-        // Only allow system/server-side writes for monthly data
-        // Client apps should not directly modify aggregated data
-        allow write: if request.auth != null 
-          && request.auth.uid == userId
-          && validateMonthlyData(request.resource.data);
-      }
-      
-      // Budget data
-      match /budget/{budgetId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-    
+
     // Budgets: Each user can read/write only their own budget document
     match /budgets/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -64,67 +19,26 @@ service cloud.firestore {
 
     // Transactions: Each user can read/write only their own transactions
     match /transactions/{docId} {
-      // For reads, use resource.data (existing doc); for writes, use request.resource.data (new/updated doc)
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow create, update: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // (Optional) Analytics: Each user can read/write only their own analytics
+    // Analytics: Each user can read/write only their own analytics
     match /analytics/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Allow users to read/write only their own goals
+    // Goals: Each user can read/write only their own goals
     match /goals/{goalId} {
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // User Learning Profiles: Each user can read/write only their own profile
+    // User Learning Profiles: Each user can read/write only their own learning profile
     match /user_learning_profiles/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Tax Filing Data
-    match /taxFormDrafts/{draftId} {
-      allow read, write, delete: if request.auth.uid == resource.data.userId;
-    }
-
-    match /taxFormSubmissions/{submissionId} {
-      allow read, create: if request.auth.uid == resource.data.userId;
-      allow update, delete: if false; // Submissions are immutable
-    }
-
-    // Validation functions
-    function validateTransaction(data) {
-      return data.keys().hasAll(['amount', 'description', 'category', 'date', 'type'])
-        && data.amount is number
-        && data.amount > 0
-        && data.description is string
-        && data.description.size() > 0
-        && data.category is string
-        && data.category.size() > 0
-        && data.date is timestamp
-        && data.type in ['income', 'expense']
-        && data.month is string
-        && data.month.matches('^[0-9]{4}-[0-9]{2}$'); // YYYY-MM format
-    }
-    
-    function validateMonthlyData(data) {
-      return data.keys().hasAll(['totalIncome', 'totalExpenses', 'categoryBreakdown', 'transactionCount'])
-        && data.totalIncome is number
-        && data.totalIncome >= 0
-        && data.totalExpenses is number
-        && data.totalExpenses >= 0
-        && data.categoryBreakdown is map
-        && data.transactionCount is number
-        && data.transactionCount >= 0;
-    }
-    
-    // Deny access to all other documents
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }

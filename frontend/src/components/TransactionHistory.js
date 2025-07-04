@@ -40,6 +40,15 @@ const TransactionHistory = () => {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // Delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
+  
+  // Bulk selection
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+
   const categories = [
     'all', 'food', 'transport', 'shopping', 'entertainment', 
     'bills', 'healthcare', 'education', 'investment', 'personal',
@@ -154,17 +163,70 @@ const TransactionHistory = () => {
   };
 
   const handleDelete = async (transactionId) => {
-    if (!window.confirm('Are you sure you want to delete this transaction?')) {
-      return;
-    }
+    setTransactionToDelete(transactionId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!transactionToDelete) return;
 
     try {
-      await dataService.deleteTransaction(transactionId);
+      await dataService.deleteTransaction(transactionToDelete);
       await loadTransactions(); // Reload transactions
+      setShowDeleteModal(false);
+      setTransactionToDelete(null);
     } catch (err) {
       console.error('Error deleting transaction:', err);
       setError('Failed to delete transaction. Please try again.');
     }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTransactions.size === 0) {
+      setError('Please select transactions to delete.');
+      return;
+    }
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const deletePromises = Array.from(selectedTransactions).map(id => 
+        dataService.deleteTransaction(id)
+      );
+      await Promise.all(deletePromises);
+      await loadTransactions();
+      setSelectedTransactions(new Set());
+      setIsSelectMode(false);
+      setShowBulkDeleteModal(false);
+    } catch (err) {
+      console.error('Error deleting transactions:', err);
+      setError('Failed to delete transactions. Please try again.');
+    }
+  };
+
+  const toggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+    setSelectedTransactions(new Set());
+  };
+
+  const toggleTransactionSelection = (transactionId) => {
+    const newSelected = new Set(selectedTransactions);
+    if (newSelected.has(transactionId)) {
+      newSelected.delete(transactionId);
+    } else {
+      newSelected.add(transactionId);
+    }
+    setSelectedTransactions(newSelected);
+  };
+
+  const selectAllTransactions = () => {
+    const allIds = new Set(currentTransactions.map(tx => tx.id));
+    setSelectedTransactions(allIds);
+  };
+
+  const deselectAllTransactions = () => {
+    setSelectedTransactions(new Set());
   };
 
   const handleSaveEdit = async () => {
@@ -269,6 +331,40 @@ const TransactionHistory = () => {
             </p>
           </div>
           <div className="flex gap-3">
+            {isSelectMode && (
+              <>
+                <button
+                  onClick={selectAllTransactions}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={deselectAllTransactions}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Deselect All
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={selectedTransactions.size === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected ({selectedTransactions.size})
+                </button>
+              </>
+            )}
+            <button
+              onClick={toggleSelectMode}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                isSelectMode 
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+            >
+              {isSelectMode ? 'Cancel Select' : 'Select'}
+            </button>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -459,6 +555,16 @@ const TransactionHistory = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                {isSelectMode && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedTransactions.size === currentTransactions.length && currentTransactions.length > 0}
+                      onChange={selectedTransactions.size === currentTransactions.length ? deselectAllTransactions : selectAllTransactions}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
@@ -481,7 +587,17 @@ const TransactionHistory = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentTransactions.map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50">
+                <tr key={transaction.id} className={`hover:bg-gray-50 ${selectedTransactions.has(transaction.id) ? 'bg-blue-50' : ''}`}>
+                  {isSelectMode && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.has(transaction.id)}
+                        onChange={() => toggleTransactionSelection(transaction.id)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {format(parseISO(transaction.date), 'MMM dd, yyyy')}
                   </td>
@@ -719,6 +835,96 @@ const TransactionHistory = () => {
               Add Your First Transaction
             </button>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-100 rounded-full p-2 mr-3">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Transaction</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone.</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete this transaction? This will permanently remove it from your records.
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setTransactionToDelete(null);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Delete Transaction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-100 rounded-full p-2 mr-3">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Multiple Transactions</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone.</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mb-4">
+              Are you sure you want to delete <strong>{selectedTransactions.size}</strong> selected transaction{selectedTransactions.size > 1 ? 's' : ''}?
+            </p>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+              <div className="flex items-start">
+                <div className="bg-yellow-100 rounded-full p-1 mr-2 mt-0.5">
+                  <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-sm text-yellow-800">
+                  This will permanently remove all selected transactions from your records and cannot be undone.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowBulkDeleteModal(false);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBulkDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Delete {selectedTransactions.size} Transaction{selectedTransactions.size > 1 ? 's' : ''}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
