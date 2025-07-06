@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { Calculator } from 'lucide-react';
 import PinButton from './components/PinButton';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -226,7 +227,9 @@ export default function TaxBreakdown() {
           {salary === 0 && (
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="text-center py-12">
-                <span className="text-6xl mb-4 block">🧮</span>
+                <div className="p-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl inline-block mb-4">
+                  <Calculator className="w-12 h-12 text-white" />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Tax Calculator</h3>
                 <p className="text-gray-600">Enter your annual salary to see the tax breakdown</p>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../firebase';
-import { FirebaseDataService } from '../services/FirebaseDataService';
+import FirebaseDataService from '../services/FirebaseDataService';
 import { format, parseISO } from 'date-fns';
 import { 
   Search, 
@@ -14,7 +14,23 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  RefreshCw
+  RefreshCw,
+  CreditCard,
+  Banknote,
+  Building2,
+  Smartphone,
+  Utensils,
+  Car,
+  ShoppingBag,
+  Film,
+  Receipt,
+  Heart,
+  BookOpen,
+  TrendingUp,
+  User,
+  FileText as FileTextIcon,
+  ArrowLeftRight,
+  Landmark
 } from 'lucide-react';
 
 const TransactionHistory = () => {
@@ -278,34 +294,55 @@ const TransactionHistory = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      food: '🍽️',
-      transport: '🚗',
-      shopping: '🛍️',
-      entertainment: '🎬',
-      bills: '📄',
-      healthcare: '🏥',
-      education: '📚',
-      investment: '📈',
-      personal: '👤',
-      miscellaneous: '📝',
-      transfer: '↔️',
-      atm: '🏧'
+  const getCategoryBackground = (category) => {
+    const backgroundMap = {
+      food: 'bg-gradient-to-r from-orange-50 to-orange-100',
+      transport: 'bg-gradient-to-r from-blue-50 to-blue-100',
+      shopping: 'bg-gradient-to-r from-purple-50 to-purple-100',
+      entertainment: 'bg-gradient-to-r from-pink-50 to-pink-100',
+      bills: 'bg-gradient-to-r from-red-50 to-red-100',
+      healthcare: 'bg-gradient-to-r from-rose-50 to-rose-100',
+      education: 'bg-gradient-to-r from-green-50 to-green-100',
+      investment: 'bg-gradient-to-r from-emerald-50 to-emerald-100',
+      personal: 'bg-gradient-to-r from-indigo-50 to-indigo-100',
+      miscellaneous: 'bg-gradient-to-r from-gray-50 to-gray-100',
+      transfer: 'bg-gradient-to-r from-teal-50 to-teal-100',
+      atm: 'bg-gradient-to-r from-slate-50 to-slate-100'
     };
-    return icons[category] || '💰';
+    return backgroundMap[category] || 'bg-gradient-to-r from-yellow-50 to-yellow-100';
+  };
+
+  const getCategoryIcon = (category) => {
+    const iconMap = {
+      food: { Icon: Utensils, color: 'text-orange-600' },
+      transport: { Icon: Car, color: 'text-blue-600' },
+      shopping: { Icon: ShoppingBag, color: 'text-purple-600' },
+      entertainment: { Icon: Film, color: 'text-pink-600' },
+      bills: { Icon: Receipt, color: 'text-red-600' },
+      healthcare: { Icon: Heart, color: 'text-rose-600' },
+      education: { Icon: BookOpen, color: 'text-green-600' },
+      investment: { Icon: TrendingUp, color: 'text-emerald-600' },
+      personal: { Icon: User, color: 'text-indigo-600' },
+      miscellaneous: { Icon: FileTextIcon, color: 'text-gray-600' },
+      transfer: { Icon: ArrowLeftRight, color: 'text-teal-600' },
+      atm: { Icon: Landmark, color: 'text-slate-600' }
+    };
+    const iconData = iconMap[category] || { Icon: DollarSign, color: 'text-yellow-600' };
+    const { Icon, color } = iconData;
+    return <Icon className={`w-4 h-4 ${color}`} />;
   };
 
   const getPaymentMethodIcon = (method) => {
-    const icons = {
-      credit_card: '💳',
-      debit_card: '💳',
-      cash: '💵',
-      bank_transfer: '🏦',
-      digital_wallet: '📱',
-      upi: '📱'
+    const iconMap = {
+      credit_card: CreditCard,
+      debit_card: CreditCard,
+      cash: Banknote,
+      bank_transfer: Building2,
+      digital_wallet: Smartphone,
+      upi: Smartphone
     };
-    return icons[method] || '💳';
+    const IconComponent = iconMap[method] || CreditCard;
+    return <IconComponent className="w-4 h-4 text-gray-600" />;
   };
 
   if (loading) {
@@ -618,7 +655,9 @@ const TransactionHistory = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{getCategoryIcon(transaction.category)}</span>
+                      <div className={`p-1.5 rounded-lg border border-gray-200 ${getCategoryBackground(transaction.category)}`}>
+                        {getCategoryIcon(transaction.category)}
+                      </div>
                       <span className="text-sm text-gray-900 capitalize">
                         {transaction.category || 'Uncategorized'}
                       </span>
@@ -631,7 +670,7 @@ const TransactionHistory = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">{getPaymentMethodIcon(transaction.payment_method)}</span>
+                      {getPaymentMethodIcon(transaction.payment_method)}
                       <span className="text-sm text-gray-600 capitalize">
                         {transaction.payment_method?.replace('_', ' ') || 'Unknown'}
                       </span>

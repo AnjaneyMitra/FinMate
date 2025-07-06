@@ -2,6 +2,20 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DataMigrationService from './services/DataMigrationService';
 import SampleDataService from './services/SampleDataService';
 import PinButton from './components/PinButton';
+import { 
+  Database, 
+  Shield, 
+  Settings as SettingsIcon, 
+  Info, 
+  CheckCircle, 
+  XCircle, 
+  BarChart3, 
+  Download, 
+  Upload, 
+  RotateCcw, 
+  Target, 
+  Lock 
+} from 'lucide-react';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('data');
@@ -9,8 +23,8 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const migrationService = new DataMigrationService();
-  const sampleDataService = new SampleDataService();
+  const migrationService = useMemo(() => new DataMigrationService(), []);
+  const sampleDataService = useMemo(() => new SampleDataService(), []);
 
   const checkMigrationStatus = useCallback(async () => {
     try {
@@ -93,10 +107,10 @@ export default function Settings() {
   };
 
   const tabs = [
-    { id: 'data', label: 'Data Management', icon: '💾' },
-    { id: 'privacy', label: 'Privacy', icon: '🔒' },
-    { id: 'preferences', label: 'Preferences', icon: '⚙️' },
-    { id: 'about', label: 'About', icon: 'ℹ️' }
+    { id: 'data', label: 'Data Management', icon: <Database className="w-4 h-4" /> },
+    { id: 'privacy', label: 'Privacy', icon: <Shield className="w-4 h-4" /> },
+    { id: 'preferences', label: 'Preferences', icon: <SettingsIcon className="w-4 h-4" /> },
+    { id: 'about', label: 'About', icon: <Info className="w-4 h-4" /> }
   ];
 
   return (
@@ -120,13 +134,13 @@ export default function Settings() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center gap-2 ${
                 activeTab === tab.id
                   ? 'border-teal-500 text-teal-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
+              {tab.icon}
               {tab.label}
             </button>
           ))}
@@ -135,11 +149,27 @@ export default function Settings() {
 
       {/* Message Display */}
       {message && (
-        <div className={`mb-6 p-4 rounded-md ${
-          message.includes('❌') ? 'bg-red-50 text-red-800 border border-red-200' : 
-          'bg-green-50 text-green-800 border border-green-200'
+        <div className={`mb-6 p-4 rounded-xl border shadow-sm ${
+          message.includes('❌') || message.includes('failed') || message.includes('Failed') 
+            ? 'bg-red-50 text-red-800 border-red-200' 
+            : 'bg-green-50 text-green-800 border-green-200'
         }`}>
-          {message}
+          <div className="flex items-start gap-3">
+            <div className={`p-1 rounded-md ${
+              message.includes('❌') || message.includes('failed') || message.includes('Failed')
+                ? 'bg-red-100' 
+                : 'bg-green-100'
+            }`}>
+              {message.includes('❌') || message.includes('failed') || message.includes('Failed') ? (
+                <XCircle className="w-5 h-5 text-red-600" />
+              ) : (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              )}
+            </div>
+            <div className="flex-1">
+              {message.replace(/[✅❌]/g, '').trim()}
+            </div>
+          </div>
         </div>
       )}
 
@@ -147,15 +177,27 @@ export default function Settings() {
       {activeTab === 'data' && (
         <div className="space-y-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 Data Storage & Migration</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Database className="w-5 h-5 text-teal-600" />
+              Data Storage & Migration
+            </h2>
             
             {/* Firebase Status */}
             <div className="mb-6 p-4 bg-blue-50 rounded-md">
               <h3 className="font-medium text-blue-900 mb-2">Firebase Integration Status</h3>
-              <div className="text-sm text-blue-800">
-                <p>✅ Firebase Firestore is configured and ready</p>
-                <p>📈 Free tier: 50k reads/day, 20k writes/day, 1GB storage</p>
-                <p>🔄 Real-time sync across all your devices</p>
+              <div className="text-sm text-blue-800 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Firebase Firestore is configured and ready</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                  <span>Free tier: 50k reads/day, 20k writes/day, 1GB storage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="w-4 h-4 text-blue-600" />
+                  <span>Real-time sync across all your devices</span>
+                </div>
               </div>
             </div>
 
@@ -182,7 +224,10 @@ export default function Settings() {
             <div className="space-y-4">
               {migrationStatus?.needsMigration && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <h3 className="font-medium text-yellow-800 mb-2">🔄 Migration Available</h3>
+                  <h3 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4 text-yellow-600" />
+                    Migration Available
+                  </h3>
                   <p className="text-sm text-yellow-700 mb-3">
                     You have data in localStorage that can be migrated to Firebase for better persistence and sync.
                   </p>
@@ -198,8 +243,11 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Demo Data */}
-                <div className="p-4 border border-gray-200 rounded-md">
-                  <h3 className="font-medium text-gray-900 mb-2">🎯 Demo Data</h3>
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    Demo Data
+                  </h3>
                   <p className="text-sm text-gray-600 mb-3">
                     Add sample transactions, budget, and preferences to test the app.
                   </p>
@@ -213,8 +261,11 @@ export default function Settings() {
                 </div>
 
                 {/* Backup */}
-                <div className="p-4 border border-gray-200 rounded-md">
-                  <h3 className="font-medium text-gray-900 mb-2">💾 Backup Data</h3>
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                    <Download className="w-4 h-4 text-teal-600" />
+                    Backup Data
+                  </h3>
                   <p className="text-sm text-gray-600 mb-3">
                     Download a complete backup of your financial data as a JSON file.
                   </p>
@@ -228,8 +279,11 @@ export default function Settings() {
                 </div>
 
                 {/* Restore */}
-                <div className="p-4 border border-gray-200 rounded-md">
-                  <h3 className="font-medium text-gray-900 mb-2">🔄 Restore Data</h3>
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-teal-600" />
+                    Restore Data
+                  </h3>
                   <p className="text-sm text-gray-600 mb-3">
                     Restore your data from a previously downloaded backup file.
                   </p>
@@ -249,7 +303,10 @@ export default function Settings() {
 
           {/* Data Usage */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Storage Usage</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-teal-600" />
+              Storage Usage
+            </h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Firebase Free Tier Usage:</span>
@@ -267,15 +324,30 @@ export default function Settings() {
 
       {activeTab === 'privacy' && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">🔒 Privacy & Security</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-gray-600" />
+            Privacy & Security
+          </h2>
           <div className="space-y-4">
             <div className="p-4 bg-green-50 rounded-md">
               <h3 className="font-medium text-green-900 mb-2">Data Privacy</h3>
-              <ul className="text-sm text-green-800 space-y-1">
-                <li>✅ All data is stored securely in Firebase</li>
-                <li>✅ Data is encrypted in transit and at rest</li>
-                <li>✅ Only you can access your financial data</li>
-                <li>✅ No data is shared with third parties</li>
+              <ul className="text-sm text-green-800 space-y-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>All data is stored securely in Firebase</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Data is encrypted in transit and at rest</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Only you can access your financial data</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>No data is shared with third parties</span>
+                </li>
               </ul>
             </div>
             
@@ -292,7 +364,10 @@ export default function Settings() {
 
       {activeTab === 'preferences' && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">⚙️ App Preferences</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <SettingsIcon className="w-5 h-5 text-gray-600" />
+            App Preferences
+          </h2>
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

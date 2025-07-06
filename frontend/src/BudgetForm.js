@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FirebaseDataService from './services/FirebaseDataService';
 import { ResponsiveBar } from '@nivo/bar';
+import { DollarSign, Zap, BarChart3 } from 'lucide-react';
 import PinButton from './components/PinButton';
 
 export default function BudgetForm() {
@@ -16,47 +17,18 @@ export default function BudgetForm() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [plannedCategories, setPlannedCategories] = useState({});
   
-  // Add missing state for editing planned category
-  const [editingCat, setEditingCat] = useState(null);
-  const [editingValue, setEditingValue] = useState("");
-
-  // --- Planned Spending (Global) ---
-  const [globalPlannedSpending, setGlobalPlannedSpending] = useState(0);
-  const [globalPlannedStatus, setGlobalPlannedStatus] = useState(null);
-  
   useEffect(() => {
     async function fetchGlobalPlanned() {
       try {
         const dataService = new FirebaseDataService();
         const prefs = await dataService.getUserPreferences();
         if (prefs && prefs.plannedSpending !== undefined) {
-          setGlobalPlannedSpending(Number(prefs.plannedSpending));
+          // globalPlannedSpending fetched but not used in current implementation
         }
       } catch {}
     }
     fetchGlobalPlanned();
   }, []);
-
-  const saveGlobalPlannedSpending = async (value) => {
-    setGlobalPlannedStatus('saving');
-    try {
-      const dataService = new FirebaseDataService();
-      const prefs = await dataService.getUserPreferences();
-      await dataService.saveUserPreferences({ ...(prefs || {}), plannedSpending: Number(value) });
-      setGlobalPlannedStatus('success');
-    } catch {
-      setGlobalPlannedStatus('error');
-    }
-  };
-
-  // --- Planned Spending by Category (Global, for Budget Planner) ---
-  const [categories, setCategories] = useState([
-    'Essentials', 'Savings', 'Discretionary', 'Emergency',
-    'Food', 'Bills', 'Transport', 'Shopping', 'Entertainment', 'Healthcare', 'Education', 'Personal', 'Miscellaneous'
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState('Essentials');
-  const [categoryPlanned, setCategoryPlanned] = useState({});
-  const [catSaveStatus, setCatSaveStatus] = useState(null);
 
   // Load user's saved budget and planned categories on mount
   useEffect(() => {
@@ -260,7 +232,9 @@ export default function BudgetForm() {
           
           {!loading && !suggestedBudget && (
             <div className="text-center py-8 text-gray-500">
-              <span className="text-4xl mb-4 block">💰</span>
+              <div className="p-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl inline-block mb-4">
+                <DollarSign className="w-12 h-12 text-white" />
+              </div>
               <p>Fill out the form to get your personalized budget suggestion</p>
             </div>
           )}
@@ -341,7 +315,10 @@ export default function BudgetForm() {
       {(suggestedBudget && !suggestedBudget.error) && (
         <div className="bg-gradient-to-br from-teal-50 to-blue-100 rounded-xl p-6 mt-8 border border-teal-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span>📊</span> Live Budget Analytics
+            <div className="bg-teal-100 p-2 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-teal-600" />
+            </div>
+            Live Budget Analytics
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Real Spending Progress */}
@@ -440,7 +417,10 @@ export default function BudgetForm() {
           </div>
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
-              ⚡ <strong>Real-time data:</strong> Budget tracking • Spending alerts • Progress monitoring • Smart insights
+              <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <strong>Real-time data:</strong> Budget tracking • Spending alerts • Progress monitoring • Smart insights
+            </div>
             </p>
           </div>
         </div>

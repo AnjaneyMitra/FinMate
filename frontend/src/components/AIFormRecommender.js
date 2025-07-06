@@ -87,12 +87,12 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
     return (
       <div className="space-y-4">
         {results.search_interpretation && (
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
             <div className="flex items-start gap-3">
-              <Target className="w-5 h-5 text-blue-600 mt-0.5" />
+              <Target className="w-5 h-5 text-teal-600 mt-0.5" />
               <div>
-                <h5 className="font-medium text-blue-900 mb-1">How I understood your query:</h5>
-                <p className="text-blue-800 text-sm">{results.search_interpretation}</p>
+                <h5 className="font-medium text-teal-900 mb-1">How I understood your query:</h5>
+                <p className="text-teal-800 text-sm">{results.search_interpretation}</p>
               </div>
             </div>
           </div>
@@ -100,7 +100,7 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {results.search_results.map((result, index) => (
-            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 hover:border-teal-300 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <h5 className="font-semibold text-gray-900">{result.form_name}</h5>
                 <div className="flex items-center gap-1 text-sm">
@@ -143,7 +143,7 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
 
               <button
                 onClick={() => onFormSelected && onFormSelected(result.form_id)}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all text-sm font-medium"
+                className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-2 px-4 rounded-lg hover:from-teal-600 hover:to-blue-700 transition-all text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
               >
                 Select This Form
               </button>
@@ -167,10 +167,10 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-6 border border-blue-100">
+    <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl p-6 mb-6 border border-teal-200">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-          <Bot className="w-5 h-5 text-white" />
+        <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+          <Bot className="w-6 h-6 text-white" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">AI-Powered Form Search</h3>
@@ -186,12 +186,12 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
             value={naturalLanguageQuery}
             onChange={(e) => setNaturalLanguageQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleAiSearch()}
-            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
           />
           <button
             onClick={handleAiSearch}
             disabled={aiSearchLoading || !naturalLanguageQuery.trim()}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-teal-600 hover:text-teal-700 disabled:text-gray-400"
           >
             {aiSearchLoading ? (
               <Loader className="w-5 h-5 animate-spin" />
@@ -212,7 +212,7 @@ const AIFormRecommender = ({ onFormSelected, userProfile = {} }) => {
                 <button
                   key={index}
                   onClick={() => handleSituationDiscovery(suggestion)}
-                  className="px-3 py-1 bg-white text-blue-700 text-sm rounded-full border border-blue-200 hover:bg-blue-50 transition-colors"
+                  className="px-3 py-1 bg-white text-teal-700 text-sm rounded-full border border-teal-200 hover:bg-teal-50 transition-colors"
                 >
                   {suggestion}
                 </button>

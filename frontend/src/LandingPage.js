@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardPreview, GoalsPreview, BudgetPreview } from './components/FeaturePreviews';
+import { PieChart } from 'lucide-react';
 
 export default function LandingPage() {
 	const navigate = useNavigate();
@@ -10,7 +11,9 @@ export default function LandingPage() {
 			{/* Fixed header */}
 			<header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
 				<div className="flex items-center gap-3">
-					<span className="text-2xl">🧩</span>
+					<div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+						<PieChart className="w-5 h-5 text-white" />
+					</div>
 					<span className="font-bold text-xl md:text-2xl tracking-tight text-gray-900">
 						FinMate
 					</span>
@@ -80,7 +83,7 @@ export default function LandingPage() {
 								</div>
 							</div>
 							<div className="flex-1 w-full max-w-md lg:max-w-none">
-								<div className="h-80 md:h-96">
+								<div className="h-[28rem] md:h-[32rem] lg:h-[36rem]">
 									<DashboardPreview />
 								</div>
 							</div>
@@ -108,7 +111,7 @@ export default function LandingPage() {
 								</div>
 							</div>
 							<div className="flex-1 w-full max-w-md lg:max-w-none">
-								<div className="h-80 md:h-96">
+								<div className="h-[24rem] md:h-[28rem] lg:h-[32rem]">
 									<GoalsPreview />
 								</div>
 							</div>
@@ -136,7 +139,7 @@ export default function LandingPage() {
 								</div>
 							</div>
 							<div className="flex-1 w-full max-w-md lg:max-w-none">
-								<div className="h-80 md:h-96">
+								<div className="h-[22rem] md:h-[26rem] lg:h-[30rem]">
 									<BudgetPreview />
 								</div>
 							</div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Sparkles, Target, CheckCircle, Loader, BookOpen, User, Clock, Tag } from 'lucide-react';
+import { Sparkles, Target, CheckCircle, Loader, BookOpen, User, Clock, Tag, X, AlertTriangle } from 'lucide-react';
 import './LearningContent.css';
 import ContentActions from './ContentActions';
 
@@ -110,7 +110,7 @@ const PersonalizedContent = ({
           className="text-gray-400 hover:text-gray-600 transition-colors"
           title="Close content"
         >
-          ✕
+          <X className="w-4 h-4" />
         </button>
       </div>
 
@@ -305,7 +305,9 @@ const PersonalizedContent = ({
       {content.risk_disclaimers && (
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
           <div className="flex items-start">
-            <div className="text-yellow-600 mr-2 mt-1">⚠️</div>
+            <div className="p-1 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-md mr-2 mt-1">
+              <AlertTriangle className="w-4 h-4 text-yellow-600" />
+            </div>
             <div className="text-yellow-800 text-sm leading-relaxed">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}

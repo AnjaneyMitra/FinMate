@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme, useThemeStyles, ThemedInput, ThemedButton, ThemedCard, ThemedAlert, ThemedStatus } from '../contexts/ThemeContext';
+import { CreditCard, DollarSign, Smartphone, Building2, Rocket, Sparkles, CheckCircle, AlertTriangle, XCircle, Lightbulb } from 'lucide-react';
 
 /**
  * ThemeShowcase - Demonstrates the enhanced theme system capabilities
@@ -26,16 +27,28 @@ export default function ThemeShowcase() {
           <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Alert Components</h2>
           <div className="grid gap-4">
             <ThemedAlert type="success">
-              ✅ Transaction saved successfully! Your expense has been categorized and added to your budget.
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Transaction saved successfully! Your expense has been categorized and added to your budget.
+              </div>
             </ThemedAlert>
             <ThemedAlert type="warning">
-              ⚠️ You're approaching your monthly budget limit. Consider reviewing your expenses.
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                You're approaching your monthly budget limit. Consider reviewing your expenses.
+              </div>
             </ThemedAlert>
             <ThemedAlert type="error">
-              ❌ Failed to process transaction. Please check your internet connection and try again.
+              <div className="flex items-center gap-2">
+                <XCircle className="w-4 h-4" />
+                Failed to process transaction. Please check your internet connection and try again.
+              </div>
             </ThemedAlert>
             <ThemedAlert type="info">
-              💡 Pro tip: Use detailed descriptions to improve automatic categorization accuracy.
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4" />
+                Pro tip: Use detailed descriptions to improve automatic categorization accuracy.
+              </div>
             </ThemedAlert>
           </div>
         </ThemedCard>
@@ -120,19 +133,27 @@ export default function ThemeShowcase() {
           <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Selection States</h2>
           <div className="grid-auto-fit">
             <div className={`${styles.selectable('selected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">💳</span>
+              <div className="p-2 bg-gradient-to-r from-teal-100 to-blue-100 rounded-lg">
+                <CreditCard className="w-6 h-6 text-teal-600" />
+              </div>
               <span className="text-sm font-medium">Credit Card (Selected)</span>
             </div>
             <div className={`${styles.selectable('unselected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">💵</span>
+              <div className="p-2 bg-gradient-to-r from-gray-100 to-green-100 rounded-lg">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
               <span className="text-sm font-medium">Cash</span>
             </div>
             <div className={`${styles.selectable('unselected')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">📱</span>
+              <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
+                <Smartphone className="w-6 h-6 text-purple-600" />
+              </div>
               <span className="text-sm font-medium">UPI</span>
             </div>
             <div className={`${styles.selectable('disabled')} flex-center flex-col space-y-2`}>
-              <span className="text-2xl">🏦</span>
+              <div className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg">
+                <Building2 className="w-6 h-6 text-gray-400" />
+              </div>
               <span className="text-sm font-medium">Net Banking (Disabled)</span>
             </div>
           </div>
@@ -182,7 +203,12 @@ export default function ThemeShowcase() {
           <h2 className={`text-2xl font-semibold ${text.primary} mb-6`}>Usage Benefits</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className={`text-lg font-semibold ${text.primary} mb-3`}>🚀 Before (Manual Approach)</h3>
+              <h3 className={`text-lg font-semibold ${text.primary} mb-3 flex items-center gap-2`}>
+                <div className="p-1 bg-gradient-to-r from-red-100 to-orange-100 rounded-md">
+                  <Rocket className="w-4 h-4 text-red-600" />
+                </div>
+                Before (Manual Approach)
+              </h3>
               <div className={`${bg.secondary} rounded-lg p-4 text-sm ${text.secondary}`}>
                 <code>{`// Manually applying theme colors
 <button className={\`\${
@@ -195,7 +221,12 @@ export default function ThemeShowcase() {
               </div>
             </div>
             <div>
-              <h3 className={`text-lg font-semibold ${text.primary} mb-3`}>✨ After (Enhanced System)</h3>
+              <h3 className={`text-lg font-semibold ${text.primary} mb-3 flex items-center gap-2`}>
+                <div className="p-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-md">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                </div>
+                After (Enhanced System)
+              </h3>
               <div className={`${bg.secondary} rounded-lg p-4 text-sm ${text.secondary}`}>
                 <code>{`// Semantic, theme-aware components
 <ThemedButton variant="primary">

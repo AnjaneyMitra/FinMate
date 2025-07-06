@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, PartyPopper, Utensils, Receipt, Car, ShoppingBag, Film, Hospital, GraduationCap, User, CreditCard, Banknote, DollarSign, Building, Smartphone, Wallet, FileText, Calendar, Building2, Target, CheckCircle, Lightbulb, Sparkles, BarChart3, Zap } from 'lucide-react';
 import FirebaseDataService from './services/FirebaseDataService';
 import BankStatementUpload from './components/BankStatementUpload';
 import { auth } from './firebase';
@@ -81,47 +81,47 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
   const categories = {
     food: { 
-      icon: '🍽️',
+      icon: Utensils,
       subcategories: ['Groceries', 'Restaurants', 'Cafe/Coffee', 'Fast Food', 'Delivery']
     },
     bills: { 
-      icon: '🧾',
+      icon: Receipt,
       subcategories: ['Rent/Mortgage', 'Utilities', 'Insurance', 'Phone', 'Internet']
     },
     transport: { 
-      icon: '🚗',
+      icon: Car,
       subcategories: ['Fuel/Gas', 'Public Transport', 'Uber/Taxi', 'Parking', 'Maintenance']
     },
     shopping: { 
-      icon: '🛍️',
+      icon: ShoppingBag,
       subcategories: ['Clothing', 'Electronics', 'Home Goods', 'Online Shopping', 'Books']
     },
     entertainment: { 
-      icon: '🎬',
+      icon: Film,
       subcategories: ['Movies', 'Gaming', 'Streaming Services', 'Events', 'Sports']
     },
     healthcare: { 
-      icon: '🏥',
+      icon: Hospital,
       subcategories: ['Doctor Visit', 'Pharmacy', 'Dental', 'Vision', 'Lab Tests']
     },
     education: { 
-      icon: '📚',
+      icon: GraduationCap,
       subcategories: ['Tuition', 'Books', 'Courses', 'Training', 'Supplies']
     },
     personal: { 
-      icon: '🧴',
+      icon: User,
       subcategories: ['Grooming', 'Fitness', 'Hobbies', 'Gifts', 'Miscellaneous']
     }
   };
 
   const paymentMethods = [
-    { value: 'credit_card', label: 'Credit Card', icon: '💳' },
-    { value: 'debit_card', label: 'Debit Card', icon: '💰' },
-    { value: 'cash', label: 'Cash', icon: '💵' },
-    { value: 'net_banking', label: 'Net Banking', icon: '🏦' },
-    { value: 'upi', label: 'UPI', icon: '📱' },
-    { value: 'wallet', label: 'Digital Wallet', icon: '👛' },
-    { value: 'cheque', label: 'Cheque', icon: '📝' }
+    { value: 'credit_card', label: 'Credit Card', icon: CreditCard },
+    { value: 'debit_card', label: 'Debit Card', icon: DollarSign },
+    { value: 'cash', label: 'Cash', icon: Banknote },
+    { value: 'net_banking', label: 'Net Banking', icon: Building },
+    { value: 'upi', label: 'UPI', icon: Smartphone },
+    { value: 'wallet', label: 'Digital Wallet', icon: Wallet },
+    { value: 'cheque', label: 'Cheque', icon: FileText }
   ];
 
   const handleInputChange = (e) => {
@@ -175,8 +175,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
       // Store transaction details for success display
       setLastTransaction({
         ...transactionData,
-        category_icon: categories[transactionData.category]?.icon || '🛒',
-        payment_icon: paymentMethods.find(p => p.value === transactionData.payment_method)?.icon || '💳',
+        category_icon: categories[transactionData.category]?.icon || ShoppingBag,
+        payment_icon: paymentMethods.find(p => p.value === transactionData.payment_method)?.icon || CreditCard,
         timestamp: new Date().toLocaleTimeString()
       });
       
@@ -331,7 +331,10 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold mb-1">Transaction Added Successfully! 🎉</h3>
+                    <h3 className="text-2xl font-bold mb-1 flex items-center gap-2">
+                      Transaction Added Successfully! 
+                      <PartyPopper className="w-6 h-6 text-green-200" />
+                    </h3>
                     <p className="text-green-100 text-sm">Your expense has been tracked and categorized</p>
                   </div>
                 </div>
@@ -347,14 +350,18 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               <div className="mt-6 bg-white bg-opacity-10 rounded-xl p-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{lastTransaction.category_icon}</span>
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      {React.createElement(lastTransaction.category_icon, { className: "w-6 h-6 text-green-600" })}
+                    </div>
                     <div>
                       <p className="font-semibold">Amount</p>
                       <p className="text-green-100">₹{lastTransaction.amount.toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{lastTransaction.payment_icon}</span>
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      {React.createElement(lastTransaction.payment_icon, { className: "w-6 h-6 text-green-600" })}
+                    </div>
                     <div>
                       <p className="font-semibold">Category</p>
                       <p className="text-green-100 capitalize">{lastTransaction.category}</p>
@@ -428,7 +435,10 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
         {/* Real-Time Transaction Insights */}
         <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 mb-8 border border-green-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span>💳</span> Live Transaction Analytics
+            <div className="bg-green-100 p-2 rounded-lg">
+              <CreditCard className="w-5 h-5 text-green-600" />
+            </div>
+            Live Transaction Analytics
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Smart Categorization - Real */}
@@ -438,17 +448,19 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 {(() => {
                   // Generate recent transactions based on current form category or default
                   const currentCategory = formData.category || 'food';
-                  const categoryIcon = categories[currentCategory]?.icon || '🛒';
+                  const categoryIcon = categories[currentCategory]?.icon || ShoppingBag;
                   const recentTransactions = [
                     { name: 'Your latest entry', amount: formData.amount || '500', category: currentCategory, icon: categoryIcon },
-                    { name: 'Grocery Store', amount: '2,450', category: 'food', icon: '🍽️' },
-                    { name: 'Metro Card', amount: '200', category: 'transport', icon: '🚗' }
+                    { name: 'Grocery Store', amount: '2,450', category: 'food', icon: Utensils },
+                    { name: 'Metro Card', amount: '200', category: 'transport', icon: Car }
                   ];
                   
                   return recentTransactions.map((transaction, index) => (
                     <div key={index} className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 flex items-center gap-1">
-                        <span>{transaction.icon}</span>
+                        <div className="p-1">
+                          {React.createElement(transaction.icon, { className: "w-4 h-4" })}
+                        </div>
                         {transaction.name}
                       </span>
                       <div className="flex items-center gap-2">
@@ -527,8 +539,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             </div>
           </div>
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
-              ⚡ <strong>Real-time tracking:</strong> Smart categorization • Goal linking • Live insights • Instant analysis
+            <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+              <div className="bg-purple-100 p-1 rounded">
+                <Zap className="w-3 h-3 text-purple-600" />
+              </div>
+              <strong>Real-time tracking:</strong> Smart categorization • Goal linking • Live insights • Instant analysis
             </p>
           </div>
         </div>
@@ -539,8 +554,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Amount */}
               <div>
-                <label htmlFor="amount" className="block text-lg font-semibold text-teal-700 mb-3">
-                  💰 Amount (₹) *
+                <label htmlFor="amount" className="block text-lg font-semibold text-teal-700 mb-3 flex items-center gap-2">
+                  <div className="bg-teal-100 p-1.5 rounded-lg">
+                    <DollarSign className="w-4 h-4 text-teal-600" />
+                  </div>
+                  Amount (₹) *
                 </label>
                 <input
                   type="number"
@@ -558,8 +576,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
               {/* Date */}
               <div>
-                <label htmlFor="date" className="block text-lg font-semibold text-teal-700 mb-3">
-                  📅 Date *
+                <label htmlFor="date" className="block text-lg font-semibold text-teal-700 mb-3 flex items-center gap-2">
+                  <div className="bg-teal-100 p-1.5 rounded-lg">
+                    <Calendar className="w-4 h-4 text-teal-600" />
+                  </div>
+                  Date *
                 </label>
                 <input
                   type="date"
@@ -576,8 +597,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-lg font-medium text-gray-700 mb-3">
-              📝 Description *
+            <label htmlFor="description" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <div className="bg-gray-100 p-1.5 rounded-lg">
+                <FileText className="w-4 h-4 text-gray-600" />
+              </div>
+              Description *
             </label>
             <input
               type="text"
@@ -595,8 +619,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3">
-                🏷️ Category *
+              <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-gray-600" />
+                Category *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(categories).map(([cat, data]) => (
@@ -610,7 +635,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                         : 'border-gray-300 hover:border-teal-300 hover:bg-teal-50'
                     }`}
                   >
-                    <span className="text-lg">{data.icon}</span>
+                    <div className="p-1">
+                      {React.createElement(data.icon, { className: "w-5 h-5" })}
+                    </div>
                     <span className="text-sm font-medium capitalize">{cat}</span>
                   </button>
                 ))}
@@ -619,8 +646,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
             {/* Subcategory */}
             <div>
-              <label htmlFor="subcategory" className="block text-lg font-medium text-gray-700 mb-3">
-                🎯 Subcategory
+              <label htmlFor="subcategory" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-gray-600" />
+                Subcategory
               </label>
               <select
                 id="subcategory"
@@ -641,8 +669,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Payment Method - Visual Selection */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-4">
-              💳 Payment Method
+            <label className="block text-lg font-medium text-gray-700 mb-4 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-gray-600" />
+              Payment Method
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {paymentMethods.map(method => (
@@ -656,7 +685,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                       : 'border-gray-300 hover:border-teal-300 hover:bg-teal-50'
                   }`}
                 >
-                  <span className="text-2xl">{method.icon}</span>
+                  <div className="p-1">
+                    {React.createElement(method.icon, { className: "w-6 h-6" })}
+                  </div>
                   <span className="text-sm font-medium text-center">{method.label}</span>
                 </button>
               ))}
@@ -665,8 +696,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Merchant */}
           <div>
-            <label htmlFor="merchant_name" className="block text-lg font-medium text-gray-700 mb-3">
-              🏪 Merchant/Store
+            <label htmlFor="merchant_name" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <div className="bg-gray-100 p-1.5 rounded-lg">
+                <Building2 className="w-4 h-4 text-gray-600" />
+              </div>
+              Merchant/Store
             </label>
             <input
               type="text"
@@ -681,8 +715,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-lg font-medium text-gray-700 mb-3">
-              📋 Notes
+            <label htmlFor="notes" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <div className="bg-gray-100 p-1.5 rounded-lg">
+                <FileText className="w-4 h-4 text-gray-600" />
+              </div>
+              Notes
             </label>
             <textarea
               id="notes"
@@ -697,8 +734,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Goal Assignment Dropdown */}
           <div>
-            <label htmlFor="goalId" className="block text-lg font-medium text-gray-700 mb-3">
-              🎯 Assign to Goal (optional)
+            <label htmlFor="goalId" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <div className="bg-gray-100 p-1.5 rounded-lg">
+                <Target className="w-4 h-4 text-gray-600" />
+              </div>
+              Assign to Goal (optional)
             </label>
             <select
               id="goalId"
@@ -711,7 +751,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               <option value="">No goal</option>
               {goals.map(goal => (
                 <option key={goal.id} value={goal.id}>
-                  {goal.emoji || '🎯'} {goal.name} (Target: ₹{goal.target})
+                  {goal.name} (Target: ₹{goal.target})
                 </option>
               ))}
             </select>
@@ -741,12 +781,12 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 </div>
               ) : success ? (
                 <div className="flex items-center justify-center animate-bounce">
-                  <span className="mr-3 text-2xl">✅</span>
+                  <CheckCircle className="w-6 h-6 text-green-200 mr-3" />
                   <span>Transaction Added!</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <span className="mr-3 text-xl">💰</span>
+                  <DollarSign className="w-5 h-5 text-white mr-3" />
                   <span>Add Transaction</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transform -skew-x-12 transition-all duration-700"></div>
                 </div>
@@ -768,33 +808,43 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
         {/* Tips Section */}
         <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
           <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-            <span className="mr-2">💡</span>
+            <div className="bg-blue-100 p-2 rounded-lg mr-3">
+              <Lightbulb className="w-5 h-5 text-blue-600" />
+            </div>
             Pro Tips for Better Expense Tracking
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start">
-              <span className="text-blue-500 mr-3 text-lg">✨</span>
+              <div className="bg-blue-100 p-1.5 rounded-lg mr-3 mt-0.5">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+              </div>
               <div>
                 <p className="text-sm font-medium text-blue-800">Be Specific</p>
                 <p className="text-sm text-blue-700">Use detailed descriptions like "Groceries at Walmart" instead of just "Shopping"</p>
               </div>
             </div>
             <div className="flex items-start">
-              <span className="text-purple-500 mr-3 text-lg">🎯</span>
+              <div className="bg-purple-100 p-1.5 rounded-lg mr-3 mt-0.5">
+                <Target className="w-4 h-4 text-purple-600" />
+              </div>
               <div>
                 <p className="text-sm font-medium text-purple-800">Track Merchants</p>
                 <p className="text-sm text-purple-700">Adding store names helps identify spending patterns and favorite locations</p>
               </div>
             </div>
             <div className="flex items-start">
-              <span className="text-green-500 mr-3 text-lg">📊</span>
+              <div className="bg-green-100 p-1.5 rounded-lg mr-3 mt-0.5">
+                <BarChart3 className="w-4 h-4 text-green-600" />
+              </div>
               <div>
                 <p className="text-sm font-medium text-green-800">Consistent Categories</p>
                 <p className="text-sm text-green-700">Use the same categories regularly to get accurate spending insights</p>
               </div>
             </div>
             <div className="flex items-start">
-              <span className="text-orange-500 mr-3 text-lg">📝</span>
+              <div className="bg-orange-100 p-1.5 rounded-lg mr-3 mt-0.5">
+                <FileText className="w-4 h-4 text-orange-600" />
+              </div>
               <div>
                 <p className="text-sm font-medium text-orange-800">Note Large Expenses</p>
                 <p className="text-sm text-orange-700">Add context for unusual or large purchases for future reference</p>

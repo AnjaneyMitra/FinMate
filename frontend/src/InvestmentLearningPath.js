@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { User, BookOpen, Sparkles, CheckCircle, Loader } from 'lucide-react';
+import { User, BookOpen, Sparkles, Loader, LeafyGreen, TreePine, TreeDeciduous, Target, TrendingUp, RotateCcw, Lightbulb } from 'lucide-react';
 import InvestmentLearningService from './services/InvestmentLearningService';
 import UserProfileSetup from './components/UserProfileSetup';
 import PersonalizedContent from './components/PersonalizedContent';
@@ -8,7 +8,9 @@ import PinButton from './components/PinButton';
 const levels = [
   {
     name: "Beginner",
-    icon: "🌱",
+    icon: LeafyGreen,
+    iconColor: "text-green-600",
+    iconBg: "bg-green-100",
     description: "Start your investment journey with the basics",
     topics: [
       "What is investing?",
@@ -30,7 +32,9 @@ const levels = [
   },
   {
     name: "Intermediate",
-    icon: "🌿",
+    icon: TreePine,
+    iconColor: "text-blue-600",
+    iconBg: "bg-blue-100",
     description: "Explore different investment vehicles and strategies",
     topics: [
       "Mutual Funds vs ETFs",
@@ -53,7 +57,9 @@ const levels = [
   },
   {
     name: "Advanced",
-    icon: "🌳",
+    icon: TreeDeciduous,
+    iconColor: "text-purple-600",
+    iconBg: "bg-purple-100",
     description: "Master complex strategies and portfolio management",
     topics: [
       "Portfolio rebalancing",
@@ -266,7 +272,9 @@ export default function InvestmentLearningPath() {
             onClick={() => setSelectedLevel(index)}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-3xl">{level.icon}</span>
+              <div className={`p-3 rounded-xl ${level.iconBg}`}>
+                <level.icon className={`w-8 h-8 ${level.iconColor}`} />
+              </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-teal-600">
                   {getCompletionPercentage(index)}%
@@ -351,7 +359,11 @@ export default function InvestmentLearningPath() {
         <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-              <span className="text-3xl mr-3">{levels[selectedLevel].icon}</span>
+              <div className={`p-2 rounded-lg ${levels[selectedLevel].iconBg} mr-3`}>
+                {React.createElement(levels[selectedLevel].icon, {
+                  className: `w-6 h-6 ${levels[selectedLevel].iconColor}`
+                })}
+              </div>
               <h3 className="text-2xl font-semibold text-gray-900">
                 {selectedTopic ? selectedTopic : `${levels[selectedLevel].name} Level`}
               </h3>
@@ -445,25 +457,38 @@ export default function InvestmentLearningPath() {
 
       {/* Quick Tips */}
       <div className="mt-8 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">💡 Quick Investment Tips</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="p-1 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg">
+            <Lightbulb className="w-5 h-5 text-white" />
+          </div>
+          Quick Investment Tips
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg">
-            <div className="text-2xl mb-2">🎯</div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="p-2 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg inline-block mb-2">
+              <Target className="w-6 h-6 text-white" />
+            </div>
             <h4 className="font-semibold text-gray-800 mb-1">Set Clear Goals</h4>
             <p className="text-sm text-gray-600">Define your investment objectives and timeline</p>
           </div>
-          <div className="bg-white p-4 rounded-lg">
-            <div className="text-2xl mb-2">📈</div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg inline-block mb-2">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
             <h4 className="font-semibold text-gray-800 mb-1">Start Small</h4>
             <p className="text-sm text-gray-600">Begin with SIPs as low as ₹500 per month</p>
           </div>
-          <div className="bg-white p-4 rounded-lg">
-            <div className="text-2xl mb-2">🔄</div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg inline-block mb-2">
+              <RotateCcw className="w-6 h-6 text-white" />
+            </div>
             <h4 className="font-semibold text-gray-800 mb-1">Stay Consistent</h4>
             <p className="text-sm text-gray-600">Regular investing beats trying to time the market</p>
           </div>
-          <div className="bg-white p-4 rounded-lg">
-            <div className="text-2xl mb-2">📚</div>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="p-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg inline-block mb-2">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
             <h4 className="font-semibold text-gray-800 mb-1">Keep Learning</h4>
             <p className="text-sm text-gray-600">Financial education is a lifelong journey</p>
           </div>

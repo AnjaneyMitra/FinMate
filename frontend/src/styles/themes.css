@@ -46,16 +46,20 @@
   box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
 }
 
-/* Nature theme leaf animation */
+/* Nature theme decorative element animation */
 [data-theme="nature"] .leaf-animation {
   position: relative;
 }
 
 [data-theme="nature"] .leaf-animation::before {
-  content: "🍃";
+  content: "";
   position: absolute;
   top: -10px;
   right: -10px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(45deg, #10b981, #059669);
+  border-radius: 0 50% 50% 50%;
   animation: float 3s ease-in-out infinite;
 }
 

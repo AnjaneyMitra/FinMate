@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import FirebaseDataService from './services/FirebaseDataService';
 import PinButton from './components/PinButton';
+import { PartyPopper, Target, Plus, Trophy, Gem, Rocket, Zap, Edit2 } from 'lucide-react';
 
 export default function Goals() {
   const [goals, setGoals] = useState([]);
@@ -88,11 +89,11 @@ export default function Goals() {
   };
 
   const getGoalLevel = (percent) => {
-    if (percent === 100) return { level: 'Mastered', color: 'bg-green-500', icon: '🏆' };
-    if (percent >= 75) return { level: 'Expert', color: 'bg-blue-500', icon: '💎' };
-    if (percent >= 50) return { level: 'Intermediate', color: 'bg-yellow-400', icon: '⭐' };
-    if (percent >= 25) return { level: 'Beginner', color: 'bg-orange-400', icon: '🎯' };
-    return { level: 'Getting Started', color: 'bg-gray-300', icon: '🚀' };
+    if (percent === 100) return { level: 'Mastered', color: 'bg-green-500', icon: Trophy };
+    if (percent >= 75) return { level: 'Expert', color: 'bg-blue-500', icon: Gem };
+    if (percent >= 50) return { level: 'Intermediate', color: 'bg-yellow-400', icon: Zap };
+    if (percent >= 25) return { level: 'Beginner', color: 'bg-orange-400', icon: Target };
+    return { level: 'Getting Started', color: 'bg-gray-300', icon: Rocket };
   };
 
   return (
@@ -100,7 +101,10 @@ export default function Goals() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <span>🎯</span> My Financial Goals
+            <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            My Financial Goals
           </h2>
           <PinButton pageId="goals" />
         </div>
@@ -123,7 +127,10 @@ export default function Goals() {
               ×
             </button>
             <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span>🎯</span> Add Financial Goal
+              <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+                <Plus className="w-5 h-5 text-white" />
+              </div>
+              Add Financial Goal
             </h3>
             <form onSubmit={handleGoalSubmit} className="flex flex-col gap-3">
               <input
@@ -206,7 +213,10 @@ export default function Goals() {
       {/* Real Goals Analytics Section */}
       <div className="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-xl p-6 mb-6 border border-teal-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <span>🎯</span> Goals Analytics Dashboard
+          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+            <Target className="w-4 h-4 text-white" />
+          </div>
+          Goals Analytics Dashboard
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Goals Summary */}
@@ -321,8 +331,9 @@ export default function Goals() {
           </div>
         </div>
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            ⚡ <strong>Real-time data:</strong> Live progress • Achievement tracking • Smart insights • Goal analytics
+          <p className="text-sm text-gray-600 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-yellow-500" />
+            <strong>Real-time data:</strong> Live progress • Achievement tracking • Smart insights • Goal analytics
           </p>
         </div>
       </div>
@@ -434,14 +445,18 @@ export default function Goals() {
               className={`${bgGradient} rounded-xl p-5 shadow flex flex-col gap-2 relative ${borderColor} hover:shadow-xl transition-shadow duration-200`}
               style={{ minHeight: 180 }}
             >
-              <div className="flex items-center gap-2 text-3xl font-bold drop-shadow-sm">{goal.emoji || '🎯'} <span className="text-lg font-semibold text-gray-800">{goal.name}</span>
+              <div className="flex items-center gap-2 text-3xl font-bold drop-shadow-sm">
+                <div className="bg-white bg-opacity-50 p-2 rounded-lg">
+                  {goal.emoji || '🎯'}
+                </div>
+                <span className="text-lg font-semibold text-gray-800">{goal.name}</span>
                 {goal.color && <span className={`ml-2 w-4 h-4 rounded-full inline-block border border-white shadow ${colorOptions.find(opt => opt.value === goal.color)?.class}`}></span>}
                 <button
                   className="ml-auto text-xs text-gray-400 hover:text-teal-600 px-2 py-1 rounded focus:outline-none"
                   onClick={() => handleEditGoal(goal)}
                   title="Edit Goal"
                 >
-                  ✏️
+                  <Edit2 className="w-4 h-4" />
                 </button>
               </div>
               <div className="text-sm text-gray-700 font-medium">Target: <span className="font-bold text-gray-900">₹{Number(goal.target).toLocaleString('en-IN')}</span></div>
@@ -454,11 +469,15 @@ export default function Goals() {
               <div className="flex items-center justify-between mt-1">
                 <span className="text-xs text-gray-800">Progress: <span className="font-semibold">₹{Number(goal.saved).toLocaleString('en-IN')}</span> / ₹{Number(goal.target).toLocaleString('en-IN')} ({percent}%)</span>
                 <span className={`text-xs font-semibold ${color} px-2 py-1 rounded-full flex items-center gap-1 shadow-sm`}>
-                  {icon} {level}
+                  {React.createElement(icon, { className: "w-3 h-3" })} {level}
                 </span>
               </div>
               {goal.date && <div className="text-xs text-gray-500">By: {goal.date}</div>}
-              {percent === 100 && <div className="absolute top-2 right-2 text-green-600 text-2xl animate-bounce">🎉</div>}
+              {percent === 100 && (
+                <div className="absolute top-2 right-2 p-1 bg-green-100 rounded-full animate-bounce">
+                  <PartyPopper className="w-5 h-5 text-green-600" />
+                </div>
+              )}
             </div>
           );
         })}

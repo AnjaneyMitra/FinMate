@@ -1,10 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, BarChart3, Calculator } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+} from 'recharts';
+import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, BarChart3, Calculator, X, LineChart as LineChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon, Target, Activity } from 'lucide-react';
 import { auth } from './firebase';
 import PinButton from './components/PinButton';
 import TimeSelector from './components/TimeSelector';
 import { getPeriodDescription } from './utils/timeUtils';
+
+// Enhanced color palettes for different chart types
+const colorPalettes = {
+  primary: [
+    '#14b8a6',   // Teal
+    '#3b82f6',   // Blue
+    '#f59e0b',   // Amber
+    '#ef4444',   // Red
+    '#8b5cf6',   // Purple
+    '#22c55e',   // Green
+    '#ec4899',   // Pink
+    '#9ca3af',   // Gray
+  ],
+  gradients: [
+    'hsl(173, 80%, 40%)',  // Teal
+    'hsl(217, 91%, 60%)',  // Blue
+    'hsl(38, 92%, 50%)',   // Amber
+    'hsl(0, 84%, 60%)',    // Red
+    'hsl(251, 91%, 68%)',  // Purple
+    'hsl(142, 76%, 47%)',  // Green
+    'hsl(329, 81%, 61%)',  // Pink
+    'hsl(218, 11%, 65%)',  // Gray
+  ],
+};
 
 const MonthComparison = () => {
   const [comparisonData, setComparisonData] = useState(null);
@@ -13,6 +40,7 @@ const MonthComparison = () => {
   const [selectedMonths, setSelectedMonths] = useState(['2025-05', '2025-06']);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRangeFilter, setTimeRangeFilter] = useState('6months'); // New time range filter
+  const [chartType, setChartType] = useState('bar'); // 'bar', 'line', 'area', 'pie', 'stacked'
 
   // Generate month options based on selected time range
   const monthOptions = useMemo(() => {
@@ -35,7 +63,7 @@ const MonthComparison = () => {
     return options;
   }, [timeRangeFilter]);
 
-  const fetchComparison = async () => {
+  const fetchComparison = useCallback(async () => {
     if (selectedMonths.length < 2) return;
     
     setLoading(true);
@@ -80,11 +108,11 @@ const MonthComparison = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonths, selectedCategory]);
 
   useEffect(() => {
     fetchComparison();
-  }, [selectedMonths, selectedCategory, timeRangeFilter]); // Add timeRangeFilter dependency
+  }, [selectedMonths, selectedCategory, timeRangeFilter, fetchComparison]); // Add fetchComparison dependency
 
   // Prepare chart data for side-by-side comparison
   const chartData = useMemo(() => {
@@ -109,6 +137,20 @@ const MonthComparison = () => {
     });
   }, [comparisonData, selectedMonths]);
 
+  // Prepare pie chart data for total comparison
+  const pieChartData = useMemo(() => {
+    if (!comparisonData?.comparison || selectedMonths.length < 2) return [];
+    
+    return selectedMonths.map((month, index) => {
+      const monthData = comparisonData.comparison[month];
+      return {
+        name: monthData?.month_name || month,
+        value: monthData?.total || 0,
+        fill: colorPalettes.primary[index % colorPalettes.primary.length],
+      };
+    });
+  }, [comparisonData, selectedMonths]);
+
   const handleMonthChange = (index, value) => {
     const newMonths = [...selectedMonths];
     newMonths[index] = value;
@@ -126,43 +168,6 @@ const MonthComparison = () => {
       const newMonths = selectedMonths.filter((_, i) => i !== index);
       setSelectedMonths(newMonths);
     }
-  };
-
-  const handleTimeRangeChange = (range) => {
-    setTimeRangeFilter(range);
-    
-    const endDate = new Date();
-    let startDate = new Date();
-    
-    switch (range) {
-      case '1week':
-        startDate.setDate(endDate.getDate() - 7);
-        break;
-      case '1month':
-        startDate.setMonth(endDate.getMonth() - 1);
-        break;
-      case '3months':
-        startDate.setMonth(endDate.getMonth() - 3);
-        break;
-      case '6months':
-        startDate.setMonth(endDate.getMonth() - 6);
-        break;
-      case '1year':
-        startDate.setFullYear(endDate.getFullYear() - 1);
-        break;
-      default:
-        return;
-    }
-    
-    const newSelectedMonths = [];
-    let currentDate = startDate;
-    while (currentDate <= endDate) {
-      const value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      newSelectedMonths.push(value);
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-    
-    setSelectedMonths(newSelectedMonths);
   };
 
   if (loading) {
@@ -264,9 +269,9 @@ const MonthComparison = () => {
                     {selectedMonths.length > 2 && (
                       <button
                         onClick={() => removeMonth(index)}
-                        className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
+                        className="text-red-500 hover:text-red-700 px-2 py-1 rounded flex items-center"
                       >
-                        ✕
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -344,41 +349,330 @@ const MonthComparison = () => {
             })}
           </div>
 
-          {/* Side-by-Side Bar Chart */}
+          {/* Side-by-Side Chart with Type Selector */}
           <div className="bg-white rounded-lg shadow-md border-l-4 border-green-500 mb-8">
             <div className="p-6">
-              <h2 className="text-gray-900 text-xl font-bold mb-4 flex items-center gap-2">
-                <BarChart3 className="w-6 h-6 text-green-600" />
-                Category-wise Comparison
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-gray-900 text-xl font-bold flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-green-600" />
+                  Category-wise Comparison
+                </h2>
+                
+                {/* Chart Type Selector */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">Chart Type:</span>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setChartType('bar')}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        chartType === 'bar' 
+                          ? 'bg-teal-600 text-white shadow-sm transform scale-105' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2 inline" />
+                      Bar
+                    </button>
+                    <button
+                      onClick={() => setChartType('line')}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        chartType === 'line' 
+                          ? 'bg-teal-600 text-white shadow-sm transform scale-105' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <LineChartIcon className="w-4 h-4 mr-2 inline" />
+                      Line
+                    </button>
+                    <button
+                      onClick={() => setChartType('area')}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        chartType === 'area' 
+                          ? 'bg-teal-600 text-white shadow-sm transform scale-105' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <AreaChartIcon className="w-4 h-4 mr-2 inline" />
+                      Area
+                    </button>
+                    <button
+                      onClick={() => setChartType('pie')}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        chartType === 'pie' 
+                          ? 'bg-teal-600 text-white shadow-sm transform scale-105' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <PieChartIcon className="w-4 h-4 mr-2 inline" />
+                      Pie
+                    </button>
+                    <button
+                      onClick={() => setChartType('stacked')}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        chartType === 'stacked' 
+                          ? 'bg-teal-600 text-white shadow-sm transform scale-105' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4 mr-2 inline" />
+                      Stacked
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="category" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`} />
-                  <Tooltip 
-                    formatter={(value, name) => [
-                      `₹${value.toLocaleString('en-IN')}`, 
-                      chartData[0]?.[`${name}Name`] || name
-                    ]}
-                    labelFormatter={(label) => `Category: ${label}`}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      color: '#1f2937'
-                    }}
-                  />
-                  {selectedMonths.map((month, index) => (
-                    <Bar 
-                      key={month}
-                      dataKey={`Month${index + 1}`}
-                      fill={`hsl(${200 + index * 60}, 70%, 50%)`}
-                      radius={[2, 2, 0, 0]}
+                {chartType === 'bar' && (
+                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="category" stroke="#6b7280" />
+                    <YAxis stroke="#6b7280" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`} />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `₹${value.toLocaleString('en-IN')}`, 
+                        chartData[0]?.[`${name}Name`] || name
+                      ]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        color: '#1f2937',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {selectedMonths.map((month, index) => (
+                      <Bar 
+                        key={month}
+                        dataKey={`Month${index + 1}`}
+                        fill={colorPalettes.primary[index % colorPalettes.primary.length]}
+                        radius={[4, 4, 0, 0]}
+                        name={comparisonData.comparison[month]?.month_name || month}
+                      />
+                    ))}
+                  </BarChart>
+                )}
+                
+                {chartType === 'line' && (
+                  <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="category" stroke="#6b7280" />
+                    <YAxis stroke="#6b7280" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`} />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `₹${value.toLocaleString('en-IN')}`, 
+                        chartData[0]?.[`${name}Name`] || name
+                      ]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        color: '#1f2937',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {selectedMonths.map((month, index) => (
+                      <Line 
+                        key={month}
+                        type="monotone"
+                        dataKey={`Month${index + 1}`}
+                        stroke={colorPalettes.primary[index % colorPalettes.primary.length]}
+                        strokeWidth={3}
+                        dot={{ r: 5, strokeWidth: 2 }}
+                        activeDot={{ r: 7, strokeWidth: 2 }}
+                        name={comparisonData.comparison[month]?.month_name || month}
+                      />
+                    ))}
+                  </LineChart>
+                )}
+                
+                {chartType === 'area' && (
+                  <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="category" stroke="#6b7280" />
+                    <YAxis stroke="#6b7280" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`} />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `₹${value.toLocaleString('en-IN')}`, 
+                        chartData[0]?.[`${name}Name`] || name
+                      ]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        color: '#1f2937',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {selectedMonths.map((month, index) => (
+                      <Area 
+                        key={month}
+                        type="monotone"
+                        dataKey={`Month${index + 1}`}
+                        stackId="1"
+                        stroke={colorPalettes.primary[index % colorPalettes.primary.length]}
+                        fill={colorPalettes.primary[index % colorPalettes.primary.length]}
+                        fillOpacity={0.6}
+                        strokeWidth={2}
+                        name={comparisonData.comparison[month]?.month_name || month}
+                      />
+                    ))}
+                  </AreaChart>
+                )}
+                
+                {chartType === 'pie' && (
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                      stroke="#ffffff"
+                      strokeWidth={3}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Total Spending']}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        color: '#1f2937',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                )}
+                
+                {chartType === 'stacked' && (
+                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="category" stroke="#6b7280" />
+                    <YAxis stroke="#6b7280" tickFormatter={(value) => `₹${(value/1000).toFixed(0)}K`} />
+                    <Tooltip 
+                      formatter={(value, name) => [
+                        `₹${value.toLocaleString('en-IN')}`, 
+                        chartData[0]?.[`${name}Name`] || name
+                      ]}
+                      labelFormatter={(label) => `Category: ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        color: '#1f2937',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend />
+                    {selectedMonths.map((month, index) => (
+                      <Bar 
+                        key={month}
+                        dataKey={`Month${index + 1}`}
+                        stackId="months"
+                        fill={colorPalettes.primary[index % colorPalettes.primary.length]}
+                        name={comparisonData.comparison[month]?.month_name || month}
+                      />
+                    ))}
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Chart Statistics and Visual Feedback */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Chart Performance Stats */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-purple-600" />
+                Chart Insights
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Chart Type</span>
+                  <span className="text-sm font-medium text-gray-900 capitalize">{chartType}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Months Compared</span>
+                  <span className="text-sm font-medium text-gray-900">{selectedMonths.length}</span>
+                </div>
+                {chartData && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Categories</span>
+                    <span className="text-sm font-medium text-gray-900">{chartData.length}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Filter</span>
+                  <span className="text-sm font-medium text-gray-900 capitalize">
+                    {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Chart Type Recommendations */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-green-600" />
+                Best Practices
+              </h3>
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600">
+                  <p className="mb-2">
+                    <span className="font-medium text-green-600">Bar charts</span> compare amounts across categories
+                  </p>
+                  <p className="mb-2">
+                    <span className="font-medium text-blue-600">Line charts</span> show trends and patterns
+                  </p>
+                  <p className="mb-2">
+                    <span className="font-medium text-purple-600">Area charts</span> emphasize volume differences
+                  </p>
+                  <p className="mb-2">
+                    <span className="font-medium text-orange-600">Pie charts</span> show total spending distribution
+                  </p>
+                  <p>
+                    <span className="font-medium text-teal-600">Stacked</span> reveals cumulative spending
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Theme Preview */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-orange-600" />
+                Color Palette
+              </h3>
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600 mb-3">Month comparison colors:</div>
+                <div className="flex flex-wrap gap-2">
+                  {colorPalettes.primary.slice(0, Math.min(6, selectedMonths.length)).map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                      style={{ backgroundColor: color }}
+                      title={`Month ${index + 1} Color`}
                     />
                   ))}
-                </BarChart>
-              </ResponsiveContainer>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">
+                  Enhanced with gradients and improved contrast
+                </div>
+              </div>
             </div>
           </div>
 

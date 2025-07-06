@@ -12,22 +12,22 @@ export const useSidebar = () => {
 
 // Default sidebar items - these are always available
 const DEFAULT_SIDEBAR_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/dashboard', isPinned: true, isDefault: true },
-  { id: 'quick-actions', label: 'Quick Actions', icon: '⚡', path: '/dashboard/quick-actions', isPinned: true, isDefault: true },
-  { id: 'budget', label: 'Budget Planner', icon: '💰', path: '/dashboard/budget', isPinned: true, isDefault: false },
-  { id: 'transactions', label: 'Transactions', icon: '➕', path: '/dashboard/transactions', isPinned: true, isDefault: false },
-  { id: 'history', label: 'History', icon: '📋', path: '/dashboard/history', isPinned: false, isDefault: false },
-  { id: 'goals', label: 'Goals', icon: '🎯', path: '/dashboard/goals', isPinned: true, isDefault: false },
-  { id: 'analytics', label: 'Analytics', icon: '📊', path: '/dashboard/spending', isPinned: true, isDefault: false },
-  { id: 'predictions', label: 'AI Predictions', icon: '🔮', path: '/dashboard/predictions', isPinned: false, isDefault: false },
-  { id: 'comparison', label: 'Month Comparison', icon: '📈', path: '/dashboard/comparison', isPinned: false, isDefault: false },
-  { id: 'learning', label: 'Investment Learning', icon: '📚', path: '/dashboard/learning', isPinned: false, isDefault: false },
-  { id: 'simulation', label: 'Investment Simulation', icon: '🧮', path: '/dashboard/simulation', isPinned: false, isDefault: false },
-  { id: 'risk', label: 'Risk Profiler', icon: '🧑‍💼', path: '/dashboard/risk', isPinned: false, isDefault: false },
-  { id: 'tax-breakdown', label: 'Tax Breakdown', icon: '🧾', path: '/dashboard/tax', isPinned: false, isDefault: false },
-  { id: 'tax-estimator', label: 'Tax Estimator', icon: '🧮', path: '/dashboard/tax/estimator', isPinned: false, isDefault: false },
-  { id: 'tax-filing', label: 'Tax Filing', icon: '📋', path: '/tax-filing', isPinned: false, isDefault: false },
-  { id: 'settings', label: 'Settings', icon: '⚙️', path: '/dashboard/settings', isPinned: true, isDefault: false },
+  { id: 'dashboard', label: 'Dashboard', icon: 'home', path: '/dashboard', isPinned: true, isDefault: true },
+  { id: 'quick-actions', label: 'Quick Actions', icon: 'zap', path: '/dashboard/quick-actions', isPinned: true, isDefault: true },
+  { id: 'budget', label: 'Budget Planner', icon: 'dollar-sign', path: '/dashboard/budget', isPinned: true, isDefault: false },
+  { id: 'transactions', label: 'Transactions', icon: 'plus', path: '/dashboard/transactions', isPinned: true, isDefault: false },
+  { id: 'history', label: 'History', icon: 'file-text', path: '/dashboard/history', isPinned: false, isDefault: false },
+  { id: 'goals', label: 'Goals', icon: 'target', path: '/dashboard/goals', isPinned: true, isDefault: false },
+  { id: 'analytics', label: 'Analytics', icon: 'bar-chart-3', path: '/dashboard/spending', isPinned: true, isDefault: false },
+  { id: 'predictions', label: 'AI Predictions', icon: 'brain', path: '/dashboard/predictions', isPinned: false, isDefault: false },
+  { id: 'comparison', label: 'Month Comparison', icon: 'trending-up', path: '/dashboard/comparison', isPinned: false, isDefault: false },
+  { id: 'learning', label: 'Investment Learning', icon: 'book-open', path: '/dashboard/learning', isPinned: false, isDefault: false },
+  { id: 'simulation', label: 'Investment Simulation', icon: 'calculator', path: '/dashboard/simulation', isPinned: false, isDefault: false },
+  { id: 'risk', label: 'Risk Profiler', icon: 'user-check', path: '/dashboard/risk', isPinned: false, isDefault: false },
+  { id: 'tax-breakdown', label: 'Tax Breakdown', icon: 'receipt', path: '/dashboard/tax', isPinned: false, isDefault: false },
+  { id: 'tax-estimator', label: 'Tax Estimator', icon: 'calculator', path: '/dashboard/tax/estimator', isPinned: false, isDefault: false },
+  { id: 'tax-filing', label: 'Tax Filing', icon: 'file-text', path: '/tax-filing', isPinned: false, isDefault: false },
+  { id: 'settings', label: 'Settings', icon: 'settings', path: '/dashboard/settings', isPinned: true, isDefault: false },
 ];
 
 export const SidebarProvider = ({ children }) => {

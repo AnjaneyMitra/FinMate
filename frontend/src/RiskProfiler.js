@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserCheck, Rocket, Cloud, Shield, Building2, Brain, Target, TrendingUp } from 'lucide-react';
 import PinButton from './components/PinButton';
 
 const questions = [
@@ -109,12 +110,19 @@ export default function RiskProfiler() {
   const progress = Math.round((answers.filter(Boolean).length / questions.length) * 100);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 mt-8 border border-teal-100 relative overflow-hidden">
-      <div className="absolute -top-8 -right-8 opacity-10 text-[10rem] select-none pointer-events-none">🧑‍💼</div>
+    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 mt-8 border border-gray-200 relative overflow-hidden">
+      <div className="absolute -top-4 -right-4 opacity-10 select-none pointer-events-none">
+        <div className="p-6 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+          <UserCheck className="w-24 h-24 text-white" />
+        </div>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
+          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+            <Brain className="w-6 h-6 text-white" />
+          </div>
           <div>
-            <h2 className="text-3xl font-extrabold text-teal-700 drop-shadow">Risk Profiling Tool</h2>
+            <h2 className="text-3xl font-bold text-gray-800">Risk Profiling Tool</h2>
             <p className="text-gray-600">Answer a few questions to discover your investment risk profile.</p>
           </div>
           <PinButton pageId="risk" />
@@ -129,7 +137,7 @@ export default function RiskProfiler() {
           {questions.map((q, i) => (
             <div key={i} className="mb-2">
               <div className="font-semibold mb-3 text-lg text-gray-800 flex items-center">
-                <span className="inline-block w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center mr-3 font-bold">{i + 1}</span>
+                <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 text-white flex items-center justify-center mr-3 font-bold text-sm">{i + 1}</span>
                 {q.text}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -151,30 +159,51 @@ export default function RiskProfiler() {
           ))}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-teal-500 to-blue-400 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-blue-500 text-xl font-bold shadow-lg mt-6 transition-all"
+            className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-blue-700 text-xl font-bold shadow-lg mt-6 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
             disabled={answers.includes(null)}
           >
-            Assess My Risk Profile
+            <div className="flex items-center justify-center gap-2">
+              <Target className="w-5 h-5" />
+              Assess My Risk Profile
+            </div>
           </button>
         </form>
       ) : (
-        <div className={`mt-8 p-8 rounded-2xl border-l-8 border-${profile.color}-500 bg-${profile.color}-50 shadow-lg animate-fade-in`}> 
-          <h3 className={`text-2xl font-extrabold mb-2 text-${profile.color}-700`}>Your Risk Profile: {profile.type}</h3>
-          <p className="text-gray-800 mb-4 text-lg">{profile.desc}</p>
-          <div className="flex items-center gap-4 mb-4">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl bg-${profile.color}-100 border-4 border-${profile.color}-300`}>{profile.type === 'Aggressive' ? '🚀' : profile.type === 'Moderate' ? '🌤️' : profile.type === 'Conservative' ? '🛡️' : '🏦'}</div>
-            <div className="text-gray-600 text-base">Total Score: <span className="font-bold text-gray-900">{totalScore} / 32</span></div>
+        <div className="mt-8 p-8 rounded-xl border border-gray-200 bg-gradient-to-br from-teal-50 to-blue-50 shadow-lg animate-fade-in">
+          <div className="text-center mb-6">
+            <div className="p-3 bg-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-md">
+              {profile.type === 'Aggressive' ? <Rocket className="w-10 h-10 text-red-500" /> : 
+               profile.type === 'Moderate' ? <Cloud className="w-10 h-10 text-yellow-500" /> : 
+               profile.type === 'Conservative' ? <Shield className="w-10 h-10 text-green-500" /> : 
+               <Building2 className="w-10 h-10 text-blue-500" />}
+            </div>
+            <h3 className="text-2xl font-bold mb-2 text-gray-800">Your Risk Profile: {profile.type}</h3>
+            <p className="text-gray-700 mb-4 text-lg">{profile.desc}</p>
+            <div className="flex items-center justify-center gap-2 text-gray-600 text-base mb-4">
+              <TrendingUp className="w-5 h-5" />
+              <span>Total Score: <span className="font-bold text-gray-900">{totalScore} / 32</span></span>
+            </div>
           </div>
           <button
             onClick={handleRetake}
-            className="bg-white border border-teal-500 text-teal-700 px-6 py-2 rounded-lg hover:bg-teal-50 font-semibold transition-colors mt-2"
+            className="w-full bg-white border border-teal-500 text-teal-700 px-6 py-3 rounded-lg hover:bg-teal-50 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
             Retake Assessment
           </button>
         </div>
       )}
-      <div className="mt-8 text-gray-500 text-sm text-center">
-        <b>Note:</b> This assessment is for guidance only. For investment decisions, consult a certified financial advisor.
+      <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex items-start gap-2">
+          <div className="p-1 bg-blue-100 rounded-md mt-0.5">
+            <Target className="w-4 h-4 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-blue-800 mb-1">Assessment Note</p>
+            <p className="text-sm text-blue-700">
+              This assessment is for guidance only. For investment decisions, consult a certified financial advisor.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

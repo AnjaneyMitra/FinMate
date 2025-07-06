@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, FileText, Scan, Check, X, AlertCircle, Download, Eye, Trash2, FolderOpen } from 'lucide-react';
+import { Upload, FileText, Scan, Check, AlertCircle, Download, Eye, Trash2 } from 'lucide-react';
 
 const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = [] }) => {
   const [uploadedDocuments, setUploadedDocuments] = useState([]);
@@ -61,7 +61,7 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
         )
       : defaultDocumentCategories;
     setDocumentCategories(categories);
-  }, [requiredDocuments]);
+  }, [requiredDocuments, defaultDocumentCategories]);
 
   const handleFileUpload = useCallback(async (files, categoryId) => {
     if (!files || files.length === 0) return;

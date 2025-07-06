@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Calculator, DollarSign, Receipt, Save, TrendingUp, Target } from 'lucide-react';
 import FirebaseDataService from './services/FirebaseDataService';
 import PinButton from './components/PinButton';
 
@@ -55,11 +56,6 @@ export default function TaxEstimator() {
     }
   };
 
-  const handlePlannedSpendingChange = (e) => {
-    setPlannedSpending(e.target.value);
-    savePlannedSpending(e.target.value);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setTax(estimateTax({ income: Number(income), deductions: Number(deductions) }));
@@ -67,7 +63,7 @@ export default function TaxEstimator() {
   };
 
   // --- Planned Spending by Category ---
-  const [categories, setCategories] = useState([
+  const [categories] = useState([
     'Essentials', 'Savings', 'Discretionary', 'Emergency',
     'Food', 'Bills', 'Transport', 'Shopping', 'Entertainment', 'Healthcare', 'Education', 'Personal', 'Miscellaneous'
   ]);
@@ -105,82 +101,148 @@ export default function TaxEstimator() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
-      <div className="flex items-center justify-between mb-4">
+    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 mt-8 border border-gray-200">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-teal-700">Income Tax Estimator (India)</h2>
+          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+            <Calculator className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Income Tax Estimator (India)</h2>
           <PinButton pageId="tax-estimator" />
         </div>
       </div>
-      <form className="grid grid-cols-1 gap-4 mb-6" onSubmit={handleSubmit}>
+      <form className="grid grid-cols-1 gap-6 mb-6" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Annual Income (₹)</label>
-          <input type="number" min="0" value={income} onChange={e => setIncome(e.target.value)} className="w-full border rounded px-3 py-2" required />
+          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-teal-600" />
+            Annual Income (₹)
+          </label>
+          <input 
+            type="number" 
+            min="0" 
+            value={income} 
+            onChange={e => setIncome(e.target.value)} 
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+            required 
+          />
         </div>
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Deductions (₹)</label>
-          <input type="number" min="0" value={deductions} onChange={e => setDeductions(e.target.value)} className="w-full border rounded px-3 py-2" required />
+          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+            <Receipt className="w-4 h-4 text-teal-600" />
+            Deductions (₹)
+          </label>
+          <input 
+            type="number" 
+            min="0" 
+            value={deductions} 
+            onChange={e => setDeductions(e.target.value)} 
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+            required 
+          />
           <div className="text-xs text-gray-500 mt-1">E.g. 80C, 80D, HRA, etc.</div>
         </div>
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Planned Spending (₹)</label>
-          <div className="bg-gray-50 rounded p-3 border">
+          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
+            <Target className="w-4 h-4 text-teal-600" />
+            Planned Spending (₹)
+          </label>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <form
               onSubmit={e => {
                 e.preventDefault();
                 savePlannedSpending(plannedSpending);
               }}
-              className="flex flex-col gap-2"
+              className="flex flex-col gap-3"
             >
               <input
                 type="number"
                 min="0"
                 value={plannedSpending}
                 onChange={e => setPlannedSpending(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="Enter planned annual spending"
               />
-              <button
-                type="submit"
-                className="self-end bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm"
-                disabled={loading || saveStatus === 'saving'}
-              >
-                {saveStatus === 'saving' ? 'Saving...' : 'Save'}
-              </button>
-              {saveStatus === 'success' && <span className="text-xs text-green-600">Saved!</span>}
-              {saveStatus === 'error' && <span className="text-xs text-red-600">Save failed</span>}
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm transition-colors"
+                  disabled={loading || saveStatus === 'saving'}
+                >
+                  <Save className="w-4 h-4" />
+                  {saveStatus === 'saving' ? 'Saving...' : 'Save'}
+                </button>
+                <div className="flex items-center gap-2">
+                  {saveStatus === 'success' && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      Saved!
+                    </span>
+                  )}
+                  {saveStatus === 'error' && (
+                    <span className="text-xs text-red-600 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      Save failed
+                    </span>
+                  )}
+                </div>
+              </div>
             </form>
-            <div className="text-xs text-gray-500 mt-1">Enter your planned annual spending for comparison.</div>
+            <div className="text-xs text-gray-500 mt-2">Enter your planned annual spending for comparison.</div>
           </div>
         </div>
-        <button type="submit" className="bg-teal-600 text-white px-6 py-2 rounded hover:bg-teal-700 transition-colors mt-2">Estimate Tax</button>
+        <button 
+          type="submit" 
+          className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors mt-4 flex items-center gap-2 justify-center font-medium"
+        >
+          <Calculator className="w-5 h-5" />
+          Estimate Tax
+        </button>
       </form>
       {tax !== null && (
-        <div className="bg-yellow-50 p-4 rounded text-yellow-800 text-lg font-semibold mb-2">
-          Estimated Tax: ₹{tax.toLocaleString('en-IN')}
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl border border-yellow-200 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-yellow-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Estimated Tax</h3>
+              <p className="text-2xl font-bold text-yellow-700">₹{tax.toLocaleString('en-IN')}</p>
+            </div>
+          </div>
         </div>
       )}
       {plannedSpending > 0 && (
-        <div className="bg-blue-50 p-4 rounded text-blue-800 text-base font-medium mb-2">
-          Planned Spending: ₹{Number(plannedSpending).toLocaleString('en-IN')}
+        <div className="bg-gradient-to-r from-blue-50 to-teal-50 p-6 rounded-xl border border-blue-200 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Target className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Planned Annual Spending</h3>
+              <p className="text-2xl font-bold text-blue-700">₹{Number(plannedSpending).toLocaleString('en-IN')}</p>
+            </div>
+          </div>
         </div>
       )}
       {/* --- Planned Spending by Category --- */}
       <div className="mt-8">
-        <h3 className="text-xl font-semibold mb-4 text-teal-600">Planned Spending by Category</h3>
-        <div className="bg-gray-50 rounded p-4 border">
+        <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
+          <Receipt className="w-5 h-5 text-teal-600" />
+          Planned Spending by Category
+        </h3>
+        <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
           <form
             onSubmit={e => {
               e.preventDefault();
               saveCategoryPlanned(selectedCategory, categoryPlanned[selectedCategory] || 0);
             }}
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-4"
           >
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-3 items-center">
               <select
                 value={selectedCategory}
                 onChange={e => setSelectedCategory(e.target.value)}
-                className="border rounded px-3 py-2 w-48"
+                className="border border-gray-300 rounded-lg px-4 py-3 flex-1 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -191,18 +253,31 @@ export default function TaxEstimator() {
                 min="0"
                 value={categoryPlanned[selectedCategory] || ''}
                 onChange={e => setCategoryPlanned({ ...categoryPlanned, [selectedCategory]: e.target.value })}
-                className="border rounded px-3 py-2 w-40"
+                className="border border-gray-300 rounded-lg px-4 py-3 w-40 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="Amount (₹)"
               />
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm"
+                className="bg-teal-600 text-white px-4 py-3 rounded-lg hover:bg-teal-700 text-sm transition-colors flex items-center gap-2"
                 disabled={catSaveStatus === 'saving'}
               >
+                <Save className="w-4 h-4" />
                 {catSaveStatus === 'saving' ? 'Saving...' : 'Save'}
               </button>
-              {catSaveStatus === 'success' && <span className="text-xs text-green-600 ml-2">Saved!</span>}
-              {catSaveStatus === 'error' && <span className="text-xs text-red-600 ml-2">Save failed</span>}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              {catSaveStatus === 'success' && (
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Saved!
+                </span>
+              )}
+              {catSaveStatus === 'error' && (
+                <span className="text-xs text-red-600 flex items-center gap-1">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  Save failed
+                </span>
+              )}
             </div>
           </form>
           <div className="mt-3">

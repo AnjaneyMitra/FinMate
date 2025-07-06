@@ -1,8 +1,28 @@
 import React, { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase';
 import { useSidebar } from '../contexts/SidebarContext';
+import { 
+  Home, 
+  Zap, 
+  PiggyBank, 
+  Target, 
+  Plus, 
+  History, 
+  BarChart3, 
+  TrendingUp, 
+  Calendar, 
+  BookOpen, 
+  Calculator, 
+  User, 
+  Receipt, 
+  FileText, 
+  Settings, 
+  Database,
+  ChevronDown,
+  MoreVertical,
+  PinOff,
+  Grip
+} from 'lucide-react';
 
 export default function Sidebar({ user, setUser }) {
   const location = useLocation();
@@ -11,21 +31,93 @@ export default function Sidebar({ user, setUser }) {
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showDropdown, setShowDropdown] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState({
+    planning: true,
+    analytics: true,
+    investments: false,
+    taxes: false,
+  });
   const dropdownRef = useRef(null);
 
-  const sidebarItems = getPinnedItems();
-  
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      if (setUser) {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  // Icon mapping for consistent iconography
+  const iconMap = {
+    'dashboard': Home,
+    'quick-actions': Zap,
+    'budget': PiggyBank,
+    'goals': Target,
+    'transactions': Plus,
+    'history': History,
+    'analytics': BarChart3,
+    'predictions': TrendingUp,
+    'comparison': Calendar,
+    'learning': BookOpen,
+    'simulation': Calculator,
+    'risk': User,
+    'tax-breakdown': Receipt,
+    'tax-estimator': Calculator,
+    'tax-filing': FileText,
+    'settings': Settings,
+    'firestore-test': Database,
   };
 
+  // Group navigation items
+  const navigationGroups = [
+    {
+      id: 'core',
+      name: 'Core',
+      items: ['dashboard', 'quick-actions'],
+      alwaysExpanded: true,
+    },
+    {
+      id: 'planning',
+      name: 'Financial Planning',
+      items: ['budget', 'goals', 'transactions'],
+      alwaysExpanded: false,
+    },
+    {
+      id: 'analytics',
+      name: 'Analytics & Insights',
+      items: ['analytics', 'history', 'predictions', 'comparison'],
+      alwaysExpanded: false,
+    },
+    {
+      id: 'investments',
+      name: 'Investments',
+      items: ['learning', 'simulation', 'risk'],
+      alwaysExpanded: false,
+    },
+    {
+      id: 'taxes',
+      name: 'Tax Management',
+      items: ['tax-breakdown', 'tax-estimator', 'tax-filing'],
+      alwaysExpanded: false,
+    },
+    {
+      id: 'system',
+      name: 'System',
+      items: ['settings', 'firestore-test'],
+      alwaysExpanded: true,
+    },
+  ];
+
+  const sidebarItems = getPinnedItems();
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
+  };
+
+  const getGroupItems = (groupItems) => {
+    return sidebarItems.filter(item => groupItems.includes(item.id));
+  };
+
+  const renderIcon = (iconKey, className = "w-5 h-5") => {
+    const IconComponent = iconMap[iconKey];
+    return IconComponent ? <IconComponent className={className} /> : <Home className={className} />;
+  };
+  
   const handleDragStart = (e, item, index) => {
     if (item.isDefault) return; // Don't allow dragging default items
     setDraggedItem({ item, index });
@@ -90,96 +182,125 @@ export default function Sidebar({ user, setUser }) {
     }
     return location.pathname.startsWith(item.path);
   };
+
   return (
-    <aside className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
-      <div>
-        <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
-          <span className="text-2xl">🧩</span>
-          <span className="font-bold text-lg tracking-tight">FinMate</span>
+    <aside className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+      <div className="flex-1 overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-blue-50">
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">F</span>
+          </div>
+          <span className="font-bold text-xl tracking-tight text-gray-900">FinMate</span>
         </div>
-        <nav className="mt-4">
-          {sidebarItems.map((item, index) => (
-            <div
-              key={item.id}
-              className={`relative mx-2 mb-1 ${
-                dragOverIndex === index ? 'border-t-2 border-blue-500' : ''
-              }`}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => {
-                setHoveredItem(null);
-                if (showDropdown !== item.id) setShowDropdown(null);
-              }}
-            >
-              <Link
-                to={item.path}
-                draggable={!item.isDefault}
-                onDragStart={(e) => handleDragStart(e, item, index)}
-                onDragEnd={handleDragEnd}
-                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium group ${
-                  isActive(item) ? 'bg-gray-100 font-semibold' : ''
-                } ${draggedItem?.item.id === item.id ? 'opacity-50' : ''} ${
-                  !item.isDefault ? 'cursor-move' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{item.icon}</span>
-                  <span>{item.label}</span>
-                </div>
-                
-                {/* Three dots menu - only show for non-default items */}
-                {!item.isDefault && hoveredItem === item.id && (
-                  <div className="relative" ref={dropdownRef}>
-                    {/* Debug: log item properties */}
-                    {console.log(`Sidebar item ${item.id}:`, { isDefault: item.isDefault, isPinned: item.isPinned })}
-                    <button
-                      onClick={(e) => toggleDropdown(item.id, e)}
-                      className="p-1 rounded-full hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
-                    </button>
-                    
-                    {/* Dropdown menu */}
-                    {showDropdown === item.id && (
-                      <div className="absolute right-0 top-8 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                        <button
-                          onClick={(e) => handleUnpin(item.id, e)}
-                          className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+
+        {/* Navigation Groups */}
+        <nav className="py-4 space-y-1">
+          {navigationGroups.map((group) => {
+            const groupItems = getGroupItems(group.items);
+            if (groupItems.length === 0) return null;
+
+            const isExpanded = group.alwaysExpanded || expandedGroups[group.id];
+
+            return (
+              <div key={group.id} className="px-3">
+                {/* Group Header */}
+                {!group.alwaysExpanded && (
+                  <button
+                    onClick={() => toggleGroup(group.id)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-group-transition"
+                  >
+                    <span>{group.name}</span>
+                    <div className={`sidebar-item-transition ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </button>
+                )}
+
+                {/* Group Items */}
+                {isExpanded && (
+                  <div className="space-y-1 animate-slide-down">
+                    {groupItems.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className={`relative sidebar-item-transition ${
+                          dragOverIndex === index ? 'border-t-2 border-teal-500' : ''
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onMouseEnter={() => setHoveredItem(item.id)}
+                        onMouseLeave={() => {
+                          setHoveredItem(null);
+                          if (showDropdown !== item.id) setShowDropdown(null);
+                        }}
+                      >
+                        <Link
+                          to={item.path}
+                          draggable={!item.isDefault}
+                          onDragStart={(e) => handleDragStart(e, item, index)}
+                          onDragEnd={handleDragEnd}
+                          className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 font-medium group relative ${
+                            isActive(item) 
+                              ? 'bg-gradient-to-r from-teal-50 to-blue-50 text-teal-700 font-semibold border-l-4 border-teal-500 shadow-sm' 
+                              : 'hover:border-l-4 hover:border-gray-300'
+                          } ${draggedItem?.item.id === item.id ? 'opacity-50' : ''} ${
+                            !item.isDefault ? 'cursor-move' : ''
+                          }`}
                         >
-                          <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 011.4.9L18 9l.293.707A1 1 0 0117 11H9.293l-4 4a1 1 0 01-1.414-1.414l4-4V3a1 1 0 011-1z" clipRule="evenodd" />
-                          </svg>
-                          Unpin from sidebar
-                        </button>
+                          <div className="flex items-center gap-3">
+                            {!item.isDefault && (
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Grip className="w-3 h-3 text-gray-400" />
+                              </div>
+                            )}
+                            <div className={`p-1.5 rounded-md sidebar-item-transition ${
+                              isActive(item) 
+                                ? 'bg-teal-100 text-teal-600' 
+                                : 'text-gray-500 group-hover:text-gray-700'
+                            }`}>
+                              {renderIcon(item.id, "w-4 h-4")}
+                            </div>
+                            <span className="text-sm">{item.label}</span>
+                          </div>
+                          
+                          {/* Active indicator */}
+                          {isActive(item) && (
+                            <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse-soft"></div>
+                          )}
+                          
+                          {/* Three dots menu - only show for non-default items */}
+                          {!item.isDefault && hoveredItem === item.id && (
+                            <div className="relative" ref={dropdownRef}>
+                              <button
+                                onClick={(e) => toggleDropdown(item.id, e)}
+                                className="p-1.5 rounded-md hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                <MoreVertical className="w-4 h-4 text-gray-400" />
+                              </button>
+                              
+                              {/* Dropdown menu */}
+                              {showDropdown === item.id && (
+                                <div className="absolute right-0 top-8 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 animate-fade-in">
+                                  <button
+                                    onClick={(e) => handleUnpin(item.id, e)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                  >
+                                    <PinOff className="w-4 h-4" />
+                                    Unpin from sidebar
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </Link>
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
-              </Link>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </nav>
-      </div>
-      <div className="px-6 py-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-500">
-            {user?.email?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-gray-800">{user?.email?.split('@')[0]}</div>
-            <div className="text-xs text-gray-400">{user?.email}</div>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <span>🚪</span>
-          Logout
-        </button>
       </div>
     </aside>
   );

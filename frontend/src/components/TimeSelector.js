@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 const TimeSelector = ({ 
   value, 
