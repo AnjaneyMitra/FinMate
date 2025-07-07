@@ -5,8 +5,38 @@ import { auth } from './firebase';
 import PinButton from './components/PinButton';
 import TimeSelector from './components/TimeSelector';
 import { getPeriodDescription } from './utils/timeUtils';
+import { useTheme } from './contexts/ThemeContext';
 
 const FutureExpensePrediction = () => {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   const [predictions, setPredictions] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

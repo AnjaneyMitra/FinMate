@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from './contexts/ThemeContext';
 
 // ZMI = Zero-based Money Index: Salary breakdown into Essentials, Optional, Savings
 const DEFAULT_SPLIT = { essentials: 50, optional: 30, savings: 20 };
@@ -10,6 +11,34 @@ const ZMI_CATEGORIES = [
 ];
 
 export default function ZMIBreakdown({ salary = 0, breakdown = null }) {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   // Advanced: Allow user to customize split and persist in localStorage
   const [customSplit, setCustomSplit] = useState(() => {
     const saved = localStorage.getItem('zmiCustomSplit');

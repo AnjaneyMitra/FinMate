@@ -3,8 +3,38 @@ import FirebaseDataService from './services/FirebaseDataService';
 import { ResponsiveBar } from '@nivo/bar';
 import { DollarSign, Zap, BarChart3 } from 'lucide-react';
 import PinButton from './components/PinButton';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 
 export default function BudgetForm() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Safe fallbacks for all theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
   const [form, setForm] = useState({
     income: "",
     goals: "",
@@ -158,8 +188,8 @@ export default function BudgetForm() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Budget Planner</h2>
-            <p className="text-gray-600">Create a personalized budget based on your income and goals</p>
+            <h2 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Budget Planner</h2>
+            <p className={`${safeText.secondary}`}>Create a personalized budget based on your income and goals</p>
           </div>
           <PinButton pageId="budget" showLabel={true} />
         </div>
@@ -167,43 +197,43 @@ export default function BudgetForm() {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Budget Form */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Your Information</h3>
+        <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
+          <h3 className={`text-xl font-semibold ${safeText.accent} mb-4`}>Your Information</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Monthly Income (INR)</label>
+              <label className={`block mb-2 font-medium ${safeText.primary}`}>Monthly Income (INR)</label>
               <input
                 type="number"
                 name="income"
                 value={form.income}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className={`w-full border ${safeBorder.primary} px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-transparent ${safeBg.card} ${safeText.primary}`}
                 placeholder="Enter your monthly income"
                 required
               />
             </div>
             
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Financial Goals</label>
+              <label className={`block mb-2 font-medium ${safeText.primary}`}>Financial Goals</label>
               <input
                 type="text"
                 name="goals"
                 value={form.goals}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className={`w-full border ${safeBorder.primary} px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-transparent ${safeBg.card} ${safeText.primary}`}
                 placeholder="e.g. Save for house, travel, emergency fund"
                 required
               />
             </div>
             
             <div>
-              <label className="block mb-2 font-medium text-gray-700">Location</label>
+              <label className={`block mb-2 font-medium ${safeText.primary}`}>Location</label>
               <input
                 type="text"
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className={`w-full border ${safeBorder.primary} px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-transparent ${safeBg.card} ${safeText.primary}`}
                 placeholder="e.g. Mumbai, Delhi, Bangalore"
                 required
               />
@@ -211,7 +241,7 @@ export default function BudgetForm() {
             
             <button
               type="submit"
-              className="w-full bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors disabled:opacity-50"
+              className={`w-full ${styles.button('primary')} disabled:opacity-50`}
               disabled={loading}
             >
               {loading ? "Generating Budget..." : "Get Suggested Budget"}
@@ -220,28 +250,27 @@ export default function BudgetForm() {
         </div>
 
         {/* Budget Results */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Budget Suggestion</h3>
+        <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
+          <h3 className={`text-xl font-semibold ${safeText.accent} mb-4`}>Budget Suggestion</h3>
           
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-              <span className="ml-2 text-gray-600">Calculating your budget...</span>
+              <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${safeAccent.primary.replace('bg-', 'border-')}`}></div>
+              <span className={`ml-2 ${safeText.secondary}`}>Calculating your budget...</span>
             </div>
           )}
           
           {!loading && !suggestedBudget && (
-            <div className="text-center py-8 text-gray-500">
-              <div className="p-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl inline-block mb-4">
+            <div className={`text-center py-8 ${safeText.secondary}`}>
+              <div className={`p-4 ${safeAccent.primary} rounded-2xl inline-block mb-4`}>
                 <DollarSign className="w-12 h-12 text-white" />
               </div>
               <p>Fill out the form to get your personalized budget suggestion</p>
             </div>
           )}
           
-          {suggestedBudget && suggestedBudget.error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="text-red-600">{suggestedBudget.error}</div>
+          {suggestedBudget && suggestedBudget.error && (              <div className={`${styles.alert('error')}`}>
+              <div className={`${safeText.inverse}`}>{suggestedBudget.error}</div>
             </div>
           )}
           
@@ -261,10 +290,10 @@ export default function BudgetForm() {
                     const value = suggestedBudget[cat.key] || 0;
                     const percent = Math.round((value / income) * 100);
                     return (
-                      <div key={cat.key} className={`bg-${cat.color}-50 p-4 rounded-lg text-center`}>
-                        <p className={`text-sm text-${cat.color}-600 font-medium`}>{cat.label}</p>
-                        <p className={`text-2xl font-bold text-${cat.color}-700`}>₹{value.toLocaleString("en-IN")}</p>
-                        <p className={`text-xs text-${cat.color}-600`}>{percent}% of income</p>
+                      <div key={cat.key} className={`${safeBg.secondary} p-4 rounded-lg text-center border ${safeBorder.primary}`}>
+                        <p className={`text-sm ${safeText.accent} font-medium`}>{cat.label}</p>
+                        <p className={`text-2xl font-bold ${safeText.primary}`}>₹{value.toLocaleString("en-IN")}</p>
+                        <p className={`text-xs ${safeText.secondary}`}>{percent}% of income</p>
                       </div>
                     );
                   });
@@ -273,7 +302,7 @@ export default function BudgetForm() {
 
               {/* Edit Button */}
               <button
-                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors mb-4"
+                className={`${styles.button('secondary')} mb-4`}
                 onClick={handleEdit}
               >
                 Edit Budget
@@ -283,29 +312,29 @@ export default function BudgetForm() {
           
           {editMode && (
             <div className="space-y-4 mb-4">
-              <h4 className="font-semibold text-gray-800 mb-2">Edit Budget Categories</h4>
+              <h4 className={`font-semibold ${safeText.primary} mb-2`}>Edit Budget Categories</h4>
               {['essentials','savings','discretionary','emergency'].map(cat => (
                 <div key={cat} className="flex items-center gap-4">
-                  <label className="w-32 capitalize">{cat}</label>
+                  <label className={`w-32 capitalize ${safeText.primary}`}>{cat}</label>
                   <input
                     type="number"
                     min="0"
                     value={editBudget[cat]}
                     onChange={e => handleEditChange(cat, e.target.value)}
-                    className="border rounded px-3 py-1 w-40"
+                    className={`border ${safeBorder.primary} rounded px-3 py-1 w-40 ${safeBg.card} ${safeText.primary}`}
                   />
                 </div>
               ))}
               <button
-                className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors mt-2"
+                className={`${styles.button('primary')} mt-2`}
                 onClick={handleSave}
                 type="button"
               >
                 Save Changes
               </button>
-              {saveStatus === 'saving' && <div className="text-teal-600 mt-2">Saving...</div>}
-              {saveStatus === 'success' && <div className="text-green-600 mt-2">Budget updated!</div>}
-              {saveStatus === 'error' && <div className="text-red-600 mt-2">Failed to save. Try again.</div>}
+              {saveStatus === 'saving' && <div className={`${safeText.accent} mt-2`}>Saving...</div>}
+              {saveStatus === 'success' && <div className={`${safeText.accent} mt-2`}>Budget updated!</div>}
+              {saveStatus === 'error' && <div className={`text-red-600 mt-2`}>Failed to save. Try again.</div>}
             </div>
           )}
         </div>
@@ -313,17 +342,17 @@ export default function BudgetForm() {
 
       {/* Real-Time Budget Analytics - Only show when budget exists */}
       {(suggestedBudget && !suggestedBudget.error) && (
-        <div className="bg-gradient-to-br from-teal-50 to-blue-100 rounded-xl p-6 mt-8 border border-teal-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <div className="bg-teal-100 p-2 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-teal-600" />
+        <div className={`${safeBg.secondary} rounded-xl p-6 mt-8 border ${safeBorder.accent}`}>
+          <h3 className={`text-lg font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+            <div className={`${safeBg.tertiary} p-2 rounded-lg`}>
+              <BarChart3 className={`w-5 h-5 ${safeText.accent}`} />
             </div>
             Live Budget Analytics
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Real Spending Progress */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Current Month Progress</h4>
+            <div className={`${safeBg.card} rounded-lg p-4 shadow-sm`}>
+              <h4 className={`font-semibold ${safeText.primary} mb-3`}>Current Month Progress</h4>
               <div className="space-y-2">
                 {(() => {
                   const categories = [
@@ -352,9 +381,9 @@ export default function BudgetForm() {
                     
                     return (
                       <div key={cat.name} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{cat.name}</span>
+                        <span className={`text-sm ${safeText.secondary}`}>{cat.name}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className={`w-16 ${safeBg.tertiary} rounded-full h-2`}>
                             <div className={`${colorClass} h-2 rounded-full progress-bar`} style={{ width: `${percent}%` }}></div>
                           </div>
                           <span className={`text-xs ${textColor} font-semibold`}>{percent}%</span>
@@ -364,20 +393,20 @@ export default function BudgetForm() {
                   });
                 })()}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Real-time budget utilization tracking</p>
+              <p className={`text-xs ${safeText.secondary} mt-3`}>Real-time budget utilization tracking</p>
             </div>
 
             {/* Live Budget vs Actual Comparison */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Budget vs Actual Spending</h4>
+            <div className={`${safeBg.card} rounded-lg p-4 shadow-sm`}>
+              <h4 className={`font-semibold ${safeText.primary} mb-3`}>Budget vs Actual Spending</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-3 bg-blue-400 rounded"></div>
-                  <span className="text-xs text-gray-600">Planned Budget</span>
+                  <span className={`text-xs ${safeText.secondary}`}>Planned Budget</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-16 h-3 bg-teal-400 rounded"></div>
-                  <span className="text-xs text-gray-600">Actual Spending</span>
+                  <div className={`w-16 h-3 ${safeAccent.primary} rounded`}></div>
+                  <span className={`text-xs ${safeText.secondary}`}>Actual Spending</span>
                 </div>
                 <div className="mt-4 space-y-2">
                   {(() => {
@@ -391,7 +420,7 @@ export default function BudgetForm() {
                     
                     return budgetComparison.map((item, index) => (
                       <div key={item.name} className="flex items-center gap-2">
-                        <div className="text-xs w-16 text-gray-600">{item.name}</div>
+                        <div className={`text-xs w-16 ${safeText.secondary}`}>{item.name}</div>
                         <div className="flex gap-1">
                           <div 
                             className="h-2 bg-blue-400 rounded"
@@ -399,12 +428,12 @@ export default function BudgetForm() {
                             title={`Planned: ₹${item.planned.toLocaleString('en-IN')}`}
                           ></div>
                           <div 
-                            className="h-2 bg-teal-400 rounded"
+                            className={`h-2 ${safeAccent.primary} rounded`}
                             style={{ width: `${Math.max(8, (item.actual / maxAmount) * 40)}px` }}
                             title={`Actual: ₹${item.actual.toLocaleString('en-IN')}`}
                           ></div>
                         </div>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className={`text-xs ${safeText.secondary} ml-2`}>
                           {item.actual > item.planned ? '+' : ''}₹{(item.actual - item.planned).toLocaleString('en-IN')}
                         </span>
                       </div>
@@ -412,11 +441,11 @@ export default function BudgetForm() {
                   })()}
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">Live comparison with your set budget</p>
+              <p className={`text-xs ${safeText.secondary} mt-3`}>Live comparison with your set budget</p>
             </div>
           </div>
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
+            <p className={`text-sm ${safeText.secondary}`}>
               <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-500" />
               <strong>Real-time data:</strong> Budget tracking • Spending alerts • Progress monitoring • Smart insights
@@ -428,8 +457,8 @@ export default function BudgetForm() {
 
       {/* Planned vs Actual Spend Chart */}
       {(suggestedBudget && !suggestedBudget.error) && (
-        <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Planned vs. Actual Spend</h3>
+        <div className={`${safeBg.card} p-6 rounded-lg shadow-md mt-8`}>
+          <h3 className={`text-xl font-semibold ${safeText.accent} mb-4`}>Planned vs. Actual Spend</h3>
           <div style={{ height: 260 }}>
             <ResponsiveBar
               data={plannedVsActualData
@@ -443,7 +472,7 @@ export default function BudgetForm() {
               margin={{ top: 10, right: 30, bottom: 30, left: 80 }}
               padding={0.4}
               groupMode="grouped"
-              colors={["#38bdf8", "#14b8a6"]}
+              colors={[currentTheme?.colors?.accent?.secondary || '#3b82f6', currentTheme?.colors?.accent?.primary || '#14b8a6']}
               axisBottom={false}
               axisLeft={{
                 tickSize: 0,
@@ -456,7 +485,7 @@ export default function BudgetForm() {
               enableGridY={false}
               enableLabel={false}
               tooltip={({ id, value, indexValue, data }) => (
-                <div className="bg-white p-2 rounded shadow text-xs text-gray-800">
+                <div className={`${safeBg.card} p-2 rounded shadow text-xs ${safeText.primary}`}>
                   <b>{indexValue}</b><br />{id}: ₹{value.toLocaleString('en-IN')}
                   {id === 'Actual' && data.Planned > 0 && (
                     <div className="mt-1 text-xs text-gray-500">
@@ -466,12 +495,28 @@ export default function BudgetForm() {
                 </div>
               )}
               theme={{
-                axis: { ticks: { text: { fontSize: 12, fill: '#64748b' } } },
-                tooltip: { container: { fontSize: 13 } }
+                axis: { 
+                  ticks: { 
+                    text: { 
+                      fontSize: 12, 
+                      fill: currentTheme?.colors?.text?.secondary?.includes('text-') ? 
+                        currentTheme.colors.text.secondary.replace('text-', '') : 
+                        '#64748b' 
+                    } 
+                  } 
+                },
+                tooltip: { 
+                  container: { 
+                    fontSize: 13,
+                    backgroundColor: currentTheme?.colors?.bg?.card?.includes('bg-') ? 
+                      (currentTheme.colors.bg.card === 'bg-white' ? '#ffffff' : '#1f2937') : 
+                      '#ffffff'
+                  } 
+                }
               }}
             />
             <div className="flex justify-end text-xs text-gray-400 mt-1">
-              <span>Top 6 categories by spend</span>
+              <span className={`${safeText.secondary}`}>Top 6 categories by spend</span>
             </div>
           </div>
         </div>

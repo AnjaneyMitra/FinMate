@@ -4,8 +4,35 @@ import FirebaseDataService from './services/FirebaseDataService';
 import BankStatementUpload from './components/BankStatementUpload';
 import { auth } from './firebase';
 import PinButton from './components/PinButton';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 
 export default function TransactionForm({ onTransactionAdded, onClose, user }) {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    bg: 'bg-teal-50',
+    border: 'border-teal-300'
+  };
+  
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -244,11 +271,11 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-8 px-4 relative">
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-8 px-4 relative ${safeBg.primary}`}>
       {/* Floating Success Toast */}
       {success && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl border-l-4 border-green-500 p-4 max-w-sm">
+          <div className={`${safeBg.card} rounded-xl shadow-2xl border-l-4 border-green-500 p-4 max-w-sm`}>
             <div className="flex items-center">
               <div className="bg-green-100 rounded-full p-2 mr-3">
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,27 +283,27 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Success!</p>
-                <p className="text-sm text-gray-600">Transaction saved successfully</p>
+                <p className={`font-semibold ${safeText.primary}`}>Success!</p>
+                <p className={`text-sm ${safeText.secondary}`}>Transaction saved successfully</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-xl p-8 max-w-4xl mx-auto relative overflow-hidden">
+      <div className={`${safeBg.card} rounded-xl shadow-xl p-8 max-w-4xl mx-auto relative overflow-hidden`}>
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Add New Transaction</h2>
-            <p className="text-gray-600">Track your expenses with detailed information</p>
+            <h2 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Add New Transaction</h2>
+            <p className={`${safeText.secondary}`}>Track your expenses with detailed information</p>
             
             {/* Progress Indicator */}
             <div className="mt-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className={`flex items-center gap-2 text-sm ${safeText.tertiary}`}>
                 <span>Form completion:</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-32">
+                <div className={`flex-1 ${safeBg.secondary} rounded-full h-2 max-w-32`}>
                   <div 
-                    className="bg-gradient-to-r from-teal-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                    className={`bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-500 h-2 rounded-full transition-all duration-300`}
                     style={{ 
                       width: `${Math.min(100, (
                         (formData.amount ? 25 : 0) +
@@ -287,7 +314,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                     }}
                   />
                 </div>
-                <span className="font-semibold text-teal-600">
+                <span className={`font-semibold ${safeAccent.secondary}`}>
                   {Math.min(100, (
                     (formData.amount ? 25 : 0) +
                     (formData.description ? 25 : 0) +
@@ -303,7 +330,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             <button
               type="button"
               onClick={() => setShowBankUpload(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className={`flex items-center px-4 py-2 ${safeAccent.primary} text-white rounded-md hover:bg-blue-700 transition-colors`}
             >
               <Upload className="w-5 h-5 mr-2" />
               Upload Statement
@@ -311,7 +338,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             {onClose && (
               <button 
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                className={`${safeText.tertiary} hover:${safeText.secondary} text-2xl font-bold`}
               >
                 ✕
               </button>
@@ -433,8 +460,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
         )}
 
         {/* Real-Time Transaction Insights */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 mb-8 border border-green-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <div className={`bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-6 mb-8 border border-green-200 ${safeBg.secondary}`}>
+          <h3 className={`text-lg font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
             <div className="bg-green-100 p-2 rounded-lg">
               <CreditCard className="w-5 h-5 text-green-600" />
             </div>
@@ -442,8 +469,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Smart Categorization - Real */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Recent Transactions</h4>
+            <div className={`${safeBg.card} rounded-lg p-4 shadow-sm`}>
+              <h4 className={`font-semibold ${safeText.secondary} mb-3`}>Recent Transactions</h4>
               <div className="space-y-2">
                 {(() => {
                   // Generate recent transactions based on current form category or default
@@ -457,14 +484,14 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   
                   return recentTransactions.map((transaction, index) => (
                     <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 flex items-center gap-1">
+                      <span className={`${safeText.secondary} flex items-center gap-1`}>
                         <div className="p-1">
                           {React.createElement(transaction.icon, { className: "w-4 h-4" })}
                         </div>
                         {transaction.name}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-800 font-semibold">₹{transaction.amount}</span>
+                        <span className={`${safeText.primary} font-semibold`}>₹{transaction.amount}</span>
                         <span className={`px-2 py-1 rounded text-xs ${
                           transaction.category === 'food' ? 'bg-yellow-100 text-yellow-700' :
                           transaction.category === 'transport' ? 'bg-blue-100 text-blue-700' :
@@ -477,12 +504,12 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   ));
                 })()}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Auto-categorized transactions</p>
+              <p className={`text-xs ${safeText.tertiary} mt-3`}>Auto-categorized transactions</p>
             </div>
 
             {/* Goal Assignment - Real */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Available Goals</h4>
+            <div className={`${safeBg.card} rounded-lg p-4 shadow-sm`}>
+              <h4 className={`font-semibold ${safeText.secondary} mb-3`}>Available Goals</h4>
               <div className="space-y-2">
                 {goalsLoading ? (
                   <div className="text-sm text-gray-500">Loading goals...</div>
@@ -550,13 +577,13 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Amount and Date - Hero Section */}
-          <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 border border-teal-200">
+          <div className={`bg-gradient-to-r from-${safeAccent.bg.replace('bg-', '')} to-blue-50 rounded-lg p-6 border ${safeAccent.border}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Amount */}
               <div>
-                <label htmlFor="amount" className="block text-lg font-semibold text-teal-700 mb-3 flex items-center gap-2">
-                  <div className="bg-teal-100 p-1.5 rounded-lg">
-                    <DollarSign className="w-4 h-4 text-teal-600" />
+                <label htmlFor="amount" className={`block text-lg font-semibold ${safeAccent.secondary} mb-3 flex items-center gap-2`}>
+                  <div className={`${safeAccent.bg} p-1.5 rounded-lg`}>
+                    <DollarSign className={`w-4 h-4 ${safeAccent.secondary}`} />
                   </div>
                   Amount (₹) *
                 </label>
@@ -569,16 +596,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   step="0.01"
                   min="0"
                   required
-                  className="w-full px-4 py-3 text-xl font-semibold border-2 border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                  className={`w-full px-4 py-3 text-xl font-semibold border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
                   placeholder="0.00"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label htmlFor="date" className="block text-lg font-semibold text-teal-700 mb-3 flex items-center gap-2">
-                  <div className="bg-teal-100 p-1.5 rounded-lg">
-                    <Calendar className="w-4 h-4 text-teal-600" />
+                <label htmlFor="date" className={`block text-lg font-semibold ${safeAccent.secondary} mb-3 flex items-center gap-2`}>
+                  <div className={`${safeAccent.bg} p-1.5 rounded-lg`}>
+                    <Calendar className={`w-4 h-4 ${safeAccent.secondary}`} />
                   </div>
                   Date *
                 </label>
@@ -589,7 +616,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   value={formData.date}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 text-lg border-2 border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                  className={`w-full px-4 py-3 text-lg border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
                 />
               </div>
             </div>
@@ -597,9 +624,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <div className="bg-gray-100 p-1.5 rounded-lg">
-                <FileText className="w-4 h-4 text-gray-600" />
+            <label htmlFor="description" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                <FileText className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               Description *
             </label>
@@ -610,7 +637,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               value={formData.description}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
               placeholder="What did you spend on?"
             />
           </div>
@@ -619,8 +646,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-gray-600" />
+              <label htmlFor="category" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+                <Receipt className={`w-5 h-5 ${safeText.secondary}`} />
                 Category *
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -631,8 +658,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                     onClick={() => setFormData(prev => ({ ...prev, category: cat, subcategory: '' }))}
                     className={`p-3 rounded-lg border-2 transition-all duration-200 flex items-center space-x-2 ${
                       formData.category === cat
-                        ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-md'
-                        : 'border-gray-300 hover:border-teal-300 hover:bg-teal-50'
+                        ? `${safeAccent.border} ${safeAccent.bg} ${safeAccent.secondary} shadow-md`
+                        : `${safeBorder.primary} hover:border-${safeAccent.primary.replace('bg-', '')} hover:${safeAccent.bg}`
                     }`}
                   >
                     <div className="p-1">
@@ -646,8 +673,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
             {/* Subcategory */}
             <div>
-              <label htmlFor="subcategory" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-gray-600" />
+              <label htmlFor="subcategory" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+                <Receipt className={`w-5 h-5 ${safeText.secondary}`} />
                 Subcategory
               </label>
               <select
@@ -655,7 +682,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 name="subcategory"
                 value={formData.subcategory}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
               >
                 <option value="">Select subcategory</option>
                 {categories[formData.category]?.subcategories?.map(subcat => (
@@ -669,8 +696,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Payment Method - Visual Selection */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-4 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-gray-600" />
+            <label className={`block text-lg font-medium ${safeText.secondary} mb-4 flex items-center gap-2`}>
+              <CreditCard className={`w-5 h-5 ${safeText.secondary}`} />
               Payment Method
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -681,8 +708,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   onClick={() => setFormData(prev => ({ ...prev, payment_method: method.value }))}
                   className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
                     formData.payment_method === method.value
-                      ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-md transform scale-105'
-                      : 'border-gray-300 hover:border-teal-300 hover:bg-teal-50'
+                      ? `${safeAccent.border} ${safeAccent.bg} ${safeAccent.secondary} shadow-md transform scale-105`
+                      : `${safeBorder.primary} hover:border-${safeAccent.primary.replace('bg-', '')} hover:${safeAccent.bg}`
                   }`}
                 >
                   <div className="p-1">
@@ -768,7 +795,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
                   : success
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 scale-105 shadow-xl'
-                    : 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:scale-105 shadow-lg hover:shadow-xl'
+                    : `bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-600 hover:from-${safeAccent.primary.replace('bg-', '')} hover:to-blue-700 hover:scale-105 shadow-lg hover:shadow-xl`
               } text-white`}
             >
               {loading ? (
@@ -797,7 +824,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-8 py-4 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                className={`px-8 py-4 border-2 ${safeBorder.primary} rounded-lg ${safeText.secondary} hover:${safeBg.secondary} transition-colors font-semibold text-lg`}
               >
                 Cancel
               </button>

@@ -11,6 +11,7 @@ import {
 } from "chart.js";
 import { Calculator } from 'lucide-react';
 import PinButton from './components/PinButton';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -37,6 +38,29 @@ function calculateTaxBreakdown(salary) {
 }
 
 export default function TaxBreakdown() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600'
+  };
+  
   const [salary, setSalary] = useState(0);
   const breakdown = calculateTaxBreakdown(Number(salary));
   const totalTax = breakdown.reduce((sum, b) => sum + b.tax, 0);
@@ -122,8 +146,8 @@ export default function TaxBreakdown() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tax Calculator</h2>
-            <p className="text-gray-600">Calculate your income tax based on current Indian tax slabs</p>
+            <h2 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Tax Calculator</h2>
+            <p className={`${safeText.secondary}`}>Calculate your income tax based on current Indian tax slabs</p>
           </div>
           <PinButton pageId="tax-breakdown" />
         </div>
@@ -131,18 +155,18 @@ export default function TaxBreakdown() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Input Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-teal-700 mb-4">Annual Salary</h3>
+        <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
+          <h3 className={`text-xl font-semibold ${safeAccent.secondary} mb-4`}>Annual Salary</h3>
           <div className="space-y-4">
             <div>
-              <label className="block mb-2 font-medium text-gray-700">
+              <label className={`block mb-2 font-medium ${safeText.secondary}`}>
                 Enter your annual salary (₹)
               </label>
               <input
                 type="number"
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className={`w-full border ${safeBorder.primary} px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-transparent ${safeBg.card} ${safeText.primary}`}
                 placeholder="e.g., 1200000"
               />
             </div>
@@ -151,25 +175,25 @@ export default function TaxBreakdown() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setSalary(500000)}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                className={`px-3 py-2 text-sm ${safeBg.secondary} hover:${safeBg.tertiary || 'bg-gray-200'} rounded-md transition-colors ${safeText.primary}`}
               >
                 ₹5L
               </button>
               <button
                 onClick={() => setSalary(1000000)}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                className={`px-3 py-2 text-sm ${safeBg.secondary} hover:${safeBg.tertiary || 'bg-gray-200'} rounded-md transition-colors ${safeText.primary}`}
               >
                 ₹10L
               </button>
               <button
                 onClick={() => setSalary(1500000)}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                className={`px-3 py-2 text-sm ${safeBg.secondary} hover:${safeBg.tertiary || 'bg-gray-200'} rounded-md transition-colors ${safeText.primary}`}
               >
                 ₹15L
               </button>
               <button
                 onClick={() => setSalary(2000000)}
-                className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                className={`px-3 py-2 text-sm ${safeBg.secondary} hover:${safeBg.tertiary || 'bg-gray-200'} rounded-md transition-colors ${safeText.primary}`}
               >
                 ₹20L
               </button>
@@ -194,9 +218,9 @@ export default function TaxBreakdown() {
                 <p className="text-xl font-bold text-green-700">₹{netSalary.toLocaleString('en-IN')}</p>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 font-medium">Effective Tax Rate</p>
-                <p className="text-xl font-bold text-gray-700">{((totalTax / Number(salary)) * 100).toFixed(2)}%</p>
+              <div className={`${safeBg.secondary} p-4 rounded-lg`}>
+                <p className={`text-sm ${safeText.secondary} font-medium`}>Effective Tax Rate</p>
+                <p className={`text-xl font-bold ${safeText.primary}`}>{((totalTax / Number(salary)) * 100).toFixed(2)}%</p>
               </div>
             </div>
           )}
@@ -207,16 +231,16 @@ export default function TaxBreakdown() {
           {salary > 0 && (
             <>
               {/* Tax Breakdown Chart */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Tax Breakdown by Slab</h3>
+              <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
+                <h3 className={`text-xl font-semibold ${safeText.primary} mb-4`}>Tax Breakdown by Slab</h3>
                 <div style={{ height: '300px' }}>
                   <Bar data={barData} options={chartOptions} />
                 </div>
               </div>
 
               {/* Pie Chart */}
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Net vs Tax Distribution</h3>
+              <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
+                <h3 className={`text-xl font-semibold ${safeText.primary} mb-4`}>Net vs Tax Distribution</h3>
                 <div style={{ height: '300px' }}>
                   <Pie data={pieData} options={pieOptions} />
                 </div>
@@ -225,13 +249,13 @@ export default function TaxBreakdown() {
           )}
 
           {salary === 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className={`${safeBg.card} p-6 rounded-lg shadow-md`}>
               <div className="text-center py-12">
-                <div className="p-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl inline-block mb-4">
+                <div className={`p-4 bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-600 rounded-2xl inline-block mb-4`}>
                   <Calculator className="w-12 h-12 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Tax Calculator</h3>
-                <p className="text-gray-600">Enter your annual salary to see the tax breakdown</p>
+                <h3 className={`text-xl font-semibold ${safeText.primary} mb-2`}>Tax Calculator</h3>
+                <p className={`${safeText.secondary}`}>Enter your annual salary to see the tax breakdown</p>
               </div>
             </div>
           )}
@@ -239,29 +263,29 @@ export default function TaxBreakdown() {
       </div>
 
       {/* Tax Slab Information */}
-      <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">Current Tax Slabs (2024-25)</h3>
+      <div className={`mt-8 ${safeBg.card} rounded-lg shadow-md p-6`}>
+        <h3 className={`text-xl font-semibold ${safeText.primary} mb-4`}>Current Tax Slabs (2024-25)</h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className={`min-w-full divide-y ${safeBorder.primary}`}>
+            <thead className={`${safeBg.secondary}`}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income Range</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax Rate</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Your Tax</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${safeText.tertiary} uppercase tracking-wider`}>Income Range</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${safeText.tertiary} uppercase tracking-wider`}>Tax Rate</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${safeText.tertiary} uppercase tracking-wider`}>Your Tax</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className={`${safeBg.card} divide-y ${safeBorder.primary}`}>
               {breakdown.map((slab, index) => (
                 <tr key={index} className={slab.tax > 0 ? 'bg-yellow-50' : ''}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${safeText.primary}`}>
                     {slab.label}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${safeText.primary}`}>
                     {slab.label === "0-2.5L" ? "0%" : 
                      slab.label === "2.5L-5L" ? "5%" : 
                      slab.label === "5L-10L" ? "20%" : "30%"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${safeText.primary}`}>
                     ₹{slab.tax.toLocaleString('en-IN')}
                   </td>
                 </tr>

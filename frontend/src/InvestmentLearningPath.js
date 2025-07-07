@@ -4,6 +4,8 @@ import InvestmentLearningService from './services/InvestmentLearningService';
 import UserProfileSetup from './components/UserProfileSetup';
 import PersonalizedContent from './components/PersonalizedContent';
 import PinButton from './components/PinButton';
+import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from './contexts/ThemeContext';
 
 const levels = [
   {
@@ -84,6 +86,35 @@ const levels = [
 ];
 
 export default function InvestmentLearningPath() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   const [selectedLevel, setSelectedLevel] = useState(0);
   const [completedTopics, setCompletedTopics] = useState(new Set());
   const [selectedTopic, setSelectedTopic] = useState(null);

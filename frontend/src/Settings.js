@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DataMigrationService from './services/DataMigrationService';
 import SampleDataService from './services/SampleDataService';
 import PinButton from './components/PinButton';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 import { 
   Database, 
   Shield, 
@@ -18,6 +19,30 @@ import {
 } from 'lucide-react';
 
 export default function Settings() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600'
+  };
+  
   const [activeTab, setActiveTab] = useState('data');
   const [migrationStatus, setMigrationStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -119,8 +144,8 @@ export default function Settings() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-              <p className="text-gray-600">Manage your FinMate preferences and data</p>
+              <h1 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Settings</h1>
+              <p className={`${safeText.secondary}`}>Manage your FinMate preferences and data</p>
             </div>
             <PinButton pageId="settings" />
           </div>
@@ -128,7 +153,7 @@ export default function Settings() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-8">
+      <div className={`border-b ${safeBorder.primary} mb-8`}>
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -136,8 +161,8 @@ export default function Settings() {
               onClick={() => setActiveTab(tab.id)}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center gap-2 ${
                 activeTab === tab.id
-                  ? 'border-teal-500 text-teal-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? `${safeAccent.border || 'border-teal-500'} ${safeAccent.secondary}`
+                  : `border-transparent ${safeText.tertiary} hover:${safeText.secondary} hover:border-gray-300`
               }`}
             >
               {tab.icon}
@@ -176,9 +201,9 @@ export default function Settings() {
       {/* Tab Content */}
       {activeTab === 'data' && (
         <div className="space-y-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Database className="w-5 h-5 text-teal-600" />
+          <div className={`${safeBg.card} rounded-lg shadow p-6`}>
+            <h2 className={`text-xl font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+              <Database className={`w-5 h-5 ${safeAccent.secondary}`} />
               Data Storage & Migration
             </h2>
             
@@ -203,8 +228,8 @@ export default function Settings() {
 
             {/* Migration Status */}
             {migrationStatus && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-md">
-                <h3 className="font-medium text-gray-900 mb-2">Current Data Status</h3>
+              <div className={`mb-6 p-4 ${safeBg.secondary} rounded-md`}>
+                <h3 className={`font-medium ${safeText.primary} mb-2`}>Current Data Status</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="font-medium">Local Storage (Browser):</p>
@@ -234,7 +259,7 @@ export default function Settings() {
                   <button
                     onClick={handleMigration}
                     disabled={loading}
-                    className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                    className={`${styles.button('primary')} disabled:opacity-50`}
                   >
                     {loading ? 'Migrating...' : 'Migrate to Firebase'}
                   </button>
@@ -243,48 +268,48 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Demo Data */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                <div className={`p-4 border ${safeBorder.primary} rounded-lg`}>
+                  <h3 className={`font-medium ${safeText.primary} mb-2 flex items-center gap-2`}>
                     <Target className="w-4 h-4 text-purple-600" />
                     Demo Data
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className={`text-sm ${safeText.secondary} mb-3`}>
                     Add sample transactions, budget, and preferences to test the app.
                   </p>
                   <button
                     onClick={handleAddSampleData}
                     disabled={loading}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50"
+                    className={`${styles.button('secondary')} disabled:opacity-50`}
                   >
                     {loading ? 'Adding...' : 'Add Sample Data'}
                   </button>
                 </div>
 
                 {/* Backup */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                    <Download className="w-4 h-4 text-teal-600" />
+                <div className={`p-4 border ${safeBorder.primary} rounded-lg`}>
+                  <h3 className={`font-medium ${safeText.primary} mb-2 flex items-center gap-2`}>
+                    <Download className={`w-4 h-4 ${safeAccent.secondary}`} />
                     Backup Data
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className={`text-sm ${safeText.secondary} mb-3`}>
                     Download a complete backup of your financial data as a JSON file.
                   </p>
                   <button
                     onClick={handleBackup}
                     disabled={loading}
-                    className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 disabled:opacity-50"
+                    className={`${styles.button('primary')} disabled:opacity-50`}
                   >
                     {loading ? 'Creating...' : 'Download Backup'}
                   </button>
                 </div>
 
                 {/* Restore */}
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-teal-600" />
+                <div className={`p-4 border ${safeBorder.primary} rounded-lg`}>
+                  <h3 className={`font-medium ${safeText.primary} mb-2 flex items-center gap-2`}>
+                    <Upload className={`w-4 h-4 ${safeAccent.secondary}`} />
                     Restore Data
                   </h3>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className={`text-sm ${safeText.secondary} mb-3`}>
                     Restore your data from a previously downloaded backup file.
                   </p>
                   <label className="block">
@@ -293,7 +318,7 @@ export default function Settings() {
                       accept=".json"
                       onChange={handleFileRestore}
                       disabled={loading}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                      className={`block w-full text-sm ${safeText.tertiary} file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:${safeAccent.bg || 'bg-teal-50'} file:${safeAccent.secondary} hover:file:bg-teal-100`}
                     />
                   </label>
                 </div>
@@ -302,17 +327,17 @@ export default function Settings() {
           </div>
 
           {/* Data Usage */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-teal-600" />
+          <div className={`${safeBg.card} rounded-lg shadow p-6`}>
+            <h2 className={`text-xl font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+              <BarChart3 className={`w-5 h-5 ${safeAccent.secondary}`} />
               Storage Usage
             </h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Firebase Free Tier Usage:</span>
+                <span className={`${safeText.secondary}`}>Firebase Free Tier Usage:</span>
                 <span className="text-sm text-green-600">Well within limits</span>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className={`text-sm ${safeText.tertiary}`}>
                 <p>• Reads: Unlimited for personal use</p>
                 <p>• Writes: Unlimited for personal use</p>
                 <p>• Storage: &lt; 1MB used of 1GB available</p>
@@ -323,9 +348,9 @@ export default function Settings() {
       )}
 
       {activeTab === 'privacy' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Lock className="w-5 h-5 text-gray-600" />
+        <div className={`${safeBg.card} rounded-lg shadow p-6`}>
+          <h2 className={`text-xl font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+            <Lock className={`w-5 h-5 ${safeText.secondary}`} />
             Privacy & Security
           </h2>
           <div className="space-y-4">
@@ -363,17 +388,17 @@ export default function Settings() {
       )}
 
       {activeTab === 'preferences' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-gray-600" />
+        <div className={`${safeBg.card} rounded-lg shadow p-6`}>
+          <h2 className={`text-xl font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+            <SettingsIcon className={`w-5 h-5 ${safeText.secondary}`} />
             App Preferences
           </h2>
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium ${safeText.secondary} mb-2`}>
                 Default Currency
               </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <select className={`w-full px-3 py-2 border ${safeBorder.primary} rounded-md focus:outline-none focus:ring-2 focus:${safeAccent.ring || 'ring-teal-500'} ${safeBg.card} ${safeText.primary}`}>
                 <option value="INR">Indian Rupee (₹)</option>
                 <option value="USD">US Dollar ($)</option>
                 <option value="EUR">Euro (€)</option>
@@ -381,10 +406,10 @@ export default function Settings() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium ${safeText.secondary} mb-2`}>
                 Default View
               </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <select className={`w-full px-3 py-2 border ${safeBorder.primary} rounded-md focus:outline-none focus:ring-2 focus:${safeAccent.ring || 'ring-teal-500'} ${safeBg.card} ${safeText.primary}`}>
                 <option value="overview">Overview</option>
                 <option value="detailed">Detailed</option>
               </select>
@@ -394,9 +419,9 @@ export default function Settings() {
               <input
                 type="checkbox"
                 id="notifications"
-                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                className={`h-4 w-4 ${safeAccent.secondary} focus:${safeAccent.ring || 'ring-teal-500'} border-gray-300 rounded`}
               />
-              <label htmlFor="notifications" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="notifications" className={`ml-2 block text-sm ${safeText.primary}`}>
                 Enable budget alerts
               </label>
             </div>
@@ -405,17 +430,17 @@ export default function Settings() {
       )}
 
       {activeTab === 'about' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">ℹ️ About FinMate</h2>
+        <div className={`${safeBg.card} rounded-lg shadow p-6`}>
+          <h2 className={`text-xl font-semibold ${safeText.primary} mb-4`}>ℹ️ About FinMate</h2>
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-gray-900">Version</h3>
-              <p className="text-gray-600">1.0.0</p>
+              <h3 className={`font-medium ${safeText.primary}`}>Version</h3>
+              <p className={`${safeText.secondary}`}>1.0.0</p>
             </div>
             
             <div>
-              <h3 className="font-medium text-gray-900">Features</h3>
-              <ul className="text-gray-600 space-y-1">
+              <h3 className={`font-medium ${safeText.primary}`}>Features</h3>
+              <ul className={`${safeText.secondary} space-y-1`}>
                 <li>• Transaction tracking with Firebase sync</li>
                 <li>• Spending analysis and insights</li>
                 <li>• Budget management</li>
@@ -425,8 +450,8 @@ export default function Settings() {
             </div>
             
             <div>
-              <h3 className="font-medium text-gray-900">Technology Stack</h3>
-              <ul className="text-gray-600 space-y-1">
+              <h3 className={`font-medium ${safeText.primary}`}>Technology Stack</h3>
+              <ul className={`${safeText.secondary} space-y-1`}>
                 <li>• React.js frontend</li>
                 <li>• Firebase Firestore database</li>
                 <li>• Tailwind CSS styling</li>

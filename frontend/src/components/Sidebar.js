@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../contexts/SidebarContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   Home, 
   Zap, 
@@ -21,12 +22,36 @@ import {
   ChevronDown,
   MoreVertical,
   PinOff,
-  Grip
+  Grip,
+  Palette
 } from 'lucide-react';
 
 export default function Sidebar({ user, setUser }) {
   const location = useLocation();
   const { getPinnedItems, unpinItem, reorderItems } = useSidebar();
+  
+  // Add theme context
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    accent: 'text-teal-600'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    secondary: 'border-gray-100'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600'
+  };
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -57,6 +82,7 @@ export default function Sidebar({ user, setUser }) {
     'tax-estimator': Calculator,
     'tax-filing': FileText,
     'settings': Settings,
+    'themes': Palette,
     'firestore-test': Database,
   };
 
@@ -95,7 +121,7 @@ export default function Sidebar({ user, setUser }) {
     {
       id: 'system',
       name: 'System',
-      items: ['settings', 'firestore-test'],
+      items: ['settings', 'themes', 'firestore-test'],
       alwaysExpanded: true,
     },
   ];
@@ -184,14 +210,14 @@ export default function Sidebar({ user, setUser }) {
   };
 
   return (
-    <aside className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+    <aside className={`h-screen w-64 ${safeBg.card} border-r ${safeBorder.primary} flex flex-col shadow-sm`}>
       <div className="flex-1 overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-blue-50">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+        <div className={`flex items-center gap-3 px-6 py-5 border-b ${safeBorder.secondary} ${safeBg.secondary}`}>
+          <div className={`w-8 h-8 ${safeAccent.primary} rounded-lg flex items-center justify-center`}>
             <span className="text-white font-bold text-lg">F</span>
           </div>
-          <span className="font-bold text-xl tracking-tight text-gray-900">FinMate</span>
+          <span className={`font-bold text-xl tracking-tight ${safeText.primary}`}>FinMate</span>
         </div>
 
         {/* Navigation Groups */}
@@ -208,7 +234,7 @@ export default function Sidebar({ user, setUser }) {
                 {!group.alwaysExpanded && (
                   <button
                     onClick={() => toggleGroup(group.id)}
-                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 transition-colors sidebar-group-transition"
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold ${safeText.secondary} uppercase tracking-wider hover:${safeText.primary} transition-colors sidebar-group-transition`}
                   >
                     <span>{group.name}</span>
                     <div className={`sidebar-item-transition ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
@@ -239,10 +265,10 @@ export default function Sidebar({ user, setUser }) {
                           draggable={!item.isDefault}
                           onDragStart={(e) => handleDragStart(e, item, index)}
                           onDragEnd={handleDragEnd}
-                          className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 font-medium group relative ${
+                          className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg ${safeText.primary} hover:${safeBg.secondary} hover:${safeText.primary} transition-all duration-200 font-medium group relative ${
                             isActive(item) 
-                              ? 'bg-gradient-to-r from-teal-50 to-blue-50 text-teal-700 font-semibold border-l-4 border-teal-500 shadow-sm' 
-                              : 'hover:border-l-4 hover:border-gray-300'
+                              ? `${safeBg.secondary} ${safeText.accent} font-semibold border-l-4 ${safeBorder.primary} shadow-sm` 
+                              : `hover:border-l-4 hover:${safeBorder.secondary}`
                           } ${draggedItem?.item.id === item.id ? 'opacity-50' : ''} ${
                             !item.isDefault ? 'cursor-move' : ''
                           }`}
@@ -250,13 +276,13 @@ export default function Sidebar({ user, setUser }) {
                           <div className="flex items-center gap-3">
                             {!item.isDefault && (
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Grip className="w-3 h-3 text-gray-400" />
+                                <Grip className={`w-3 h-3 ${safeText.secondary}`} />
                               </div>
                             )}
                             <div className={`p-1.5 rounded-md sidebar-item-transition ${
                               isActive(item) 
-                                ? 'bg-teal-100 text-teal-600' 
-                                : 'text-gray-500 group-hover:text-gray-700'
+                                ? `${safeBg.secondary} ${safeText.accent}` 
+                                : `${safeText.secondary} group-hover:${safeText.primary}`
                             }`}>
                               {renderIcon(item.id, "w-4 h-4")}
                             </div>
@@ -265,7 +291,7 @@ export default function Sidebar({ user, setUser }) {
                           
                           {/* Active indicator */}
                           {isActive(item) && (
-                            <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse-soft"></div>
+                            <div className={`w-2 h-2 ${safeAccent.primary} rounded-full animate-pulse-soft`}></div>
                           )}
                           
                           {/* Three dots menu - only show for non-default items */}
@@ -273,17 +299,17 @@ export default function Sidebar({ user, setUser }) {
                             <div className="relative" ref={dropdownRef}>
                               <button
                                 onClick={(e) => toggleDropdown(item.id, e)}
-                                className="p-1.5 rounded-md hover:bg-gray-200 transition-colors opacity-0 group-hover:opacity-100"
+                                className={`p-1.5 rounded-md hover:${safeBg.secondary} transition-colors opacity-0 group-hover:opacity-100`}
                               >
-                                <MoreVertical className="w-4 h-4 text-gray-400" />
+                                <MoreVertical className={`w-4 h-4 ${safeText.secondary}`} />
                               </button>
                               
                               {/* Dropdown menu */}
                               {showDropdown === item.id && (
-                                <div className="absolute right-0 top-8 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 animate-fade-in">
+                                <div className={`absolute right-0 top-8 w-44 ${safeBg.card} border ${safeBorder.primary} rounded-lg shadow-lg z-50 py-1 animate-fade-in`}>
                                   <button
                                     onClick={(e) => handleUnpin(item.id, e)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors`}
                                   >
                                     <PinOff className="w-4 h-4" />
                                     Unpin from sidebar

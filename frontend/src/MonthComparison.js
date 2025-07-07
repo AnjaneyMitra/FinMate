@@ -8,6 +8,7 @@ import { auth } from './firebase';
 import PinButton from './components/PinButton';
 import TimeSelector from './components/TimeSelector';
 import { getPeriodDescription } from './utils/timeUtils';
+import { useTheme } from './contexts/ThemeContext';
 
 // Enhanced color palettes for different chart types
 const colorPalettes = {
@@ -34,6 +35,35 @@ const colorPalettes = {
 };
 
 const MonthComparison = () => {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -204,18 +234,20 @@ const MonthComparison = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className={`max-w-7xl mx-auto p-6 ${safeBg.secondary} min-h-screen`}>
       {/* Header */}
       <div className="mb-8">
-        <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-6 border border-indigo-200">
+        <div className={`${safeBg.card} rounded-xl p-6 border ${safeBorder.accent}`}>
           <div className="flex items-center gap-4 mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-                <BarChart3 className="w-8 h-8 text-indigo-600" />
+              <h1 className={`text-3xl font-bold ${safeText.primary} mb-2 flex items-center gap-3`}>
+                <div className={`${safeAccent.primary} p-2 rounded-lg`}>
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
                 Month-to-Month Comparison
-                <Calculator className="w-6 h-6 text-orange-500" />
+                <Calculator className={`w-6 h-6 ${safeText.accent}`} />
               </h1>
-              <p className="text-gray-700">
+              <p className={`${safeText.secondary}`}>
                 Compare your spending patterns across different months with detailed breakdowns
               </p>
             </div>
@@ -225,8 +257,8 @@ const MonthComparison = () => {
           {/* Controls */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Time Range Filter */}
-            <div className="bg-white rounded-lg p-4 border border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Available Time Range</h3>
+            <div className={`${safeBg.card} rounded-lg p-4 border ${safeBorder.primary}`}>
+              <h3 className={`text-sm font-medium ${safeText.primary} mb-3`}>Available Time Range</h3>
               <TimeSelector 
                 value={timeRangeFilter}
                 onChange={(newRange) => {
@@ -241,14 +273,14 @@ const MonthComparison = () => {
                 variant="default"
                 size="sm"
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className={`text-xs ${safeText.secondary} mt-2`}>
                 Showing months from {getPeriodDescription(timeRangeFilter)}
               </p>
             </div>
 
             {/* Month Selection */}
-            <div className="bg-white rounded-lg p-4 border border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Compare Months</h3>
+            <div className={`${safeBg.card} rounded-lg p-4 border ${safeBorder.primary}`}>
+              <h3 className={`text-sm font-medium ${safeText.primary} mb-3`}>Compare Months</h3>
               <div className="flex flex-wrap gap-4 items-center">
                 {selectedMonths.map((month, index) => (
                   <div key={index} className="flex items-center gap-2">

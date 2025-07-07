@@ -52,8 +52,18 @@ ChartJS.register(
 );
 
 const UnifiedDashboard = () => {
-  const { bg, text, border, button, accent, components } = useTheme();
+  const themeContext = useTheme();
+  const { bg, text, border, button, accent, components } = themeContext || {};
   const styles = useThemeStyles();
+  
+  // Add safety check for accent property
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'bg-blue-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
 
   const { 
     user, 

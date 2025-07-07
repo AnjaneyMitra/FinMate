@@ -18,6 +18,8 @@ import PinButton from './components/PinButton';
 import TimeSelector from './components/TimeSelector';
 import { periodToApiFormat, getPeriodDescription } from './utils/timeUtils';
 import { Calendar, TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Clock } from 'lucide-react';
+import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from './contexts/ThemeContext';
 
 // Register Chart.js components
 ChartJS.register(
@@ -125,6 +127,35 @@ const chartOptions = {
 };
 
 export default function RealSpendingAnalysis({ userId = 'default-user' }) {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [spendingData, setSpendingData] = useState(null);

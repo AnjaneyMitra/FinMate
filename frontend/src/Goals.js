@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import FirebaseDataService from './services/FirebaseDataService';
 import PinButton from './components/PinButton';
 import { PartyPopper, Target, Plus, Trophy, Gem, Rocket, Zap, Edit2 } from 'lucide-react';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 
 export default function Goals() {
+  const { bg, text, border, accent } = useTheme();
+  const styles = useThemeStyles();
   const [goals, setGoals] = useState([]);
   const [goalForm, setGoalForm] = useState({ name: '', target: '', emoji: '🎯', date: '', category: '' });
   const [goalSaveStatus, setGoalSaveStatus] = useState(null);
@@ -100,8 +103,8 @@ export default function Goals() {
     <div className="max-w-4xl mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+          <h2 className={`text-3xl font-bold ${text.primary} flex items-center gap-2`}>
+            <div className={`p-2 ${accent.primary} rounded-lg`}>
               <Target className="w-6 h-6 text-white" />
             </div>
             My Financial Goals
@@ -109,7 +112,7 @@ export default function Goals() {
           <PinButton pageId="goals" />
         </div>
         <button
-          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
+          className={`${styles.button('primary')} text-sm font-semibold`}
           onClick={() => setShowGoalForm(true)}
         >
           Add Goal
@@ -118,16 +121,16 @@ export default function Goals() {
       {/* Popout Add Goal Form */}
       {showGoalForm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-pop-in">
+          <div className={`${bg.card} rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-pop-in`}>
             <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold focus:outline-none"
+              className={`absolute top-3 right-3 ${text.secondary} hover:${text.primary} text-2xl font-bold focus:outline-none`}
               onClick={() => setShowGoalForm(false)}
               aria-label="Close add goal form"
             >
               ×
             </button>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+            <h3 className={`text-2xl font-bold ${text.primary} mb-4 flex items-center gap-2`}>
+              <div className={`p-2 ${accent.primary} rounded-lg`}>
                 <Plus className="w-5 h-5 text-white" />
               </div>
               Add Financial Goal
@@ -136,7 +139,7 @@ export default function Goals() {
               <input
                 type="text"
                 placeholder="Goal name (e.g. Vacation)"
-                className="border rounded px-3 py-2 w-full"
+                className={`border ${border.primary} rounded px-3 py-2 w-full ${bg.card} ${text.primary}`}
                 value={goalForm.name}
                 onChange={e => setGoalForm({ ...goalForm, name: e.target.value })}
                 required
@@ -145,21 +148,21 @@ export default function Goals() {
                 type="number"
                 min="1"
                 placeholder="Target (₹)"
-                className="border rounded px-3 py-2 w-full"
+                className={`border ${border.primary} rounded px-3 py-2 w-full ${bg.card} ${text.primary}`}
                 value={goalForm.target}
                 onChange={e => setGoalForm({ ...goalForm, target: e.target.value })}
                 required
               />
               <input
                 type="date"
-                className="border rounded px-3 py-2 w-full"
+                className={`border ${border.primary} rounded px-3 py-2 w-full ${bg.card} ${text.primary}`}
                 value={goalForm.date}
                 onChange={e => setGoalForm({ ...goalForm, date: e.target.value })}
               />
               <input
                 type="text"
                 maxLength={2}
-                className="border rounded px-3 py-2 w-full text-center"
+                className={`border ${border.primary} rounded px-3 py-2 w-full text-center ${bg.card} ${text.primary}`}
                 value={goalForm.emoji}
                 onChange={e => setGoalForm({ ...goalForm, emoji: e.target.value })}
                 placeholder="🎯"
@@ -167,12 +170,12 @@ export default function Goals() {
               <input
                 type="text"
                 placeholder="Category (optional)"
-                className="border rounded px-3 py-2 w-full"
+                className={`border ${border.primary} rounded px-3 py-2 w-full ${bg.card} ${text.primary}`}
                 value={goalForm.category}
                 onChange={e => setGoalForm({ ...goalForm, category: e.target.value })}
               />
               <select
-                className="border rounded px-3 py-2 w-full"
+                className={`border ${border.primary} rounded px-3 py-2 w-full ${bg.card} ${text.primary}`}
                 value={goalForm.color || ''}
                 onChange={e => setGoalForm({ ...goalForm, color: e.target.value })}
                 required
@@ -184,7 +187,7 @@ export default function Goals() {
               </select>
               <button
                 type="submit"
-                className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors font-semibold mt-2"
+                className={`${styles.button('primary')} font-semibold mt-2`}
                 disabled={goalSaveStatus === 'saving'}
               >
                 {goalSaveStatus === 'saving' ? 'Saving...' : 'Save Goal'}
@@ -198,7 +201,7 @@ export default function Goals() {
       {/* Color filter bar */}
       <div className="flex gap-2 mb-4">
         <button
-          className={`px-3 py-1 rounded-full text-xs font-semibold border ${filterColor === '' ? 'bg-gray-200 border-gray-300' : 'bg-white border-gray-200'}`}
+          className={`px-3 py-1 rounded-full text-xs font-semibold border ${filterColor === '' ? `${bg.secondary} ${border.primary}` : `${bg.card} ${border.primary}`}`}
           onClick={() => setFilterColor('')}
         >All</button>
         {colorOptions.map(opt => (
@@ -211,24 +214,24 @@ export default function Goals() {
       </div>
 
       {/* Real Goals Analytics Section */}
-      <div className="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-xl p-6 mb-6 border border-teal-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+      <div className={`${bg.secondary} rounded-xl p-6 mb-6 border ${border.accent}`}>
+        <h3 className={`text-lg font-semibold ${text.primary} mb-4 flex items-center gap-2`}>
+          <div className={`p-2 ${accent.primary} rounded-lg`}>
             <Target className="w-4 h-4 text-white" />
           </div>
           Goals Analytics Dashboard
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Goals Summary */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h4 className="font-semibold text-gray-700 mb-3">Goals Summary</h4>
+          <div className={`${bg.card} rounded-lg p-4 shadow-sm`}>
+            <h4 className={`font-semibold ${text.primary} mb-3`}>Goals Summary</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total Goals</span>
-                <span className="font-semibold text-gray-800">{goals.length}</span>
+                <span className={`${text.secondary}`}>Total Goals</span>
+                <span className={`font-semibold ${text.primary}`}>{goals.length}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Completed</span>
+                <span className={`${text.secondary}`}>Completed</span>
                 <span className="font-semibold text-green-600">
                   {goals.filter(goal => {
                     const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
@@ -237,7 +240,7 @@ export default function Goals() {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">In Progress</span>
+                <span className={`${text.secondary}`}>In Progress</span>
                 <span className="font-semibold text-blue-600">
                   {goals.filter(goal => {
                     const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;

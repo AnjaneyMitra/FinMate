@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ResponsiveLine } from '@nivo/line';
 import { TrendingUp, DollarSign, Clock, Calculator, BarChart3, Target, Zap } from 'lucide-react';
 import PinButton from './components/PinButton';
+import { useTheme } from './contexts/ThemeContext';
 
 // Simple compound interest simulation for demonstration
 function calculateReturns(principal, rate, years, frequency) {
@@ -22,6 +23,35 @@ function getProjectionData(principal, rate, years, frequency) {
 }
 
 export default function InvestmentSimulation() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600',
+    inverse: 'text-white'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    success: 'bg-green-600',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-600'
+  };
+
   const [principal, setPrincipal] = useState(10000);
   const [rate, setRate] = useState(10);
   const [years, setYears] = useState(5);
@@ -37,30 +67,30 @@ export default function InvestmentSimulation() {
   const projectionData = getProjectionData(Number(principal), Number(rate), Number(years), frequency);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 mt-8 border border-gray-200">
+    <div className={`max-w-2xl mx-auto ${safeBg.card} rounded-xl shadow-sm p-8 mt-8 border ${safeBorder.primary}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+          <div className={`p-2 ${safeAccent.primary} rounded-lg`}>
             <Calculator className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">Investment Simulation</h2>
+          <h2 className={`text-2xl font-bold ${safeText.primary}`}>Investment Simulation</h2>
           <PinButton pageId="simulation" />
         </div>
       </div>
       
       {/* Live Investment Calculator */}
-      <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 mb-6 border border-teal-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+      <div className={`${safeBg.secondary} rounded-xl p-6 mb-6 border ${safeBorder.accent}`}>
+        <h3 className={`text-lg font-semibold ${safeText.primary} mb-4 flex items-center gap-2`}>
+          <div className={`p-1.5 ${safeAccent.primary} rounded-lg`}>
             <BarChart3 className="w-5 h-5 text-white" />
           </div>
           Live Investment Calculator
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Real-time Parameter Display */}
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <div className="p-1 bg-gradient-to-r from-teal-500 to-blue-600 rounded-md">
+          <div className={`${safeBg.card} rounded-xl p-4 shadow-sm border ${safeBorder.primary}`}>
+            <h4 className={`font-semibold ${safeText.primary} mb-3 flex items-center gap-2`}>
+              <div className={`p-1 ${safeAccent.primary} rounded-md`}>
                 <Target className="w-4 h-4 text-white" />
               </div>
               Current Parameters

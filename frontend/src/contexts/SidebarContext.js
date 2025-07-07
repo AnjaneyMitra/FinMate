@@ -28,6 +28,7 @@ const DEFAULT_SIDEBAR_ITEMS = [
   { id: 'tax-estimator', label: 'Tax Estimator', icon: 'calculator', path: '/dashboard/tax/estimator', isPinned: false, isDefault: false },
   { id: 'tax-filing', label: 'Tax Filing', icon: 'file-text', path: '/tax-filing', isPinned: false, isDefault: false },
   { id: 'settings', label: 'Settings', icon: 'settings', path: '/dashboard/settings', isPinned: true, isDefault: false },
+  { id: 'themes', label: 'Theme Manager', icon: 'palette', path: '/dashboard/themes', isPinned: false, isDefault: false },
 ];
 
 export const SidebarProvider = ({ children }) => {

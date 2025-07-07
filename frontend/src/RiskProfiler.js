@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { UserCheck, Rocket, Cloud, Shield, Building2, Brain, Target, TrendingUp } from 'lucide-react';
 import PinButton from './components/PinButton';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 
 const questions = [
   {
@@ -85,6 +86,31 @@ function getRiskProfile(score) {
 }
 
 export default function RiskProfiler() {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600',
+    secondary: 'text-teal-600',
+    bg: 'bg-teal-50',
+    border: 'border-teal-500'
+  };
+  
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [submitted, setSubmitted] = useState(false);
 
@@ -110,39 +136,39 @@ export default function RiskProfiler() {
   const progress = Math.round((answers.filter(Boolean).length / questions.length) * 100);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 mt-8 border border-gray-200 relative overflow-hidden">
+    <div className={`max-w-2xl mx-auto ${safeBg.card} rounded-xl shadow-sm p-8 mt-8 border ${safeBorder.primary} relative overflow-hidden`}>
       <div className="absolute -top-4 -right-4 opacity-10 select-none pointer-events-none">
-        <div className="p-6 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl">
+        <div className={`p-6 bg-gradient-to-br from-${safeAccent.primary.replace('bg-', '')} to-blue-600 rounded-2xl`}>
           <UserCheck className="w-24 h-24 text-white" />
         </div>
       </div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+          <div className={`p-2 bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-600 rounded-lg`}>
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-gray-800">Risk Profiling Tool</h2>
-            <p className="text-gray-600">Answer a few questions to discover your investment risk profile.</p>
+            <h2 className={`text-3xl font-bold ${safeText.primary}`}>Risk Profiling Tool</h2>
+            <p className={`${safeText.secondary}`}>Answer a few questions to discover your investment risk profile.</p>
           </div>
           <PinButton pageId="risk" />
         </div>
       </div>
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-3 mb-8">
-        <div className="bg-teal-500 h-3 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+      <div className={`w-full ${safeBg.secondary} rounded-full h-3 mb-8`}>
+        <div className={`${safeAccent.primary} h-3 rounded-full transition-all duration-300`} style={{ width: `${progress}%` }}></div>
       </div>
       {!submitted ? (
         <form className="space-y-8" onSubmit={handleSubmit}>
           {questions.map((q, i) => (
             <div key={i} className="mb-2">
-              <div className="font-semibold mb-3 text-lg text-gray-800 flex items-center">
-                <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 text-white flex items-center justify-center mr-3 font-bold text-sm">{i + 1}</span>
+              <div className={`font-semibold mb-3 text-lg ${safeText.primary} flex items-center`}>
+                <span className={`inline-block w-8 h-8 rounded-full bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-600 text-white flex items-center justify-center mr-3 font-bold text-sm`}>{i + 1}</span>
                 {q.text}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {q.options.map((opt, j) => (
-                  <label key={j} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors text-base font-medium shadow-sm ${answers[i] === opt.value ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-200' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <label key={j} className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors text-base font-medium shadow-sm ${answers[i] === opt.value ? `${safeAccent.bg} ${safeAccent.border} ring-2 ring-${safeAccent.primary.replace('bg-', '')}-200` : `${safeBorder.primary} hover:${safeBg.secondary}`}`}>
                     <input
                       type="radio"
                       name={`q${i}`}

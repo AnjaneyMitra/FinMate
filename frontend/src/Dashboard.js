@@ -12,6 +12,7 @@ import Settings from './Settings';
 import InvestmentSimulation from './InvestmentSimulation';
 import RiskProfiler from './RiskProfiler';
 import TaxEstimator from './TaxEstimator';
+import ThemeManager from './components/ThemeManager';
 import FirebaseDataService from './services/FirebaseDataService';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -21,6 +22,7 @@ import FirestoreTestPanel from './components/FirestoreTestPanel';
 import TimeSelector from './components/TimeSelector';
 import RadialProgress from './components/RadialProgress';
 import GoalsModal from './components/GoalsModal';
+import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 import { periodToApiFormat, getPeriodDescription } from './utils/timeUtils';
 import { CheckCircle, XCircle, X, Hand, ShoppingCart, TrendingUp, BarChart3, Calendar, Target, Lightbulb, PieChart, Pizza } from 'lucide-react';
 import {
@@ -71,8 +73,8 @@ const formatCurrency = (amount) => {
   return `₹${numAmount.toLocaleString('en-IN')}`;
 };
 
-// Chart.js default options
-const chartOptions = {
+// Chart.js default options - Theme-aware
+const createChartOptions = (themeColors) => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -84,15 +86,16 @@ const chartOptions = {
         font: {
           size: 12,
         },
+        color: themeColors.text.secondary.replace('text-', ''),
       },
     },
     tooltip: {
       mode: 'index',
       intersect: false,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: '#fff',
-      bodyColor: '#fff',
-      borderColor: '#ddd',
+      backgroundColor: themeColors.bg.card === 'bg-white' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+      titleColor: themeColors.text.primary.replace('text-', ''),
+      bodyColor: themeColors.text.secondary.replace('text-', ''),
+      borderColor: themeColors.border.primary.replace('border-', ''),
       borderWidth: 1,
       displayColors: true,
       callbacks: {
@@ -113,10 +116,14 @@ const chartOptions = {
           size: 12,
           weight: 'bold',
         },
+        color: themeColors.text.secondary.replace('text-', ''),
       },
       grid: {
         display: true,
-        color: 'rgba(0, 0, 0, 0.1)',
+        color: themeColors.border.primary.replace('border-', '') + '20',
+      },
+      ticks: {
+        color: themeColors.text.tertiary.replace('text-', ''),
       },
     },
     y: {
@@ -128,12 +135,14 @@ const chartOptions = {
           size: 12,
           weight: 'bold',
         },
+        color: themeColors.text.secondary.replace('text-', ''),
       },
       grid: {
         display: true,
-        color: 'rgba(0, 0, 0, 0.1)',
+        color: themeColors.border.primary.replace('border-', '') + '20',
       },
       ticks: {
+        color: themeColors.text.tertiary.replace('text-', ''),
         callback: function(value) {
           return formatCurrency(value);
         },
@@ -149,9 +158,180 @@ const chartOptions = {
     duration: 1000,
     easing: 'easeInOutQuart',
   },
-};
+});
 
 function Dashboard({ user, setUser }) {
+  // Import theme hooks with error handling
+  const themeContext = useTheme();
+  const { bg, text, border, accent, currentTheme } = themeContext || {};
+  const styles = useThemeStyles();
+  
+  // Create theme-aware status configurations
+  const createThemeAwareStatusConfig = () => {
+    if (!currentTheme || !bg || !text || !border) return {};
+    
+    // Get theme colors safely with fallbacks
+    const themeColors = currentTheme.colors || {};
+    const safeThemeAccent = themeColors.accent || {
+      primary: 'bg-teal-600',
+      secondary: 'bg-blue-600', 
+      success: 'bg-green-600',
+      warning: 'bg-yellow-500',
+      error: 'bg-red-600'
+    };
+    
+    return {
+      // Spending status configuration using theme colors
+      spending: {
+        good: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.success}`,
+          badge: `${safeThemeAccent.success} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          progress: `${safeThemeAccent.success}`,
+          progressBg: `${safeThemeAccent.success} bg-opacity-20`,
+          dot: `${safeThemeAccent.success}`
+        },
+        warning: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.warning}`,
+          badge: `${safeThemeAccent.warning} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          progress: `${safeThemeAccent.warning}`,
+          progressBg: `${safeThemeAccent.warning} bg-opacity-20`,
+          dot: `${safeThemeAccent.warning}`
+        },
+        danger: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.error}`,
+          badge: `${safeThemeAccent.error} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          progress: `${safeThemeAccent.error}`,
+          progressBg: `${safeThemeAccent.error} bg-opacity-20`,
+          dot: `${safeThemeAccent.error}`
+        }
+      },
+      
+      // Savings status configuration using theme colors
+      savings: {
+        excellent: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.success}`,
+          badge: `${safeThemeAccent.success} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          budgetBg: `${bg.secondary}`,
+          budgetBorder: `${border.primary}`,
+          budgetFocus: 'focus:ring-2 focus:ring-opacity-50',
+          budgetHover: `hover:${border.accent}`,
+          dot: `${safeThemeAccent.success}`
+        },
+        good: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.success}`,
+          badge: `${safeThemeAccent.success} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          budgetBg: `${bg.secondary}`,
+          budgetBorder: `${border.primary}`,
+          budgetFocus: 'focus:ring-2 focus:ring-opacity-50',
+          budgetHover: `hover:${border.accent}`,
+          dot: `${safeThemeAccent.success}`
+        },
+        fair: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.warning}`,
+          badge: `${safeThemeAccent.warning} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          budgetBg: `${bg.secondary}`,
+          budgetBorder: `${border.primary}`,
+          budgetFocus: 'focus:ring-2 focus:ring-opacity-50',
+          budgetHover: `hover:${border.accent}`,
+          dot: `${safeThemeAccent.warning}`
+        },
+        danger: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${safeThemeAccent.error}`,
+          badge: `${safeThemeAccent.error} bg-opacity-20 ${text.primary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          budgetBg: `${bg.secondary}`,
+          budgetBorder: `${border.primary}`,
+          budgetFocus: 'focus:ring-2 focus:ring-opacity-50',
+          budgetHover: `hover:${border.accent}`,
+          dot: `${safeThemeAccent.error}`
+        },
+        neutral: {
+          bg: `${bg.card}`,
+          border: `${border.primary}`,
+          icon: `${bg.tertiary}`,
+          badge: `${bg.tertiary} ${text.secondary}`,
+          text: `${text.primary}`,
+          textBold: `${text.primary}`,
+          budgetBg: `${bg.secondary}`,
+          budgetBorder: `${border.primary}`,
+          budgetFocus: 'focus:ring-2 focus:ring-opacity-50',
+          budgetHover: `hover:${border.accent}`,
+          dot: `${bg.tertiary}`
+        }
+      },
+      
+      // Goals status configuration using theme colors
+      goals: {
+        excellent: {
+          bg: `${safeThemeAccent.success} bg-opacity-10`,
+          icon: `${safeThemeAccent.success}`,
+          text: `${text.primary}`,
+          progress: `${safeThemeAccent.success}`
+        },
+        good: {
+          bg: `${safeThemeAccent.success} bg-opacity-10`,
+          icon: `${safeThemeAccent.success}`,
+          text: `${text.primary}`,
+          progress: `${safeThemeAccent.success}`
+        },
+        warning: {
+          bg: `${safeThemeAccent.warning} bg-opacity-10`,
+          icon: `${safeThemeAccent.warning}`,
+          text: `${text.primary}`,
+          progress: `${safeThemeAccent.warning}`
+        },
+        danger: {
+          bg: `${safeThemeAccent.error} bg-opacity-10`,
+          icon: `${safeThemeAccent.error}`,
+          text: `${text.primary}`,
+          progress: `${safeThemeAccent.error}`
+        },
+        neutral: {
+          bg: `${bg.tertiary}`,
+          icon: `${text.tertiary}`,
+          text: `${text.secondary}`,
+          progress: `${text.tertiary}`
+        }
+      }
+    };
+  };
+
+  // Add safety check for accent property with theme-aware fallbacks
+  const safeAccent = accent || {
+    primary: currentTheme?.colors?.accent?.primary || 'bg-teal-600',
+    secondary: currentTheme?.colors?.accent?.secondary || 'bg-blue-600',
+    success: currentTheme?.colors?.accent?.success || 'bg-green-600',
+    warning: currentTheme?.colors?.accent?.warning || 'bg-yellow-500',
+    error: currentTheme?.colors?.accent?.error || 'bg-red-600'
+  };
+  
   // --- Dashboard Home Data State ---
   const [dashboardStats, setDashboardStats] = useState({
     monthlyBudget: null,
@@ -272,7 +452,7 @@ function Dashboard({ user, setUser }) {
       setDashboardStats({
         monthlyBudget,
         savings,
-        spent, // Selected period spending
+        spent: Math.round(spent * 100) / 100, // Selected period spending
         currentMonthSpent: currentMonthSummary?.total_spent || 0,
         totalAllTimeSpent,
         totalTransactionCount,
@@ -291,7 +471,10 @@ function Dashboard({ user, setUser }) {
     }
   }, [user, selectedTimeRange, setUserGoals]);
 
-  // Fetch analytics data for charts
+  // Chart options using current theme
+  const chartOptions = useMemo(() => createChartOptions({
+    bg, text, border
+  }), [bg, text, border]);
   const fetchAnalyticsData = useCallback(async (timeRange = selectedTimeRange) => {
     if (!user) return;
     setAnalyticsData((prev) => ({ ...prev, loading: true }));
@@ -380,19 +563,19 @@ function Dashboard({ user, setUser }) {
         {
           label: 'Spending',
           data: analyticsData.spendingTrends.map(item => Number(item.amount) || 0),
-          borderColor: 'rgb(20, 184, 166)',
-          backgroundColor: 'rgba(20, 184, 166, 0.1)',
+          borderColor: currentTheme?.colors?.accent?.primary || '#14b8a6',
+          backgroundColor: `${currentTheme?.colors?.accent?.primary || '#14b8a6'}20`,
           fill: true,
           tension: 0.4,
           pointRadius: 4,
           pointHoverRadius: 6,
-          pointBackgroundColor: 'rgb(20, 184, 166)',
-          pointBorderColor: '#fff',
+          pointBackgroundColor: currentTheme?.colors?.accent?.primary || '#14b8a6',
+          pointBorderColor: currentTheme?.colors?.bg?.primary || '#ffffff',
           pointBorderWidth: 2,
         },
       ],
     };
-  }, [analyticsData.spendingTrends, selectedTimeRange]);
+  }, [analyticsData.spendingTrends, selectedTimeRange, currentTheme]);
 
   const categoryChartData = useMemo(() => {
     const categories = analyticsData.categoryBreakdown;
@@ -407,10 +590,26 @@ function Dashboard({ user, setUser }) {
 
     if (!entries.length) return null;
 
-    const colors = [
-      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-      '#9966FF', '#FF9F40'
-    ];
+    // Use theme-aware colors
+    const getThemeColors = () => {
+      const baseColors = [
+        currentTheme?.colors?.accent?.primary || '#14b8a6',
+        currentTheme?.colors?.accent?.secondary || '#3b82f6',
+        currentTheme?.colors?.status?.success || '#10b981',
+        currentTheme?.colors?.status?.warning || '#f59e0b',
+        currentTheme?.colors?.status?.error || '#ef4444',
+        currentTheme?.colors?.status?.info || '#3b82f6',
+      ];
+      
+      // Generate more colors if needed
+      const additionalColors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
+      ];
+      
+      return [...baseColors, ...additionalColors];
+    };
+
+    const colors = getThemeColors();
 
     return {
       labels: entries.map(([k]) => k.charAt(0).toUpperCase() + k.slice(1)),
@@ -424,7 +623,7 @@ function Dashboard({ user, setUser }) {
         },
       ],
     };
-  }, [analyticsData.categoryBreakdown]);
+  }, [analyticsData.categoryBreakdown, currentTheme]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -461,10 +660,10 @@ function Dashboard({ user, setUser }) {
       monthlyBudget, 
       savings, 
       spent, 
-      currentMonthSpent, 
+      // currentMonthSpent, // Available for future use
       totalAllTimeSpent, 
       totalTransactionCount, 
-      currentMonthTransactions, 
+      // currentMonthTransactions, // Available for future use
       selectedPeriodTransactions, 
       goalsProgress,
       goalsSaved,
@@ -508,14 +707,14 @@ function Dashboard({ user, setUser }) {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+                <div className={`p-2 ${safeAccent.primary} rounded-lg`}>
                   <Hand className="w-6 h-6 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className={`text-3xl font-bold ${text.primary}`}>
                   Welcome back, {user.email?.split('@')[0]}!
                 </h2>
               </div>
-              <p className="text-gray-600">
+              <p className={`${text.secondary}`}>
                 Here's your financial overview for {getPeriodDescription(selectedTimeRange)}.
               </p>
             </div>
@@ -531,8 +730,8 @@ function Dashboard({ user, setUser }) {
                 size="sm"
               />
               {loading && (
-                <div className="flex items-center gap-2 text-blue-600">
-                  <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <div className={`flex items-center gap-2 ${text.info}`}>
+                  <div className={`animate-spin w-4 h-4 border-2 ${safeAccent.primary.replace('bg-', 'border-')} border-t-transparent rounded-full`}></div>
                   <span className="text-sm">Updating...</span>
                 </div>
               )}
@@ -569,64 +768,12 @@ function Dashboard({ user, setUser }) {
             };
             
             const spendingStatus = getSpendingStatus();
-            
-            const statusConfig = {
-              good: {
-                bg: 'bg-gradient-to-br from-green-50 to-green-100',
-                border: 'border-green-200',
-                stripe: 'bg-green-50/50',
-                icon: 'bg-green-600',
-                badge: 'bg-green-100/80 text-green-700',
-                text: 'text-green-700',
-                textBold: 'text-green-900',
-                progress: 'bg-green-600',
-                progressBg: 'bg-green-200',
-                dot: 'bg-green-500'
-              },
-              warning: {
-                bg: 'bg-gradient-to-br from-amber-50 to-amber-100',
-                border: 'border-amber-200',
-                stripe: 'bg-amber-50/50',
-                icon: 'bg-amber-600',
-                badge: 'bg-amber-100/80 text-amber-700',
-                text: 'text-amber-700',
-                textBold: 'text-amber-900',
-                progress: 'bg-amber-600',
-                progressBg: 'bg-amber-200',
-                dot: 'bg-amber-500'
-              },
-              danger: {
-                bg: 'bg-gradient-to-br from-red-50 to-red-100',
-                border: 'border-red-200',
-                stripe: 'bg-red-50/50',
-                icon: 'bg-red-600',
-                badge: 'bg-red-100/80 text-red-700',
-                text: 'text-red-700',
-                textBold: 'text-red-900',
-                progress: 'bg-red-600',
-                progressBg: 'bg-red-200',
-                dot: 'bg-red-500'
-              }
-            };
-            
-            const config = statusConfig[spendingStatus];
+            const statusConfigs = createThemeAwareStatusConfig();
+            const config = statusConfigs.spending?.[spendingStatus] || statusConfigs.spending?.good;
             
             return (
-              <div className={`${config.bg} rounded-2xl shadow-xl border-2 ${config.border} p-8 transform transition-all hover:scale-105 relative overflow-hidden`}>
-                {/* Background Stripe Pattern */}
-                <div className={`absolute inset-0 ${config.stripe} opacity-30`}
-                     style={{
-                       backgroundImage: `repeating-linear-gradient(
-                         45deg,
-                         transparent,
-                         transparent 10px,
-                         rgba(255,255,255,0.1) 10px,
-                         rgba(255,255,255,0.1) 20px
-                       )`
-                     }}
-                ></div>
-                
-                <div className="relative z-10">
+              <div className={`${config.bg} rounded-2xl shadow-xl border ${config.border} p-8 transform transition-all hover:scale-105`}>
+                <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className={`${config.icon} p-3 rounded-xl`}>
                       <ShoppingCart className="w-8 h-8 text-white" />
@@ -716,81 +863,8 @@ function Dashboard({ user, setUser }) {
             };
             
             const savingsStatus = getSavingsStatus();
-            
-            const savingsConfig = {
-              excellent: {
-                bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
-                border: 'border-emerald-200',
-                stripe: 'bg-emerald-50/50',
-                icon: 'bg-emerald-600',
-                badge: 'bg-emerald-100/80 text-emerald-700',
-                text: 'text-emerald-700',
-                textBold: 'text-emerald-900',
-                budgetBg: 'bg-white/70',
-                budgetBorder: 'border-emerald-200',
-                budgetFocus: 'focus:ring-emerald-400',
-                budgetHover: 'hover:border-emerald-300',
-                dot: 'bg-emerald-500'
-              },
-              good: {
-                bg: 'bg-gradient-to-br from-green-50 to-green-100',
-                border: 'border-green-200',
-                stripe: 'bg-green-50/50',
-                icon: 'bg-green-600',
-                badge: 'bg-green-100/80 text-green-700',
-                text: 'text-green-700',
-                textBold: 'text-green-900',
-                budgetBg: 'bg-white/70',
-                budgetBorder: 'border-green-200',
-                budgetFocus: 'focus:ring-green-400',
-                budgetHover: 'hover:border-green-300',
-                dot: 'bg-green-500'
-              },
-              fair: {
-                bg: 'bg-gradient-to-br from-lime-50 to-lime-100',
-                border: 'border-lime-200',
-                stripe: 'bg-lime-50/50',
-                icon: 'bg-lime-600',
-                badge: 'bg-lime-100/80 text-lime-700',
-                text: 'text-lime-700',
-                textBold: 'text-lime-900',
-                budgetBg: 'bg-white/70',
-                budgetBorder: 'border-lime-200',
-                budgetFocus: 'focus:ring-lime-400',
-                budgetHover: 'hover:border-lime-300',
-                dot: 'bg-lime-500'
-              },
-              danger: {
-                bg: 'bg-gradient-to-br from-red-50 to-red-100',
-                border: 'border-red-200',
-                stripe: 'bg-red-50/50',
-                icon: 'bg-red-600',
-                badge: 'bg-red-100/80 text-red-700',
-                text: 'text-red-700',
-                textBold: 'text-red-900',
-                budgetBg: 'bg-white/70',
-                budgetBorder: 'border-red-200',
-                budgetFocus: 'focus:ring-red-400',
-                budgetHover: 'hover:border-red-300',
-                dot: 'bg-red-500'
-              },
-              neutral: {
-                bg: 'bg-gradient-to-br from-gray-50 to-gray-100',
-                border: 'border-gray-200',
-                stripe: 'bg-gray-50/50',
-                icon: 'bg-gray-600',
-                badge: 'bg-gray-100/80 text-gray-700',
-                text: 'text-gray-700',
-                textBold: 'text-gray-900',
-                budgetBg: 'bg-white/70',
-                budgetBorder: 'border-gray-200',
-                budgetFocus: 'focus:ring-gray-400',
-                budgetHover: 'hover:border-gray-300',
-                dot: 'bg-gray-500'
-              }
-            };
-            
-            const config = savingsConfig[savingsStatus];
+            const statusConfigs = createThemeAwareStatusConfig();
+            const config = statusConfigs.savings?.[savingsStatus] || statusConfigs.savings?.neutral;
             
             const getSavingsStatusText = () => {
               switch (savingsStatus) {
@@ -803,21 +877,8 @@ function Dashboard({ user, setUser }) {
             };
             
             return (
-              <div className={`${config.bg} rounded-2xl shadow-xl border-2 ${config.border} p-8 transform transition-all hover:scale-105 relative overflow-hidden`}>
-                {/* Background Stripe Pattern */}
-                <div className={`absolute inset-0 ${config.stripe} opacity-30`}
-                     style={{
-                       backgroundImage: `repeating-linear-gradient(
-                         45deg,
-                         transparent,
-                         transparent 10px,
-                         rgba(255,255,255,0.1) 10px,
-                         rgba(255,255,255,0.1) 20px
-                       )`
-                     }}
-                ></div>
-                
-                <div className="relative z-10">
+              <div className={`${config.bg} rounded-2xl shadow-xl border ${config.border} p-8 transform transition-all hover:scale-105`}>
+                <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className={`${config.icon} p-3 rounded-xl`}>
                       <TrendingUp className="w-8 h-8 text-white" />
@@ -917,20 +978,20 @@ function Dashboard({ user, setUser }) {
         <div className="mb-8">
           <button
             onClick={() => setShowMoreInsights(!showMoreInsights)}
-            className="w-full bg-gray-50 hover:bg-gray-100 rounded-xl p-4 border border-gray-200 transition-all duration-200 group"
+            className={`w-full ${bg.card} hover:${bg.secondary} rounded-xl p-4 border ${border.primary} transition-all duration-200 group`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-gray-600 p-2 rounded-lg">
+                <div className={`${safeAccent.primary} p-2 rounded-lg`}>
                   <BarChart3 className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left">
-                  <h3 className="text-lg font-semibold text-gray-900">More Insights</h3>
-                  <p className="text-sm text-gray-600">Additional spending metrics and analytics</p>
+                  <h3 className={`text-lg font-semibold ${text.primary}`}>More Insights</h3>
+                  <p className={`text-sm ${text.secondary}`}>Additional spending metrics and analytics</p>
                 </div>
               </div>
               <div className={`transform transition-transform duration-200 ${showMoreInsights ? 'rotate-180' : ''}`}>
-                <svg className="w-5 h-5 text-gray-500 group-hover:text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className={`w-5 h-5 ${text.secondary} group-hover:${text.primary}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -943,34 +1004,22 @@ function Dashboard({ user, setUser }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Only show Selected Period if it's significantly different from current month */}
                 {shouldShowSelectedPeriod && (
-                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg shadow-sm border border-amber-200 p-4 hover:shadow-md transition-shadow relative overflow-hidden">
-                    {/* Subtle stripe background */}
-                    <div className="absolute inset-0 bg-amber-50/30 opacity-50"
-                         style={{
-                           backgroundImage: `repeating-linear-gradient(
-                             45deg,
-                             transparent,
-                             transparent 8px,
-                             rgba(255,255,255,0.2) 8px,
-                             rgba(255,255,255,0.2) 16px
-                           )`
-                         }}
-                    ></div>
-                    <div className="relative z-10 flex items-center gap-3">
-                      <div className="bg-amber-100 p-2 rounded-lg">
-                        <Calendar className="w-5 h-5 text-amber-600" />
+                  <div className={`${bg.card} rounded-lg shadow-sm border ${border.primary} p-4 hover:shadow-md transition-shadow`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`${safeAccent.warning} bg-opacity-20 p-2 rounded-lg`}>
+                        <Calendar className={`w-5 h-5 ${safeAccent.warning.replace('bg-', 'text-')}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-amber-800">{getPeriodDescription(selectedTimeRange)} Total</p>
-                        <p className="text-xl font-bold text-amber-900">
+                        <p className={`text-sm font-medium ${text.primary}`}>{getPeriodDescription(selectedTimeRange)} Total</p>
+                        <p className={`text-xl font-bold ${text.primary}`}>
                           {loading ? (
-                            <span className="text-amber-500">Loading...</span>
+                            <span className={`${text.secondary}`}>Loading...</span>
                           ) : (
                             spent !== null ? `₹${spent.toLocaleString('en-IN')}` : 'N/A'
                           )}
                         </p>
                         {!loading && selectedPeriodTransactions > 0 && (
-                          <p className="text-xs text-amber-600">
+                          <p className={`text-xs ${text.secondary}`}>
                             {selectedPeriodTransactions} transactions
                           </p>
                         )}
@@ -981,35 +1030,23 @@ function Dashboard({ user, setUser }) {
 
                 {/* Historical Context - Only show if user has significant transaction history */}
                 {totalTransactionCount > 50 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-sm border border-purple-200 p-4 hover:shadow-md transition-shadow relative overflow-hidden">
-                    {/* Subtle stripe background */}
-                    <div className="absolute inset-0 bg-purple-50/30 opacity-50"
-                         style={{
-                           backgroundImage: `repeating-linear-gradient(
-                             45deg,
-                             transparent,
-                             transparent 8px,
-                             rgba(255,255,255,0.2) 8px,
-                             rgba(255,255,255,0.2) 16px
-                           )`
-                         }}
-                    ></div>
-                    <div className="relative z-10 flex items-center gap-3">
-                      <div className="bg-purple-100 p-2 rounded-lg">
-                        <BarChart3 className="w-5 h-5 text-purple-600" />
+                  <div className={`${bg.card} rounded-lg shadow-sm border ${border.primary} p-4 hover:shadow-md transition-shadow`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`${safeAccent.secondary} bg-opacity-20 p-2 rounded-lg`}>
+                        <BarChart3 className={`w-5 h-5 ${safeAccent.secondary.replace('bg-', 'text-')}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-purple-800">Historical Average</p>
-                        <p className="text-xl font-bold text-purple-900">
+                        <p className={`text-sm font-medium ${text.primary}`}>Historical Average</p>
+                        <p className={`text-xl font-bold ${text.primary}`}>
                           {loading ? (
-                            <span className="text-purple-500">Loading...</span>
+                            <span className={`${text.secondary}`}>Loading...</span>
                           ) : (
                             totalAllTimeSpent && totalTransactionCount > 0 ? 
                               `₹${Math.round(totalAllTimeSpent / (totalTransactionCount / 30)).toLocaleString('en-IN')}/month` : 'N/A'
                           )}
                         </p>
                         {!loading && totalTransactionCount > 0 && (
-                          <p className="text-xs text-purple-600">
+                          <p className={`text-xs ${text.secondary}`}>
                             Based on {totalTransactionCount} transactions
                           </p>
                         )}
@@ -1020,32 +1057,10 @@ function Dashboard({ user, setUser }) {
 
                 {/* Goals Progress - Enhanced with Radial Progress */}
                 {(goalsProgress !== null || userGoals.length > 0 || true) && ( // Always show to encourage goal setting
-                  <div className={`rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer ${
-                    userGoals.length === 0 ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200' :
-                    goalsProgress > 100 ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200' :
-                    goalsProgress > 80 ? 'bg-gradient-to-r from-yellow-50 to-amber-100 border-amber-200' :
-                    'bg-gradient-to-r from-teal-50 to-blue-100 border-teal-200'
-                  }`}
+                  <div className={`rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer ${bg.card} ${border.primary}`}
                   onClick={() => userGoals.length > 0 ? setShowGoalsModal(true) : window.location.href = '/dashboard/goals'}
                   >
-                    {/* Semantic stripe background */}
-                    <div className={`absolute inset-0 opacity-40 ${
-                      userGoals.length === 0 ? 'bg-gray-50/30' :
-                      goalsProgress > 100 ? 'bg-red-50/30' :
-                      goalsProgress > 80 ? 'bg-amber-50/30' :
-                      'bg-teal-50/30'
-                    }`}
-                         style={{
-                           backgroundImage: `repeating-linear-gradient(
-                             45deg,
-                             transparent,
-                             transparent 8px,
-                             rgba(255,255,255,0.2) 8px,
-                             rgba(255,255,255,0.2) 16px
-                           )`
-                         }}
-                    ></div>
-                    <div className="relative z-10 flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                       <div className={`p-2 rounded-lg ${
                         userGoals.length === 0 ? 'bg-gray-100' :
                         goalsProgress > 100 ? 'bg-red-100' :
@@ -1135,28 +1150,16 @@ function Dashboard({ user, setUser }) {
                 )}
 
                 {/* Smart Insights - Enhanced with better semantic coding */}
-                <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg shadow-sm border border-teal-200 p-4 hover:shadow-md transition-shadow relative overflow-hidden">
-                  {/* Subtle stripe background */}
-                  <div className="absolute inset-0 bg-teal-50/30 opacity-50"
-                       style={{
-                         backgroundImage: `repeating-linear-gradient(
-                           45deg,
-                           transparent,
-                           transparent 8px,
-                           rgba(255,255,255,0.2) 8px,
-                           rgba(255,255,255,0.2) 16px
-                         )`
-                       }}
-                  ></div>
-                  <div className="relative z-10 flex items-center gap-3">
-                    <div className="bg-teal-100 p-2 rounded-lg">
-                      <Lightbulb className="w-5 h-5 text-teal-600" />
+                <div className={`${bg.card} rounded-lg shadow-sm border ${border.primary} p-4 hover:shadow-md transition-shadow`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`${safeAccent.primary} bg-opacity-20 p-2 rounded-lg`}>
+                      <Lightbulb className={`w-5 h-5 ${safeAccent.primary.replace('bg-', 'text-')}`} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-teal-700">Smart Insight</p>
-                      <p className="text-sm font-semibold text-teal-900">
+                      <p className={`text-sm font-medium ${text.primary}`}>Smart Insight</p>
+                      <p className={`text-sm font-semibold ${text.primary}`}>
                         {loading ? (
-                          <span className="text-teal-500">Loading...</span>
+                          <span className={`${text.secondary}`}>Loading...</span>
                         ) : (
                           spent !== null && monthlyBudget > 0 ? (
                             (() => {
@@ -1173,7 +1176,7 @@ function Dashboard({ user, setUser }) {
                         )}
                       </p>
                       {!loading && spent !== null && monthlyBudget > 0 && (
-                        <p className="text-xs text-teal-600 mt-1">
+                        <p className={`text-xs ${text.secondary} mt-1`}>
                           {(() => {
                             const periodDays = selectedTimeRange === '30days' ? 30 : selectedTimeRange === '3months' ? 90 : selectedTimeRange === '6months' ? 180 : selectedTimeRange === '1year' ? 365 : 30;
                             const monthlyDays = 30;
@@ -1195,16 +1198,16 @@ function Dashboard({ user, setUser }) {
         </div>
 
         {/* Live Dashboard Analytics */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8 animate-fade-in">
+        <div className={`${bg.card} rounded-lg shadow p-6 mb-8 animate-fade-in`}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <div className="p-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+            <h3 className={`text-xl font-semibold ${text.primary} flex items-center gap-2`}>
+              <div className={`p-1 ${safeAccent.primary} rounded-lg`}>
                 <PieChart className="w-5 h-5 text-white" />
               </div>
               Real-Time Analytics
             </h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Period:</span>
+              <span className={`text-sm ${text.secondary}`}>Period:</span>
               <TimeSelector 
                 value={selectedTimeRange} 
                 onChange={setSelectedTimeRange}
@@ -1216,19 +1219,19 @@ function Dashboard({ user, setUser }) {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Spending Trend Chart */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3">Spending Trends</h4>
+            <div className={`${bg.secondary} rounded-lg p-4 ${border.primary} border`}>
+              <h4 className={`font-semibold ${text.primary} mb-3`}>Spending Trends</h4>
               <div className="h-64">
                 {analyticsData.loading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${safeAccent.primary.replace('bg-', 'border-')}`}></div>
                   </div>
                 ) : trendChartData ? (
                   <Line data={trendChartData} options={chartOptions} />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className={`flex items-center justify-center h-full ${text.secondary}`}>
                     <div className="text-center">
-                      <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg inline-block mb-2">
+                      <div className={`p-3 ${safeAccent.primary} rounded-lg inline-block mb-2`}>
                         <TrendingUp className="w-8 h-8 text-white" />
                       </div>
                       <p className="text-sm mt-2">No data available</p>
@@ -1236,48 +1239,47 @@ function Dashboard({ user, setUser }) {
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-600 mt-2">
+              <p className={`text-xs ${text.secondary} mt-2`}>
                 {analyticsData.loading ? 'Loading...' : `${getPeriodDescription(selectedTimeRange)} spending trends`}
               </p>
             </div>
 
             {/* Category Breakdown Chart */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-800 mb-3">Category Breakdown</h4>
-              <div className="h-64">
-                {analyticsData.loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                  </div>
-                ) : categoryChartData ? (
-                  <Doughnut data={categoryChartData} options={{
-                    ...chartOptions,
-                    plugins: {
-                      ...chartOptions.plugins,
-                      legend: {
-                        position: 'bottom',
-                        labels: {
-                          usePointStyle: true,
-                          padding: 10,
-                          font: {
-                            size: 10,
-                          },
+            <div className={`${bg.secondary} rounded-lg p-4 ${border.primary} border`}>
+              <h4 className={`font-semibold ${text.primary} mb-3`}>Category Breakdown</h4>            <div className="h-64">
+              {analyticsData.loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${safeAccent.primary.replace('bg-', 'border-')}`}></div>
+                </div>
+              ) : categoryChartData ? (
+                <Doughnut data={categoryChartData} options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        usePointStyle: true,
+                        padding: 10,
+                        font: {
+                          size: 10,
                         },
                       },
                     },
-                  }} />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <div className="text-center">
-                      <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg inline-block mb-2">
-                        <Pizza className="w-8 h-8 text-white" />
-                      </div>
+                  },
+                }} />
+              ) : (
+                <div className={`flex items-center justify-center h-full ${text.secondary}`}>
+                  <div className="text-center">
+                    <div className={`p-3 ${safeAccent.primary} rounded-lg inline-block mb-2`}>
+                      <Pizza className="w-8 h-8 text-white" />
+                    </div>
                       <p className="text-sm mt-2">No category data</p>
                     </div>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-600 mt-3">
+              <p className={`text-xs ${text.secondary} mt-3`}>
                 {analyticsData.loading ? 'Loading categories...' : 'Live category breakdown from your transactions'}
               </p>
             </div>
@@ -1288,7 +1290,7 @@ function Dashboard({ user, setUser }) {
   } // End of DashboardHome function
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={`flex h-screen ${bg.primary}`}>
       <Sidebar user={user} setUser={setUser} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={user} setUser={setUser} />
@@ -1297,15 +1299,15 @@ function Dashboard({ user, setUser }) {
         {importNotification && (
           <div className={`mx-8 mt-4 p-4 rounded-xl border animate-slide-down shadow-sm ${
             importNotification.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              ? `${styles.alert('success')}` 
+              : `${styles.alert('error')}`
           }`}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
                 <div className={`p-1 rounded-md ${
                   importNotification.type === 'success' 
-                    ? 'bg-green-100' 
-                    : 'bg-red-100'
+                    ? `${bg.card}` 
+                    : `${bg.card}`
                 }`}>
                   {importNotification.type === 'success' ? (
                     <CheckCircle className="w-5 h-5 text-green-600" />
@@ -1314,15 +1316,15 @@ function Dashboard({ user, setUser }) {
                   )}
                 </div>
                 <div>
-                  <h4 className="font-semibold">{importNotification.message}</h4>
+                  <h4 className={`font-semibold ${text.inverse}`}>{importNotification.message}</h4>
                   {importNotification.description && (
-                    <p className="text-sm mt-1 opacity-75">{importNotification.description}</p>
+                    <p className={`text-sm mt-1 opacity-75 ${text.inverse}`}>{importNotification.description}</p>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => setImportNotification(null)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                className={`${text.inverse} hover:opacity-80 transition-colors p-1 rounded-md hover:${bg.secondary}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1330,8 +1332,8 @@ function Dashboard({ user, setUser }) {
           </div>
         )}
         
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-8">
+        <div className={`flex-1 overflow-y-auto ${bg.primary}`}>
+          <div className={`p-8 ${bg.primary}`}>
             <Routes>
               <Route path="/" element={<DashboardHome user={user} />} />
               <Route path="/quick-actions" element={<QuickActions />} />
@@ -1346,6 +1348,7 @@ function Dashboard({ user, setUser }) {
               <Route path="/simulation" element={<InvestmentSimulation />} />
               <Route path="/risk" element={<RiskProfiler />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/themes" element={<ThemeManager />} />
               <Route path="/firestore-test" element={<FirestoreTestPanel />} />
               <Route path="/tax/estimator" element={<TaxEstimator />} />
               <Route path="/goals" element={<Goals />} />

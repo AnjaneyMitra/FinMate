@@ -6,6 +6,7 @@ import Dashboard from './Dashboard';
 import LandingPage from './LandingPage';
 import TaxFilingDashboard from './components/TaxFilingDashboard';
 import { SidebarProvider } from './contexts/SidebarContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -54,80 +55,120 @@ function App() {
   // Show loading spinner while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p className="text-teal-700">Loading...</p>
-        </div>
-      </div>
+      <ThemeProvider>
+        <LoadingSpinner />
+      </ThemeProvider>
     );
   }
 
   return (
-    <SidebarProvider>
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route 
-              path="/login" 
-              element={
-                user ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <LoginPage 
-                    email={email}
-                    setEmail={setEmail}
-                    password={password}
-                    setPassword={setPassword}
-                    error={error}
-                    isLogin={isLogin}
-                    setIsLogin={setIsLogin}
-                    handleAuth={handleAuth}
-                    handleGoogleAuth={handleGoogleAuth}
-                  />
-                )
-              } 
-            />
-            <Route 
-              path="/dashboard/*" 
-              element={
-                user ? (
-                  <Dashboard user={user} setUser={setUser} />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              } 
-            />
-            <Route 
-              path="/tax-filing/*" 
-              element={
-                user ? (
-                  <TaxFilingDashboard user={user} />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              } 
-            />
-            <Route 
-              path="/" 
-              element={<LandingPage />} 
-            />
-          </Routes>
-        </div>
-      </Router>
-    </SidebarProvider>
+    <ThemeProvider>
+      <SidebarProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route 
+                path="/login" 
+                element={
+                  user ? (
+                    <Navigate to="/dashboard" replace />
+                  ) : (
+                    <LoginPage 
+                      email={email}
+                      setEmail={setEmail}
+                      password={password}
+                      setPassword={setPassword}
+                      error={error}
+                      isLogin={isLogin}
+                      setIsLogin={setIsLogin}
+                      handleAuth={handleAuth}
+                      handleGoogleAuth={handleGoogleAuth}
+                    />
+                  )
+                } 
+              />
+              <Route 
+                path="/dashboard/*" 
+                element={
+                  user ? (
+                    <Dashboard user={user} setUser={setUser} />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/tax-filing/*" 
+                element={
+                  user ? (
+                    <TaxFilingDashboard user={user} />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/" 
+                element={<LandingPage />} 
+              />
+            </Routes>
+          </div>
+        </Router>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }
 
-// Login Page Component
-function LoginPage({ email, setEmail, password, setPassword, error, isLogin, setIsLogin, handleAuth, handleGoogleAuth }) {
+// Loading Spinner Component with theme support
+function LoadingSpinner() {
+  const themeContext = useTheme();
+  const { bg, text, accent } = themeContext || {};
+  
+  // Safe fallbacks
+  const safeBg = bg || { primary: 'bg-white' };
+  const safeText = text || { primary: 'text-gray-900' };
+  const safeAccent = accent || { primary: 'bg-teal-600' };
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-100">
-      <main className="text-center p-8 rounded-xl shadow-lg bg-white/80 backdrop-blur-md w-full max-w-md">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-teal-700 mb-4 drop-shadow-lg">
+    <div className={`min-h-screen flex items-center justify-center ${safeBg.primary}`}>
+      <div className="text-center">
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 border-${safeAccent.primary.replace('bg-', '')} mx-auto mb-4`}></div>
+        <p className={safeText.primary}>Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// Login Page Component with theme support
+function LoginPage({ email, setEmail, password, setPassword, error, isLogin, setIsLogin, handleAuth, handleGoogleAuth }) {
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    accent: 'text-teal-600'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600'
+  };
+  
+  return (
+    <div className={`min-h-screen flex items-center justify-center ${safeBg.secondary}`}>
+      <main className={`text-center p-8 rounded-xl shadow-lg ${safeBg.card} backdrop-blur-md w-full max-w-md border ${safeBorder.primary}`}>
+        <h1 className={`text-4xl md:text-5xl font-extrabold ${safeText.accent} mb-4 drop-shadow-lg`}>
           FinMate
         </h1>
-        <h2 className="text-xl md:text-2xl font-medium text-gray-700 mb-6">
+        <h2 className={`text-xl md:text-2xl font-medium ${safeText.secondary} mb-6`}>
           Your Smart Finance Companion
         </h2>
         <form onSubmit={handleAuth} className="space-y-4">
@@ -136,7 +177,7 @@ function LoginPage({ email, setEmail, password, setPassword, error, isLogin, set
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className={`w-full px-3 py-2 border ${safeBorder.primary} rounded focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} ${safeBg.card} ${safeText.primary}`}
             required
           />
           <input
@@ -144,13 +185,13 @@ function LoginPage({ email, setEmail, password, setPassword, error, isLogin, set
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className={`w-full px-3 py-2 border ${safeBorder.primary} rounded focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} ${safeBg.card} ${safeText.primary}`}
             required
           />
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <button
             type="submit"
-            className="w-full bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
+            className={`w-full ${safeAccent.primary} text-white px-4 py-2 rounded hover:opacity-90 transition-opacity`}
           >
             {isLogin ? 'Log In' : 'Sign Up'}
           </button>
@@ -158,15 +199,15 @@ function LoginPage({ email, setEmail, password, setPassword, error, isLogin, set
         
         {/* Divider */}
         <div className="flex items-center my-4">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-gray-600 text-sm">or</span>
-          <div className="flex-grow border-t border-gray-300"></div>
+          <div className={`flex-grow border-t ${safeBorder.primary}`}></div>
+          <span className={`flex-shrink mx-4 ${safeText.secondary} text-sm`}>or</span>
+          <div className={`flex-grow border-t ${safeBorder.primary}`}></div>
         </div>
 
         {/* Google Sign-in Button */}
         <button
           onClick={handleGoogleAuth}
-          className="w-full bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
+          className={`w-full ${safeBg.card} border ${safeBorder.primary} ${safeText.secondary} px-4 py-2 rounded hover:${safeBg.secondary} transition-colors flex items-center justify-center space-x-2`}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -181,7 +222,7 @@ function LoginPage({ email, setEmail, password, setPassword, error, isLogin, set
             {isLogin ? "Don't have an account?" : 'Already have an account?'}
             <button
               type="button"
-              className="ml-2 text-teal-700 underline"
+              className={`ml-2 ${safeText.accent} underline hover:opacity-80 transition-opacity`}
               onClick={() => setIsLogin(!isLogin)}
             >
               {isLogin ? 'Sign Up' : 'Log In'}

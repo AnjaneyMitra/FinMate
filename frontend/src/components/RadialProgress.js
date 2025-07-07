@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const RadialProgress = ({ 
   percentage, 
@@ -13,50 +14,70 @@ const RadialProgress = ({
   showPercentage = true,
   showAmounts = true
 }) => {
+  const { currentTheme } = useTheme();
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
   
-  // Color variants
-  const colorVariants = {
-    teal: {
-      primary: '#14b8a6',
-      secondary: '#5eead4',
-      background: '#f0fdfa',
-      text: '#0f766e'
-    },
-    blue: {
-      primary: '#3b82f6',
-      secondary: '#93c5fd',
-      background: '#eff6ff',
-      text: '#1e40af'
-    },
-    green: {
-      primary: '#10b981',
-      secondary: '#6ee7b7',
-      background: '#f0fdf4',
-      text: '#047857'
-    },
-    amber: {
-      primary: '#f59e0b',
-      secondary: '#fcd34d',
-      background: '#fffbeb',
-      text: '#92400e'
-    },
-    red: {
-      primary: '#ef4444',
-      secondary: '#fca5a5',
-      background: '#fef2f2',
-      text: '#dc2626'
-    },
-    purple: {
-      primary: '#8b5cf6',
-      secondary: '#c4b5fd',
-      background: '#faf5ff',
-      text: '#7c3aed'
+  // Theme-aware color variants that adapt to current theme
+  const getThemeAwareColors = () => {
+    if (!currentTheme) {
+      // Fallback colors if theme is not available
+      return {
+        teal: { primary: '#14b8a6', secondary: '#5eead4', background: '#f0fdfa', text: '#0f766e' },
+        blue: { primary: '#3b82f6', secondary: '#93c5fd', background: '#eff6ff', text: '#1e40af' },
+        green: { primary: '#10b981', secondary: '#6ee7b7', background: '#f0fdf4', text: '#047857' },
+        amber: { primary: '#f59e0b', secondary: '#fcd34d', background: '#fffbeb', text: '#92400e' },
+        red: { primary: '#ef4444', secondary: '#fca5a5', background: '#fef2f2', text: '#dc2626' },
+        purple: { primary: '#8b5cf6', secondary: '#c4b5fd', background: '#faf5ff', text: '#7c3aed' }
+      };
     }
+
+    // Use theme colors for dynamic theming
+    const themeColors = currentTheme.colors;
+    const isDark = currentTheme.name === 'Dark' || currentTheme.name === 'Midnight' || currentTheme.name === 'Cyberpunk';
+    
+    return {
+      teal: {
+        primary: themeColors.accent.primary.replace('bg-', ''),
+        secondary: themeColors.accent.secondary.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      },
+      blue: {
+        primary: themeColors.accent.secondary.replace('bg-', ''),
+        secondary: themeColors.accent.primary.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      },
+      green: {
+        primary: themeColors.accent.success.replace('bg-', ''),
+        secondary: themeColors.accent.primary.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      },
+      amber: {
+        primary: themeColors.accent.warning.replace('bg-', ''),
+        secondary: themeColors.accent.primary.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      },
+      red: {
+        primary: themeColors.accent.error.replace('bg-', ''),
+        secondary: themeColors.accent.warning.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      },
+      purple: {
+        primary: themeColors.accent.secondary.replace('bg-', ''),
+        secondary: themeColors.accent.primary.replace('bg-', ''),
+        background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        text: themeColors.text.primary.replace('text-', '')
+      }
+    };
   };
 
+  const colorVariants = getThemeAwareColors();
   const colors = colorVariants[color] || colorVariants.teal;
 
   return (
@@ -101,12 +122,12 @@ const RadialProgress = ({
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {showPercentage && (
-            <div className={`text-2xl font-bold ${colors.text}`}>
+            <div className="text-2xl font-bold" style={{ color: colors.text }}>
               {Math.round(percentage)}%
             </div>
           )}
           {showAmounts && saved !== undefined && target !== undefined && target > 0 && (
-            <div className={`text-xs ${colors.text} opacity-75 text-center px-1 leading-tight break-all ${showPercentage ? 'mt-1' : ''}`}>
+            <div className="text-xs opacity-75 text-center px-1 leading-tight break-all" style={{ color: colors.text, marginTop: showPercentage ? '4px' : '0' }}>
               <div>₹{saved.toLocaleString('en-IN')}</div>
               <div>of ₹{target.toLocaleString('en-IN')}</div>
             </div>

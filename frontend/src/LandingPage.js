@@ -2,24 +2,45 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardPreview, GoalsPreview, BudgetPreview } from './components/FeaturePreviews';
 import { PieChart } from 'lucide-react';
+import { useTheme } from './contexts/ThemeContext';
 
 export default function LandingPage() {
 	const navigate = useNavigate();
+	const themeContext = useTheme();
+	const { bg, text, border, accent } = themeContext || {};
+	
+	// Safe fallbacks for theme properties
+	const safeBg = bg || {
+		primary: 'bg-white',
+		secondary: 'bg-gray-50',
+		card: 'bg-white'
+	};
+	const safeText = text || {
+		primary: 'text-gray-900',
+		secondary: 'text-gray-600',
+		accent: 'text-teal-600'
+	};
+	const safeBorder = border || {
+		primary: 'border-gray-200'
+	};
+	const safeAccent = accent || {
+		primary: 'bg-teal-600'
+	};
 
 	return (
-		<div className="min-h-screen bg-gray-50 text-gray-900 font-sans antialiased">
+		<div className={`min-h-screen ${safeBg.secondary} ${safeText.primary} font-sans antialiased`}>
 			{/* Fixed header */}
-			<header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+			<header className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 ${safeBg.primary}/95 backdrop-blur-md border-b ${safeBorder.primary} shadow-sm`}>
 				<div className="flex items-center gap-3">
-					<div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
+					<div className={`w-8 h-8 ${safeAccent.primary} rounded-lg flex items-center justify-center`}>
 						<PieChart className="w-5 h-5 text-white" />
 					</div>
-					<span className="font-bold text-xl md:text-2xl tracking-tight text-gray-900">
+					<span className={`font-bold text-xl md:text-2xl tracking-tight ${safeText.primary}`}>
 						FinMate
 					</span>
 				</div>
 				<button
-					className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 shadow-md text-sm md:text-base"
+					className={`px-6 py-2.5 ${safeAccent.primary} hover:opacity-90 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 shadow-md text-sm md:text-base`}
 					onClick={() => navigate('/login')}
 				>
 					Try it out
@@ -27,19 +48,19 @@ export default function LandingPage() {
 			</header>
 
 			{/* Hero Section */}
-			<section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-teal-50">
+			<section className={`relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-${safeBg.secondary.replace('bg-', '')} via-${safeBg.primary.replace('bg-', '')} to-${safeAccent.primary.replace('bg-', '')}-50`}>
 				<div className="text-center z-10 max-w-5xl mx-auto px-4 py-20">
 					<h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight leading-tight">
-						<span className="text-gray-900 block">Modern Finance,</span>
-						<span className="text-teal-600 block">Made Simple</span>
+						<span className={`${safeText.primary} block`}>Modern Finance,</span>
+						<span className={`${safeText.accent} block`}>Made Simple</span>
 					</h1>
-					<p className="text-lg md:text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto font-light leading-relaxed mb-8">
+					<p className={`text-lg md:text-xl lg:text-2xl ${safeText.secondary} max-w-3xl mx-auto font-light leading-relaxed mb-8`}>
 						Experience intelligent budgeting with AI-powered insights and a
 						beautiful, minimal workspace designed for clarity and focus.
 					</p>
 					<div className="mt-12">
 						<button
-							className="px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg text-lg"
+							className={`px-8 py-4 ${safeAccent.primary} hover:opacity-90 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg text-lg`}
 							onClick={() => navigate('/login')}
 						>
 							Get Started Free
@@ -49,13 +70,13 @@ export default function LandingPage() {
 			</section>
 
 			{/* Features Section */}
-			<section className="relative py-20 md:py-32 bg-white">
+			<section className={`relative py-20 md:py-32 ${safeBg.primary}`}>
 				<div className="max-w-7xl mx-auto px-4 md:px-6">
 					<div className="text-center mb-16 md:mb-20">
-						<h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+						<h2 className={`text-3xl md:text-4xl lg:text-5xl font-bold ${safeText.primary} mb-4`}>
 							Core Features
 						</h2>
-						<p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+						<p className={`text-lg md:text-xl ${safeText.secondary} max-w-2xl mx-auto`}>
 							Everything you need to take control of your finances
 						</p>
 					</div>
@@ -64,20 +85,20 @@ export default function LandingPage() {
 						{/* Real-Time Dashboard Feature */}
 						<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
 							<div className="flex-1 text-center lg:text-left">
-								<h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 text-teal-600">
+								<h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 ${safeText.accent}`}>
 									Real-Time Dashboard
 								</h3>
-								<p className="text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+								<p className={`text-base md:text-lg lg:text-xl ${safeText.secondary} leading-relaxed max-w-xl mx-auto lg:mx-0`}>
 									Live updates and interactive visualizations give you instant clarity on your financial health and spending patterns with smart insights.
 								</p>
 								<div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Live Analytics
 									</span>
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Category Insights
 									</span>
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Trend Analysis
 									</span>
 								</div>
@@ -92,10 +113,10 @@ export default function LandingPage() {
 						{/* Goal Tracking Feature */}
 						<div className="flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-16">
 							<div className="flex-1 text-center lg:text-left">
-								<h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 text-gray-700">
+								<h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 ${safeText.primary}`}>
 									Smart Goal Tracking
 								</h3>
-								<p className="text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+								<p className={`text-base md:text-lg lg:text-xl ${safeText.secondary} leading-relaxed max-w-xl mx-auto lg:mx-0`}>
 									Visual progress tracking with gamified milestones to keep you motivated and on track to achieve your financial dreams.
 								</p>
 								<div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
