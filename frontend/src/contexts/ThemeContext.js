@@ -422,15 +422,20 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [currentTheme, setCurrentTheme] = useState('classic');
-
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('finmate-theme');
-    if (savedTheme && themes[savedTheme]) {
-      setCurrentTheme(savedTheme);
+  // Initialize theme synchronously from localStorage
+  const getInitialTheme = () => {
+    try {
+      const savedTheme = localStorage.getItem('finmate-theme');
+      if (savedTheme && themes[savedTheme]) {
+        return savedTheme;
+      }
+    } catch (error) {
+      console.warn('Failed to load theme from localStorage:', error);
     }
-  }, []);
+    return 'classic';
+  };
+
+  const [currentTheme, setCurrentTheme] = useState(getInitialTheme);
 
   // Save theme to localStorage when it changes
   useEffect(() => {
@@ -442,7 +447,6 @@ export function ThemeProvider({ children }) {
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      const theme = themes[currentTheme];
       // Extract color from theme (simplified)
       metaThemeColor.setAttribute('content', 
         currentTheme === 'classic' ? '#0d9488' :

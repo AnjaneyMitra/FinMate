@@ -5,7 +5,7 @@ import UserProfileSetup from './components/UserProfileSetup';
 import PersonalizedContent from './components/PersonalizedContent';
 import PinButton from './components/PinButton';
 import { useTheme } from './contexts/ThemeContext';
-import { useTheme } from './contexts/ThemeContext';
+
 
 const levels = [
   {

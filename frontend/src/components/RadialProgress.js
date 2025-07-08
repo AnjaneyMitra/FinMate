@@ -21,7 +21,7 @@ const RadialProgress = ({
   
   // Theme-aware color variants that adapt to current theme
   const getThemeAwareColors = () => {
-    if (!currentTheme) {
+    if (!currentTheme || !currentTheme.colors) {
       // Fallback colors if theme is not available
       return {
         teal: { primary: '#14b8a6', secondary: '#5eead4', background: '#f0fdfa', text: '#0f766e' },
@@ -33,46 +33,61 @@ const RadialProgress = ({
       };
     }
 
-    // Use theme colors for dynamic theming
+    // Use theme colors for dynamic theming with safe access
     const themeColors = currentTheme.colors;
     const isDark = currentTheme.name === 'Dark' || currentTheme.name === 'Midnight' || currentTheme.name === 'Cyberpunk';
     
+    // Safe fallbacks for accent colors - handle case where accent might be undefined
+    const accent = themeColors.accent || {};
+    const safeAccent = {
+      primary: accent.primary || 'bg-teal-600',
+      secondary: accent.secondary || 'bg-blue-600',
+      success: accent.success || 'bg-green-600',
+      warning: accent.warning || 'bg-yellow-500',
+      error: accent.error || 'bg-red-600'
+    };
+    
+    const text = themeColors.text || {};
+    const safeText = {
+      primary: text.primary || 'text-gray-900'
+    };
+    
     return {
       teal: {
-        primary: themeColors.accent.primary.replace('bg-', ''),
-        secondary: themeColors.accent.secondary.replace('bg-', ''),
+        primary: safeAccent.primary.replace('bg-', ''),
+        secondary: safeAccent.secondary.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       },
       blue: {
-        primary: themeColors.accent.secondary.replace('bg-', ''),
-        secondary: themeColors.accent.primary.replace('bg-', ''),
+        primary: safeAccent.secondary.replace('bg-', ''),
+        secondary: safeAccent.primary.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       },
       green: {
-        primary: themeColors.accent.success.replace('bg-', ''),
-        secondary: themeColors.accent.primary.replace('bg-', ''),
+        primary: safeAccent.success.replace('bg-', ''),
+        secondary: safeAccent.primary.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       },
       amber: {
-        primary: themeColors.accent.warning.replace('bg-', ''),
-        secondary: themeColors.accent.primary.replace('bg-', ''),
+        primary: safeAccent.warning.replace('bg-', ''),
+        secondary: safeAccent.primary.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       },
       red: {
-        primary: themeColors.accent.error.replace('bg-', ''),
-        secondary: themeColors.accent.warning.replace('bg-', ''),
+        primary: safeAccent.error.replace('bg-', ''),
+        secondary: safeAccent.warning.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       },
       purple: {
-        primary: themeColors.accent.secondary.replace('bg-', ''),
-        secondary: themeColors.accent.primary.replace('bg-', ''),
+        primary: safeAccent.secondary.replace('bg-', ''),
+        secondary: safeAccent.primary.replace('bg-', ''),
         background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        text: themeColors.text.primary.replace('text-', '')
+        text: safeText.primary.replace('text-', '')
       }
     };
   };
