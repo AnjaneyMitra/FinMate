@@ -2,27 +2,36 @@ import React, { useState } from 'react';
 import AIFormRecommender from './AIFormRecommender';
 import FormBrowser from './FormBrowser';
 import { Bot, Search } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useOutletContext } from 'react-router-dom';
 
-const TaxFormDiscovery = ({ onFormSelected, userProfile = {} }) => {
+const TaxFormDiscovery = () => {
   const [activeView, setActiveView] = useState('browse'); // 'browse' or 'ai'
+  const { user } = useOutletContext();
+  const themeContext = useTheme();
+  const { bg, text } = themeContext || {};
+
+  // Safe fallbacks
+  const safeBg = bg || { primary: 'bg-white', secondary: 'bg-gray-100', card: 'bg-white' };
+  const safeText = text || { primary: 'text-gray-900', secondary: 'text-gray-600' };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className={`max-w-7xl mx-auto p-6 ${safeBg.primary} ${safeText.primary}`}>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tax Form Discovery</h1>
-        <p className="text-gray-600">Find the perfect tax form for your situation</p>
+        <h1 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Tax Form Discovery</h1>
+        <p className={`${safeText.secondary}`}>Find the perfect tax form for your situation</p>
       </div>
 
       {/* View Toggle */}
       <div className="mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1 max-w-md">
+        <div className={`flex ${safeBg.secondary} rounded-lg p-1 max-w-md`}>
           <button
             onClick={() => setActiveView('browse')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
               activeView === 'browse'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? `${safeBg.card} ${safeText.primary} shadow-sm`
+                : `${safeText.secondary} hover:${safeText.primary}`
             }`}
           >
             <Search className="w-4 h-4" />
@@ -32,8 +41,8 @@ const TaxFormDiscovery = ({ onFormSelected, userProfile = {} }) => {
             onClick={() => setActiveView('ai')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
               activeView === 'ai'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? `${safeBg.card} ${safeText.primary} shadow-sm`
+                : `${safeText.secondary} hover:${safeText.primary}`
             }`}
           >
             <Bot className="w-4 h-4" />
@@ -45,13 +54,10 @@ const TaxFormDiscovery = ({ onFormSelected, userProfile = {} }) => {
       {/* Content */}
       {activeView === 'ai' ? (
         <AIFormRecommender 
-          onFormSelected={onFormSelected}
-          userProfile={userProfile}
+          userProfile={user}
         />
       ) : (
-        <FormBrowser 
-          onFormSelected={onFormSelected}
-        />
+        <FormBrowser />
       )}
     </div>
   );

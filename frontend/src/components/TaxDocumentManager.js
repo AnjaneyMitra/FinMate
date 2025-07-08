@@ -1,7 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Upload, FileText, Scan, Check, AlertCircle, Download, Eye, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Upload, FileText, Scan, Check, AlertCircle, Eye, Trash2 } from 'lucide-react';
+import { useOutletContext } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
-const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = [] }) => {
+const TaxDocumentManager = () => {
+  const { user } = useOutletContext();
   const [uploadedDocuments, setUploadedDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [ocrProcessing, setOcrProcessing] = useState({});
@@ -9,7 +12,14 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
   const [documentCategories, setDocumentCategories] = useState([]);
   const fileInputRef = useRef(null);
 
-  // Document categories and their requirements
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+
+  const safeBg = bg || { primary: 'bg-white', secondary: 'bg-gray-50', card: 'bg-white', tertiary: 'bg-gray-100' };
+  const safeText = text || { primary: 'text-gray-900', secondary: 'text-gray-600', accent: 'text-teal-600' };
+  const safeBorder = border || { primary: 'border-gray-200', accent: 'border-teal-300' };
+  const safeAccent = accent || { primary: 'bg-teal-600', secondary: 'bg-blue-600', success: 'bg-green-600', error: 'bg-red-600' };
+
   const defaultDocumentCategories = [
     {
       id: 'income_proof',
@@ -53,115 +63,55 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
     }
   ];
 
-  React.useEffect(() => {
-    // Initialize document categories based on form requirements
-    const categories = requiredDocuments.length > 0 
-      ? defaultDocumentCategories.filter(cat => 
-          requiredDocuments.some(req => cat.documents.includes(req))
-        )
-      : defaultDocumentCategories;
-    setDocumentCategories(categories);
-  }, [requiredDocuments, defaultDocumentCategories]);
+  useEffect(() => {
+    setDocumentCategories(defaultDocumentCategories);
+  }, []);
 
   const handleFileUpload = useCallback(async (files, categoryId) => {
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    const formData = new FormData();
-    
-    Array.from(files).forEach((file, index) => {
-      formData.append(`documents`, file);
-    });
-    
-    formData.append('category_id', categoryId);
-    formData.append('form_id', formId);
+    // Mock upload
+    setTimeout(() => {
+      const newDocuments = Array.from(files).map((file, index) => ({
+        id: `${categoryId}-${Date.now()}-${index}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        categoryId,
+        uploadedAt: new Date().toISOString(),
+        ocrProcessed: false,
+        ocrData: null
+      }));
 
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/tax/documents/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newDocuments = data.documents.map(doc => ({
-          ...doc,
-          categoryId,
-          uploadedAt: new Date().toISOString()
-        }));
-        
-        setUploadedDocuments(prev => [...prev, ...newDocuments]);
-        
-        // Trigger OCR processing for supported file types
-        newDocuments.forEach(doc => {
-          if (doc.type === 'pdf' || doc.type.startsWith('image/')) {
-            processOCR(doc.id);
-          }
-        });
-
-        if (onDocumentUploaded) {
-          onDocumentUploaded(newDocuments);
-        }
-      } else {
-        console.error('Upload failed');
-      }
-    } catch (error) {
-      console.error('Error uploading documents:', error);
-    } finally {
+      setUploadedDocuments(prev => [...prev, ...newDocuments]);
       setUploading(false);
-    }
-  }, [formId, onDocumentUploaded]);
+
+      newDocuments.forEach(doc => {
+        if (doc.type === 'application/pdf' || doc.type.startsWith('image/')) {
+          processOCR(doc.id);
+        }
+      });
+    }, 1500);
+  }, []);
 
   const processOCR = async (documentId) => {
     setOcrProcessing(prev => ({ ...prev, [documentId]: true }));
-    
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`/api/tax/documents/${documentId}/ocr`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUploadedDocuments(prev => 
-          prev.map(doc => 
-            doc.id === documentId 
-              ? { ...doc, ocrData: data.extracted_data, ocrProcessed: true }
-              : doc
-          )
-        );
-      }
-    } catch (error) {
-      console.error('OCR processing failed:', error);
-    } finally {
+    // Mock OCR processing
+    setTimeout(() => {
+      setUploadedDocuments(prev => 
+        prev.map(doc => 
+          doc.id === documentId 
+            ? { ...doc, ocrData: { extracted: 'mock data' }, ocrProcessed: true }
+            : doc
+        )
+      );
       setOcrProcessing(prev => ({ ...prev, [documentId]: false }));
-    }
+    }, 2000);
   };
 
-  const deleteDocument = async (documentId) => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`/api/tax/documents/${documentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
-      }
-    } catch (error) {
-      console.error('Error deleting document:', error);
-    }
+  const deleteDocument = (documentId) => {
+    setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
   };
 
   const getDocumentsByCategory = (categoryId) => {
@@ -178,20 +128,21 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
 
   const DocumentUploadZone = ({ category, documents }) => {
     const completionStatus = getCategoryCompletionStatus(category);
+    const fileInput = useRef(null);
     
     return (
       <div className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-        completionStatus === 'complete' ? 'border-green-300 bg-green-50' :
-        completionStatus === 'uploaded' ? 'border-blue-300 bg-blue-50' :
-        completionStatus === 'missing' && category.required ? 'border-red-300 bg-red-50' :
-        'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
+        completionStatus === 'complete' ? `border-green-300 ${safeBg.secondary}` :
+        completionStatus === 'uploaded' ? `border-blue-300 ${safeBg.secondary}` :
+        completionStatus === 'missing' && category.required ? `border-red-300 ${safeBg.secondary}` :
+        `${safeBorder.primary} ${safeBg.secondary} hover:border-blue-400`
       }`}>
         <div className="text-center">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl">{category.icon}</span>
               <div>
-                <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                <h3 className={`font-semibold ${safeText.primary}`}>{category.name}</h3>
                 {category.required && <span className="text-xs text-red-600 font-medium">Required</span>}
               </div>
             </div>
@@ -203,15 +154,15 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
             )}
           </div>
           
-          <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+          <p className={`text-sm ${safeText.secondary} mb-4`}>{category.description}</p>
           
           {documents.length === 0 ? (
             <div>
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">
+              <Upload className={`w-8 h-8 ${safeText.tertiary} mx-auto mb-2`} />
+              <p className={`text-sm ${safeText.secondary} mb-2`}>
                 Drop files here or click to upload
               </p>
-              <div className="text-xs text-gray-500">
+              <div className={`text-xs ${safeText.tertiary}`}>
                 <p>Accepted: PDF, JPG, PNG (max 10MB each)</p>
                 <p className="mt-1">Suggested: {category.documents.join(', ')}</p>
               </div>
@@ -222,12 +173,12 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => handleFileUpload(e.target.files, category.id)}
                 className="hidden"
-                ref={fileInputRef}
+                ref={fileInput}
               />
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => fileInput.current?.click()}
                 disabled={uploading}
-                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className={`mt-3 px-4 py-2 ${safeAccent.primary} text-white rounded-lg hover:opacity-90 disabled:opacity-50`}
               >
                 {uploading ? 'Uploading...' : 'Choose Files'}
               </button>
@@ -239,8 +190,8 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
               ))}
               
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mx-auto"
+                onClick={() => fileInput.current?.click()}
+                className={`text-sm ${safeText.accent} hover:opacity-80 flex items-center gap-1 mx-auto`}
               >
                 <Upload className="w-4 h-4" />
                 Add more documents
@@ -252,7 +203,7 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => handleFileUpload(e.target.files, category.id)}
                 className="hidden"
-                ref={fileInputRef}
+                ref={fileInput}
               />
             </div>
           )}
@@ -265,14 +216,14 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
     const isProcessing = ocrProcessing[document.id];
     
     return (
-      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+      <div className={`flex items-center justify-between p-3 ${safeBg.card} border ${safeBorder.primary} rounded-lg`}>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded">
-            <FileText className="w-4 h-4 text-blue-600" />
+          <div className={`p-2 ${safeAccent.secondary} bg-opacity-10 rounded`}>
+            <FileText className={`w-4 h-4 ${safeText.accent}`} />
           </div>
           <div>
-            <p className="font-medium text-gray-900 text-sm">{document.name}</p>
-            <p className="text-xs text-gray-500">
+            <p className={`font-medium ${safeText.primary} text-sm`}>{document.name}</p>
+            <p className={`text-xs ${safeText.tertiary}`}>
               {(document.size / 1024 / 1024).toFixed(1)} MB • 
               {new Date(document.uploadedAt).toLocaleDateString()}
             </p>
@@ -283,8 +234,8 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
               </div>
             )}
             {isProcessing && (
-              <div className="text-xs text-blue-600 flex items-center gap-1 mt-1">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+              <div className={`text-xs ${safeText.accent} flex items-center gap-1 mt-1`}>
+                <div className={`animate-spin rounded-full h-3 w-3 border-b-2 ${safeBorder.accent}`}></div>
                 Processing...
               </div>
             )}
@@ -294,21 +245,14 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
         <div className="flex items-center gap-2">
           <button
             onClick={() => onPreview(document)}
-            className="p-1 text-gray-400 hover:text-blue-600"
+            className={`p-1 ${safeText.tertiary} hover:${safeText.accent}`}
             title="Preview"
           >
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={() => window.open(document.downloadUrl, '_blank')}
-            className="p-1 text-gray-400 hover:text-green-600"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
             onClick={() => onDelete(document.id)}
-            className="p-1 text-gray-400 hover:text-red-600"
+            className={`p-1 ${safeText.tertiary} hover:text-red-600`}
             title="Delete"
           >
             <Trash2 className="w-4 h-4" />
@@ -318,160 +262,37 @@ const TaxDocumentManager = ({ formId, onDocumentUploaded, requiredDocuments = []
     );
   };
 
-  const DocumentPreviewModal = ({ document, onClose }) => {
-    if (!document) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">{document.name}</h2>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-hidden">
-            {document.type === 'pdf' ? (
-              <iframe
-                src={document.previewUrl}
-                className="w-full h-full"
-                title="Document Preview"
-              />
-            ) : (
-              <img
-                src={document.previewUrl}
-                alt="Document Preview"
-                className="w-full h-full object-contain"
-              />
-            )}
-          </div>
-          
-          {document.ocrData && (
-            <div className="p-4 border-t border-gray-200 bg-gray-50">
-              <h3 className="font-medium text-gray-900 mb-2">Extracted Information</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {Object.entries(document.ocrData).map(([key, value]) => (
-                  <div key={key}>
-                    <span className="text-gray-600 capitalize">{key.replace('_', ' ')}:</span>
-                    <span className="ml-2 font-medium">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const getOverallProgress = () => {
-    const requiredCategories = documentCategories.filter(cat => cat.required);
-    const completedRequired = requiredCategories.filter(cat => 
-      getCategoryCompletionStatus(cat) === 'complete'
-    ).length;
-    
-    const totalCategories = documentCategories.length;
-    const completedTotal = documentCategories.filter(cat => 
-      getCategoryCompletionStatus(cat) === 'complete'
-    ).length;
-    
-    return {
-      required: requiredCategories.length > 0 ? (completedRequired / requiredCategories.length) * 100 : 100,
-      overall: totalCategories > 0 ? (completedTotal / totalCategories) * 100 : 0
-    };
-  };
-
-  const progress = getOverallProgress();
-
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Document Manager</h1>
-        <p className="text-gray-600">Upload and manage your tax filing documents with AI-powered data extraction</p>
-        
-        {/* Progress Indicators */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Required Documents</span>
-              <span className="text-sm font-bold text-gray-900">{Math.round(progress.required)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-red-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress.required}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">All Documents</span>
-              <span className="text-sm font-bold text-gray-900">{Math.round(progress.overall)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress.overall}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
+        <h1 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Document Manager</h1>
+        <p className={`${safeText.secondary}`}>Upload and organize your tax documents securely.</p>
       </div>
 
-      {/* Document Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {documentCategories.map(category => {
-          const categoryDocuments = getDocumentsByCategory(category.id);
-          return (
-            <DocumentUploadZone
-              key={category.id}
-              category={category}
-              documents={categoryDocuments}
-            />
-          );
-        })}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {documentCategories.map(category => (
+          <DocumentUploadZone 
+            key={category.id} 
+            category={category} 
+            documents={getDocumentsByCategory(category.id)} 
+          />
+        ))}
       </div>
 
-      {/* Summary */}
-      {uploadedDocuments.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Document Summary</h2>
-            <span className="text-sm text-gray-600">
-              {uploadedDocuments.length} document{uploadedDocuments.length !== 1 ? 's' : ''} uploaded
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{uploadedDocuments.length}</div>
-              <div className="text-sm text-blue-800">Total Documents</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {uploadedDocuments.filter(doc => doc.ocrProcessed).length}
-              </div>
-              <div className="text-sm text-green-800">Data Extracted</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {documentCategories.filter(cat => getCategoryCompletionStatus(cat) === 'complete').length}
-              </div>
-              <div className="text-sm text-purple-800">Categories Complete</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Document Preview Modal */}
       {previewDocument && (
-        <DocumentPreviewModal
-          document={previewDocument}
-          onClose={() => setPreviewDocument(null)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setPreviewDocument(null)}>
+          <div className={`${safeBg.card} p-8 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-auto`} onClick={e => e.stopPropagation()}>
+            <h2 className={`text-2xl font-bold ${safeText.primary} mb-4`}>{previewDocument.name}</h2>
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+                {JSON.stringify(previewDocument, null, 2)}
+              </pre>
+            </div>
+            <button onClick={() => setPreviewDocument(null)} className={`mt-4 px-4 py-2 ${safeAccent.primary} text-white rounded-lg`}>
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

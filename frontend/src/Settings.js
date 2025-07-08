@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DataMigrationService from './services/DataMigrationService';
 import SampleDataService from './services/SampleDataService';
 import PinButton from './components/PinButton';
+import ThemeManager from './components/ThemeManager';
 import { useTheme, useThemeStyles } from './contexts/ThemeContext';
 import { 
   Database, 
@@ -15,7 +16,8 @@ import {
   Upload, 
   RotateCcw, 
   Target, 
-  Lock 
+  Lock,
+  Palette
 } from 'lucide-react';
 
 export default function Settings() {
@@ -133,6 +135,7 @@ export default function Settings() {
 
   const tabs = [
     { id: 'data', label: 'Data Management', icon: <Database className="w-4 h-4" /> },
+    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'privacy', label: 'Privacy', icon: <Shield className="w-4 h-4" /> },
     { id: 'preferences', label: 'Preferences', icon: <SettingsIcon className="w-4 h-4" /> },
     { id: 'about', label: 'About', icon: <Info className="w-4 h-4" /> }
@@ -345,6 +348,10 @@ export default function Settings() {
             </div>
           </div>
         </div>
+      )}
+
+      {activeTab === 'appearance' && (
+        <ThemeManager />
       )}
 
       {activeTab === 'privacy' && (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calculator, DollarSign, Receipt, Save, TrendingUp, Target } from 'lucide-react';
 import FirebaseDataService from './services/FirebaseDataService';
 import PinButton from './components/PinButton';
+import { useTheme } from './contexts/ThemeContext';
 
 // Simple Indian income tax estimator for FY 2024-25 (old regime, for demo)
 function estimateTax({ income, deductions }) {
@@ -23,6 +24,28 @@ export default function TaxEstimator() {
   const [tax, setTax] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
+
+  // Theme integration
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600'
+  };
 
   // Fetch plannedSpending from Firebase on mount
   useEffect(() => {
@@ -101,20 +124,20 @@ export default function TaxEstimator() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 mt-8 border border-gray-200">
+    <div className={`max-w-2xl mx-auto ${safeBg.card} rounded-xl shadow-sm p-8 mt-8 border ${safeBorder.primary}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg">
+          <div className={`p-2 ${safeAccent.primary} rounded-lg`}>
             <Calculator className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Income Tax Estimator (India)</h2>
+          <h2 className={`text-2xl font-bold ${safeText.primary}`}>Income Tax Estimator (India)</h2>
           <PinButton pageId="tax-estimator" />
         </div>
       </div>
       <form className="grid grid-cols-1 gap-6 mb-6" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-teal-600" />
+          <label className={`block ${safeText.secondary} font-medium mb-2 flex items-center gap-2`}>
+            <DollarSign className={`w-4 h-4 ${safeText.accent || 'text-teal-600'}`} />
             Annual Income (₹)
           </label>
           <input 
@@ -127,8 +150,8 @@ export default function TaxEstimator() {
           />
         </div>
         <div>
-          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-teal-600" />
+          <label className={`block ${safeText.secondary} font-medium mb-2 flex items-center gap-2`}>
+            <Receipt className={`w-4 h-4 ${safeText.accent || 'text-teal-600'}`} />
             Deductions (₹)
           </label>
           <input 
@@ -136,14 +159,14 @@ export default function TaxEstimator() {
             min="0" 
             value={deductions} 
             onChange={e => setDeductions(e.target.value)} 
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+            className={`w-full border ${safeBorder.primary} rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-transparent ${safeBg.card} ${safeText.primary}`}
             required 
           />
-          <div className="text-xs text-gray-500 mt-1">E.g. 80C, 80D, HRA, etc.</div>
+          <div className={`text-xs ${safeText.tertiary} mt-1`}>E.g. 80C, 80D, HRA, etc.</div>
         </div>
         <div>
-          <label className="block text-gray-700 font-medium mb-2 flex items-center gap-2">
-            <Target className="w-4 h-4 text-teal-600" />
+          <label className={`block ${safeText.secondary} font-medium mb-2 flex items-center gap-2`}>
+            <Target className={`w-4 h-4 ${safeText.accent || 'text-teal-600'}`} />
             Planned Spending (₹)
           </label>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">

@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Search, BookOpen, Video, FileText, MessageCircle, Star, ChevronRight, ExternalLink, ThumbsUp, Eye } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
-const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
-  const [searchTerm, setSearchTerm] = useState(externalSearchTerm || '');
+const TaxGlossaryHelp = () => {
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTerm, setSelectedTerm] = useState(null);
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [userQuestion, setUserQuestion] = useState('');
-  const [loadingAnswer, setLoadingAnswer] = useState(false);
+
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+
+  const safeBg = bg || { primary: 'bg-white', secondary: 'bg-gray-100', card: 'bg-white', tertiary: 'bg-gray-100' };
+  const safeText = text || { primary: 'text-gray-900', secondary: 'text-gray-600', tertiary: 'text-gray-500', accent: 'text-teal-600' };
+  const safeBorder = border || { primary: 'border-gray-200', accent: 'border-teal-300' };
+  const safeAccent = accent || { primary: 'bg-teal-600', secondary: 'bg-blue-600', success: 'bg-green-600', error: 'bg-red-600' };
+
 
   const categories = [
     { id: 'all', label: 'All Terms', icon: '📚' },
@@ -99,39 +105,6 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
     }
   ];
 
-  const featuredVideos = [
-    {
-      id: 'v1',
-      title: 'ITR Filing Complete Guide 2024',
-      duration: '15:30',
-      views: '2.5M',
-      thumbnail: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=300&h=200&fit=crop',
-      description: 'Step-by-step guide to file your income tax return online'
-    },
-    {
-      id: 'v2',
-      title: 'Tax Saving Under Section 80C',
-      duration: '12:45',
-      views: '1.8M',
-      thumbnail: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=300&h=200&fit=crop',
-      description: 'Complete list of 80C investments and tax calculations'
-    },
-    {
-      id: 'v3',
-      title: 'Common ITR Filing Mistakes to Avoid',
-      duration: '10:20',
-      views: '950K',
-      thumbnail: 'https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=300&h=200&fit=crop',
-      description: 'Top mistakes taxpayers make and how to avoid them'
-    }
-  ];
-
-  useEffect(() => {
-    if (externalSearchTerm) {
-      setSearchTerm(externalSearchTerm);
-    }
-  }, [externalSearchTerm]);
-
   const filteredTerms = glossaryTerms.filter(term => {
     const matchesSearch = searchTerm === '' || 
       term.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,79 +116,32 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
     return matchesSearch && matchesCategory;
   }).sort((a, b) => b.popularity - a.popularity);
 
-  const handleAskAI = async () => {
-    if (!userQuestion.trim()) return;
-
-    const newMessage = { type: 'user', text: userQuestion };
-    setChatMessages(prev => [...prev, newMessage]);
-    setLoadingAnswer(true);
-    setUserQuestion('');
-
-    try {
-      const response = await fetch('/api/tax/assist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({
-          form_id: 'general',
-          field_id: 'chatbot',
-          user_query: userQuestion,
-          form_data: {}
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const aiResponse = { 
-          type: 'ai', 
-          text: data.assistance?.explanation || 'I apologize, but I cannot provide an answer right now. Please try again later.',
-          actionableAdvice: data.assistance?.actionable_advice
-        };
-        setChatMessages(prev => [...prev, aiResponse]);
-      } else {
-        setChatMessages(prev => [...prev, { 
-          type: 'ai', 
-          text: 'Sorry, I encountered an error. Please try asking your question again.' 
-        }]);
-      }
-    } catch (error) {
-      console.error('Error asking AI:', error);
-      setChatMessages(prev => [...prev, { 
-        type: 'ai', 
-        text: 'I am currently unavailable. Please refer to the glossary terms or try again later.' 
-      }]);
-    } finally {
-      setLoadingAnswer(false);
-    }
-  };
 
   const TermDetailModal = ({ term, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className={`${safeBg.card} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
+        <div className={`p-6 border-b ${safeBorder.primary}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{term.term}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            <h2 className={`text-2xl font-bold ${safeText.primary}`}>{term.term}</h2>
+            <button onClick={onClose} className={`${safeText.tertiary} hover:${safeText.primary} text-2xl`}>×</button>
           </div>
         </div>
         
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Definition</h3>
-            <p className="text-gray-700">{term.definition}</p>
+            <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Definition</h3>
+            <p className={`${safeText.secondary}`}>{term.definition}</p>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Detailed Explanation</h3>
-            <p className="text-gray-700">{term.detailedExplanation}</p>
+            <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Detailed Explanation</h3>
+            <p className={`${safeText.secondary}`}>{term.detailedExplanation}</p>
           </div>
 
           {term.examples && term.examples.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Examples</h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Examples</h3>
+              <ul className={`list-disc list-inside space-y-1 ${safeText.secondary}`}>
                 {term.examples.map((example, index) => (
                   <li key={index}>{example}</li>
                 ))}
@@ -225,8 +151,8 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
 
           {term.commonMistakes && term.commonMistakes.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">⚠️ Common Mistakes</h3>
-              <ul className="list-disc list-inside space-y-1 text-red-700 bg-red-50 p-4 rounded-lg">
+              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>⚠️ Common Mistakes</h3>
+              <ul className={`list-disc list-inside space-y-1 text-red-700 ${safeBg.secondary} p-4 rounded-lg`}>
                 {term.commonMistakes.map((mistake, index) => (
                   <li key={index}>{mistake}</li>
                 ))}
@@ -236,7 +162,7 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
 
           {term.relatedTerms && term.relatedTerms.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Related Terms</h3>
+              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Related Terms</h3>
               <div className="flex flex-wrap gap-2">
                 {term.relatedTerms.map((relatedTerm, index) => (
                   <button
@@ -247,7 +173,7 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
                         setSelectedTerm(related);
                       }
                     }}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition-colors"
+                    className={`px-3 py-1 ${safeAccent.secondary} bg-opacity-20 ${safeText.accent} rounded-full text-sm hover:bg-opacity-30 transition-colors`}
                   >
                     {relatedTerm}
                   </button>
@@ -258,282 +184,81 @@ const TaxGlossaryHelp = ({ searchTerm: externalSearchTerm, onTermSelect }) => {
 
           {term.videoUrl && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">📹 Video Explanation</h3>
-              <button className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors">
+              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>📹 Video Explanation</h3>
+              <a href={term.videoUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 ${safeAccent.error} bg-opacity-20 text-red-800 rounded-lg hover:bg-opacity-30 transition-colors`}>
                 <Video className="w-4 h-4" />
                 Watch Video Tutorial
                 <ExternalLink className="w-4 h-4" />
-              </button>
+              </a>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const ChatbotModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full h-[600px] flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">🤖 Tax Assistant</h2>
-            <button onClick={() => setShowChatbot(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
-          </div>
-          <p className="text-sm text-gray-600 mt-1">Ask me anything about Indian tax laws and procedures</p>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {chatMessages.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>Start a conversation by asking a tax-related question!</p>
-              <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium">Try asking:</p>
-                <div className="space-y-1 text-sm">
-                  <button 
-                    onClick={() => setUserQuestion("What is the difference between ITR-1 and ITR-2?")}
-                    className="block mx-auto px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                  >
-                    "What is the difference between ITR-1 and ITR-2?"
-                  </button>
-                  <button 
-                    onClick={() => setUserQuestion("How do I calculate HRA exemption?")}
-                    className="block mx-auto px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                  >
-                    "How do I calculate HRA exemption?"
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {chatMessages.map((message, index) => (
-            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-3 rounded-lg ${
-                message.type === 'user' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 text-gray-900'
-              }`}>
-                <p>{message.text}</p>
-                {message.actionableAdvice && (
-                  <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                    <p className="text-sm font-medium text-blue-900">💡 Actionable Advice:</p>
-                    <p className="text-sm text-blue-800">{message.actionableAdvice}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-          
-          {loadingAnswer && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-gray-600">AI is thinking...</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={userQuestion}
-              onChange={(e) => setUserQuestion(e.target.value)}
-              placeholder="Ask your tax question..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              onKeyPress={(e) => e.key === 'Enter' && handleAskAI()}
-            />
-            <button
-              onClick={handleAskAI}
-              disabled={!userQuestion.trim() || loadingAnswer}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              Send
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
+    <div className={`max-w-7xl mx-auto p-6 ${safeBg.primary} ${safeText.primary}`}>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tax Glossary & Help Center</h1>
-        <p className="text-gray-600">Comprehensive explanations of tax terms, procedures, and interactive AI assistance</p>
+        <h1 className={`text-3xl font-bold ${safeText.primary} mb-2`}>Glossary & Help</h1>
+        <p className={`${safeText.secondary}`}>Your comprehensive guide to Indian tax terminology.</p>
       </div>
 
-      {/* Search and Tools */}
-      <div className="mb-8 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search tax terms, definitions, or ask a question..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map(category => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                    : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.label}
-              </button>
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <div className={`p-4 rounded-lg ${safeBg.secondary} border ${safeBorder.primary}`}>
+            <h3 className={`text-lg font-semibold ${safeText.primary} mb-4`}>Categories</h3>
+            <div className="space-y-2">
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                    selectedCategory === category.id
+                      ? `${safeBg.card} ${safeText.accent} font-semibold shadow-sm`
+                      : `${safeText.secondary} hover:${safeBg.tertiary}`
+                  }`}>
+                  <span>{category.icon}</span>
+                  <span>{category.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-
-          <button
-            onClick={() => setShowChatbot(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            Ask AI Assistant
-          </button>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Glossary Terms */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Tax Terms {filteredTerms.length > 0 && `(${filteredTerms.length})`}
-            </h2>
-            <select 
-              className="px-3 py-1 border border-gray-300 rounded text-sm"
-              onChange={(e) => {
-                const sortBy = e.target.value;
-                // Add sorting logic here if needed
-              }}
-            >
-              <option value="popularity">Most Popular</option>
-              <option value="alphabetical">A-Z</option>
-              <option value="category">By Category</option>
-            </select>
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <div className="relative mb-6">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${safeText.tertiary}`} />
+            <input
+              type="text"
+              placeholder="Search for a tax term..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full pl-12 pr-4 py-3 ${safeBg.secondary} ${safeText.primary} border ${safeBorder.primary} rounded-lg focus:ring-2 focus:ring-offset-1 focus:${safeBorder.accent} outline-none`}
+            />
           </div>
 
           <div className="space-y-4">
             {filteredTerms.map(term => (
               <div
                 key={term.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => setSelectedTerm(term)}
+                className={`p-5 rounded-lg ${safeBg.card} border ${safeBorder.primary} hover:shadow-lg hover:border-teal-300 cursor-pointer transition-all`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{term.term}</h3>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">{term.popularity}%</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-700 mb-3">{term.definition}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {term.relatedTerms.slice(0, 3).map((related, index) => (
-                        <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                          {related}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
+                <div className="flex items-center justify-between">
+                  <h3 className={`text-lg font-semibold ${safeText.accent}`}>{term.term}</h3>
+                  <ChevronRight className={`w-5 h-5 ${safeText.tertiary}`} />
                 </div>
+                <p className={`mt-2 text-sm ${safeText.secondary}`}>{term.definition}</p>
               </div>
             ))}
-
-            {filteredTerms.length === 0 && (
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No terms found</h3>
-                <p className="text-gray-600">Try adjusting your search or browse by category</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Video Tutorials Sidebar */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📹 Video Tutorials</h2>
-          <div className="space-y-4">
-            {featuredVideos.map(video => (
-              <div key={video.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                <div className="relative">
-                  <img 
-                    src={video.thumbnail} 
-                    alt={video.title}
-                    className="w-full h-32 object-cover"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                    {video.duration}
-                  </div>
-                </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-gray-900 mb-1 text-sm">{video.title}</h3>
-                  <p className="text-xs text-gray-600 mb-2">{video.description}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-3 h-3" />
-                      {video.views}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ThumbsUp className="w-3 h-3" />
-                      <span>95%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Links */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🔗 Quick Links</h3>
-            <div className="space-y-2">
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
-                <FileText className="w-4 h-4" />
-                Income Tax Act
-              </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
-                <ExternalLink className="w-4 h-4" />
-                Official IT Portal
-              </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
-                <BookOpen className="w-4 h-4" />
-                Tax Calendar 2024
-              </a>
-              <a href="#" className="flex items-center gap-2 p-2 text-blue-600 hover:bg-blue-50 rounded">
-                <FileText className="w-4 h-4" />
-                Form Downloads
-              </a>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Modals */}
-      {selectedTerm && (
-        <TermDetailModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />
-      )}
-
-      {showChatbot && <ChatbotModal />}
+      {selectedTerm && <TermDetailModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />}
     </div>
   );
 };

@@ -7,24 +7,33 @@ import { useTheme } from './contexts/ThemeContext';
 export default function LandingPage() {
 	const navigate = useNavigate();
 	const themeContext = useTheme();
-	const { bg, text, border, accent } = themeContext || {};
+	const { bg, text, border, accent, currentTheme } = themeContext || {};
 	
 	// Safe fallbacks for theme properties
 	const safeBg = bg || {
 		primary: 'bg-white',
 		secondary: 'bg-gray-50',
-		card: 'bg-white'
+		card: 'bg-white',
+		tertiary: 'bg-gray-100'
 	};
 	const safeText = text || {
 		primary: 'text-gray-900',
 		secondary: 'text-gray-600',
-		accent: 'text-teal-600'
+		tertiary: 'text-gray-500',
+		accent: 'text-teal-600',
+		inverse: 'text-white'
 	};
 	const safeBorder = border || {
-		primary: 'border-gray-200'
+		primary: 'border-gray-200',
+		secondary: 'border-gray-300',
+		accent: 'border-teal-300'
 	};
 	const safeAccent = accent || {
-		primary: 'bg-teal-600'
+		primary: 'bg-teal-600',
+		secondary: 'bg-blue-600',
+		success: 'bg-green-600',
+		warning: 'bg-yellow-500',
+		error: 'bg-red-600'
 	};
 
 	return (
@@ -48,7 +57,17 @@ export default function LandingPage() {
 			</header>
 
 			{/* Hero Section */}
-			<section className={`relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-${safeBg.secondary.replace('bg-', '')} via-${safeBg.primary.replace('bg-', '')} to-${safeAccent.primary.replace('bg-', '')}-50`}>
+			<section className={`relative min-h-screen flex items-center justify-center overflow-hidden ${safeBg.primary}`}>
+				{/* Theme-aware gradient background */}
+				<div className={`absolute inset-0 ${currentTheme === 'classic' ? 'bg-gradient-to-br from-blue-50 via-white to-teal-50' : 
+					currentTheme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700' :
+					currentTheme === 'cyberpunk' ? 'bg-gradient-to-br from-black via-gray-900 to-purple-900' :
+					currentTheme === 'nature' ? 'bg-gradient-to-br from-green-50 via-emerald-50 to-green-100' :
+					currentTheme === 'ocean' ? 'bg-gradient-to-br from-blue-50 via-slate-50 to-blue-100' :
+					currentTheme === 'sunset' ? 'bg-gradient-to-br from-orange-50 via-pink-50 to-orange-100' :
+					currentTheme === 'midnight' ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700' :
+					`${safeBg.secondary}`}`}>
+				</div>
 				<div className="text-center z-10 max-w-5xl mx-auto px-4 py-20">
 					<h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight leading-tight">
 						<span className={`${safeText.primary} block`}>Modern Finance,</span>
@@ -92,13 +111,13 @@ export default function LandingPage() {
 									Live updates and interactive visualizations give you instant clarity on your financial health and spending patterns with smart insights.
 								</p>
 								<div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
-									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Live Analytics
 									</span>
-									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Category Insights
 									</span>
-									<span className={`px-3 py-1 ${safeAccent.primary.replace('bg-', 'bg-')}-100 ${safeText.accent} rounded-full text-sm font-medium`}>
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Trend Analysis
 									</span>
 								</div>
@@ -120,13 +139,13 @@ export default function LandingPage() {
 									Visual progress tracking with gamified milestones to keep you motivated and on track to achieve your financial dreams.
 								</p>
 								<div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
-									<span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeBg.tertiary} ${safeText.secondary} rounded-full text-sm font-medium`}>
 										Progress Tracking
 									</span>
-									<span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeBg.tertiary} ${safeText.secondary} rounded-full text-sm font-medium`}>
 										Achievement Levels
 									</span>
-									<span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeBg.tertiary} ${safeText.secondary} rounded-full text-sm font-medium`}>
 										Smart Insights
 									</span>
 								</div>
@@ -141,26 +160,26 @@ export default function LandingPage() {
 						{/* Budget Analytics Feature */}
 						<div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
 							<div className="flex-1 text-center lg:text-left">
-								<h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 text-teal-600">
+								<h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 ${safeText.accent}`}>
 									AI-Powered Budget Insights
 								</h3>
-								<p className="text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+								<p className={`text-base md:text-lg lg:text-xl ${safeText.secondary} leading-relaxed max-w-xl mx-auto lg:mx-0`}>
 									Machine learning algorithms analyze your spending patterns and provide actionable insights for better financial decisions and budget optimization.
 								</p>
 								<div className="mt-6 flex flex-wrap gap-3 justify-center lg:justify-start">
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Smart Recommendations
 									</span>
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Budget vs Actual
 									</span>
-									<span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+									<span className={`px-3 py-1 ${safeAccent.primary} bg-opacity-10 ${safeText.accent} rounded-full text-sm font-medium`}>
 										Overspend Alerts
 									</span>
 								</div>
 							</div>
 							<div className="flex-1 w-full max-w-md lg:max-w-none">
-								<div className="h-[22rem] md:h-[26rem] lg:h-[30rem]">
+								<div className="h-[26rem] md:h-[32rem] lg:h-[36rem] max-h-screen">
 									<BudgetPreview />
 								</div>
 							</div>
@@ -170,13 +189,13 @@ export default function LandingPage() {
 			</section>
 
 			{/* Why Choose Section */}
-			<section className="relative py-20 md:py-32 bg-gray-50">
+			<section className={`relative py-20 md:py-32 ${safeBg.secondary}`}>
 				<div className="max-w-6xl mx-auto px-4 md:px-6">
 					<div className="text-center mb-12 md:mb-16">
-						<h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
+						<h2 className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 ${safeText.primary}`}>
 							Why Choose FinMate?
 						</h2>
-						<p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+						<p className={`text-lg md:text-xl ${safeText.secondary} max-w-2xl mx-auto`}>
 							Built for modern professionals who value clarity and control
 						</p>
 					</div>
@@ -202,12 +221,12 @@ export default function LandingPage() {
 						].map((benefit, i) => (
 							<div
 								key={i}
-								className="p-6 md:p-8 bg-white rounded-2xl border border-gray-200 hover:border-teal-300 hover:shadow-lg transition-all duration-300 shadow-sm text-center md:text-left"
+								className={`p-6 md:p-8 ${safeBg.card} rounded-2xl border ${safeBorder.primary} hover:border-${safeBorder.accent.replace('border-', '')} hover:shadow-lg transition-all duration-300 shadow-sm text-center md:text-left`}
 							>
-								<h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-3 md:mb-4">
+								<h3 className={`text-xl md:text-2xl font-semibold ${safeText.primary} mb-3 md:mb-4`}>
 									{benefit.title}
 								</h3>
-								<p className="text-gray-600 leading-relaxed">
+								<p className={`${safeText.secondary} leading-relaxed`}>
 									{benefit.desc}
 								</p>
 							</div>
@@ -217,13 +236,13 @@ export default function LandingPage() {
 			</section>
 
 			{/* Testimonials Section */}
-			<section className="relative py-20 md:py-32 bg-white">
+			<section className={`relative py-20 md:py-32 ${safeBg.primary}`}>
 				<div className="max-w-5xl mx-auto px-4 md:px-6">
 					<div className="text-center mb-12 md:mb-16">
-						<h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+						<h3 className={`text-3xl md:text-4xl font-bold ${safeText.primary} mb-4`}>
 							Trusted by Professionals
 						</h3>
-						<p className="text-lg md:text-xl text-gray-600">
+						<p className={`text-lg md:text-xl ${safeText.secondary}`}>
 							See what our users have to say
 						</p>
 					</div>
@@ -243,20 +262,20 @@ export default function LandingPage() {
 						].map((testimonial, i) => (
 							<div
 								key={i}
-								className="p-6 md:p-8 bg-gray-50 rounded-2xl border border-gray-200 shadow-sm text-center md:text-left"
+								className={`p-6 md:p-8 ${safeBg.secondary} rounded-2xl border ${safeBorder.primary} shadow-sm text-center md:text-left`}
 							>
-								<p className="text-lg text-gray-700 mb-6 italic leading-relaxed">
+								<p className={`text-lg ${safeText.primary} mb-6 italic leading-relaxed`}>
 									"{testimonial.quote}"
 								</p>
 								<div className="flex items-center justify-center md:justify-start gap-4">
-									<div className="w-12 h-12 bg-teal-100 border-2 border-teal-300 rounded-full flex items-center justify-center text-teal-700 font-bold shrink-0">
+									<div className={`w-12 h-12 ${safeAccent.primary} bg-opacity-10 border-2 ${safeBorder.accent} rounded-full flex items-center justify-center ${safeText.accent} font-bold shrink-0`}>
 										{testimonial.name[0]}
 									</div>
 									<div>
-										<div className="font-semibold text-gray-900">
+										<div className={`font-semibold ${safeText.primary}`}>
 											{testimonial.name}
 										</div>
-										<div className="text-gray-600 text-sm">
+										<div className={`${safeText.secondary} text-sm`}>
 											{testimonial.role}
 										</div>
 									</div>
@@ -268,10 +287,10 @@ export default function LandingPage() {
 			</section>
 
 			{/* Footer */}
-			<footer className="text-center text-gray-500 text-sm py-12 md:py-16 border-t border-gray-200 bg-white">
+			<footer className={`text-center ${safeText.secondary} text-sm py-12 md:py-16 border-t ${safeBorder.primary} ${safeBg.primary}`}>
 				<div className="max-w-4xl mx-auto px-4">
 					<p>&copy; {new Date().getFullYear()} FinMate. All rights reserved.</p>
-					<p className="mt-2 text-gray-600">Built for the modern professional.</p>
+					<p className={`mt-2 ${safeText.tertiary}`}>Built for the modern professional.</p>
 				</div>
 			</footer>
 		</div>

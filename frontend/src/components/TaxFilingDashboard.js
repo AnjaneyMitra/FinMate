@@ -1,388 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { auth } from '../firebase';
-import TaxFormDiscovery from './TaxFormDiscovery';
-import TaxGlossaryHelp from './TaxGlossaryHelp';
-import TaxDocumentManager from './TaxDocumentManager';
-import EnhancedTaxReturnCompletion from './EnhancedTaxReturnCompletion';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   FileText, 
   Compass, 
   HelpCircle, 
   FolderOpen, 
-  User, 
   Bell, 
-  Settings, 
   LogOut,
-  Home,
-  BarChart3,
-  Shield,
-  Zap,
-  CheckCircle2,
-  TrendingUp,
-  Clock,
-  DollarSign
+  Home
 } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate, Routes, Route } from 'react-router-dom';
+
+// Import components for nested routes
+import TaxDashboardContent from './TaxDashboardContent';
+import TaxFormDiscovery from './TaxFormDiscovery';
+import TaxDocumentManager from './TaxDocumentManager';
+import TaxGlossaryHelp from './TaxGlossaryHelp';
+import EnhancedTaxReturnCompletion from './EnhancedTaxReturnCompletion';
 
 const TaxFilingDashboard = ({ user }) => {
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [selectedForm, setSelectedForm] = useState(null);
-  const [userStats, setUserStats] = useState({
-    formsCompleted: 0,
-    documentsUploaded: 0,
-    estimatedRefund: 0,
-    daysToDeadline: 45
-  });
+  const [selectedForm, setSelectedForm] = useState(null); // State for selected tax form
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Theme integration
+  const themeContext = useTheme();
+  const { bg, text, border, accent } = themeContext || {};
+  
+  // Safe fallbacks for theme properties
+  const safeBg = bg || {
+    primary: 'bg-white',
+    secondary: 'bg-gray-50',
+    card: 'bg-white',
+    tertiary: 'bg-gray-100'
+  };
+  const safeText = text || {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    accent: 'text-teal-600'
+  };
+  const safeBorder = border || {
+    primary: 'border-gray-200',
+    accent: 'border-teal-300'
+  };
+  const safeAccent = accent || {
+    primary: 'bg-teal-600'
+  };
 
   const navigationItems = [
     {
       id: 'dashboard',
+      path: '/tax-filing',
       name: 'Dashboard',
       icon: Home,
       description: 'Overview and quick stats'
     },
     {
       id: 'discovery',
+      path: '/tax-filing/discovery',
       name: 'Form Discovery',
       icon: Compass,
       description: 'Find the right tax form'
     },
     {
       id: 'documents',
+      path: '/tax-filing/documents',
       name: 'Document Manager',
       icon: FolderOpen,
       description: 'Upload and organize documents'
     },
     {
       id: 'glossary',
+      path: '/tax-filing/glossary',
       name: 'Glossary & Help',
       icon: HelpCircle,
       description: 'Get help and explanations'
     },
     {
       id: 'filing',
+      path: '/tax-filing/filing',
       name: 'Tax Filing',
       icon: FileText,
       description: 'Complete your tax return'
     }
   ];
 
-  useEffect(() => {
-    loadUserStats();
-  }, [user]);
-
-  const loadUserStats = async () => {
-    try {
-      // Mock data - replace with actual API calls
-      setUserStats({
-        formsCompleted: 2,
-        documentsUploaded: 8,
-        estimatedRefund: 25000,
-        daysToDeadline: 45
-      });
-    } catch (error) {
-      console.error('Error loading user stats:', error);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
+      navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
-  const renderDashboardView = () => (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="glass-card p-8 gradient-primary text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'Taxpayer'}! 👋
-            </h1>
-            <p className="text-blue-100 text-lg">
-              Ready to file your taxes? Let's make it simple and efficient.
-            </p>
-          </div>
-          <div className="hidden lg:block">
-            <div className="w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center floating">
-              <FileText className="w-16 h-16 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{userStats.formsCompleted}</span>
-          </div>
-          <h3 className="font-semibold text-gray-900">Forms Completed</h3>
-          <p className="text-sm text-gray-600">Tax forms ready for submission</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FolderOpen className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{userStats.documentsUploaded}</span>
-          </div>
-          <h3 className="font-semibold text-gray-900">Documents Uploaded</h3>
-          <p className="text-sm text-gray-600">Supporting documents processed</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-purple-600" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">₹{userStats.estimatedRefund.toLocaleString()}</span>
-          </div>
-          <h3 className="font-semibold text-gray-900">Estimated Refund</h3>
-          <p className="text-sm text-gray-600">Based on current information</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <Clock className="w-6 h-6 text-orange-600" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">{userStats.daysToDeadline}</span>
-          </div>
-          <h3 className="font-semibold text-gray-900">Days to Deadline</h3>
-          <p className="text-sm text-gray-600">Time remaining for filing</p>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            {[
-              { action: 'Start Form Discovery', desc: 'Find the right tax form for you', view: 'discovery' },
-              { action: 'Upload Documents', desc: 'Add supporting documents', view: 'documents' },
-              { action: 'Continue Filing', desc: 'Resume your tax return', view: 'filing' },
-              { action: 'Get Help', desc: 'Browse glossary and FAQs', view: 'glossary' }
-            ].map((item, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentView(item.view)}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all group"
-              >
-                <div className="text-left">
-                  <div className="font-medium text-gray-900">{item.action}</div>
-                  <div className="text-sm text-gray-600">{item.desc}</div>
-                </div>
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-all">
-                  <span className="text-blue-600">→</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-luxury border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            {[
-              { action: 'Form 16 uploaded', time: '2 hours ago', status: 'success' },
-              { action: 'ITR-1 draft saved', time: '1 day ago', status: 'info' },
-              { action: 'Bank statement processed', time: '2 days ago', status: 'success' },
-              { action: 'House rent receipt added', time: '3 days ago', status: 'success' }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <div className={`w-2 h-2 rounded-full ${
-                  item.status === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                }`}></div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">{item.action}</div>
-                  <div className="text-xs text-gray-500">{item.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Features Highlight */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-100">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          Why Choose Our Tax Filing System?
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: Shield,
-              title: 'Bank-level Security',
-              desc: 'Your data is encrypted and protected'
-            },
-            {
-              icon: Zap,
-              title: 'AI-Powered Assistance',
-              desc: 'Smart recommendations and guidance'
-            },
-            {
-              icon: TrendingUp,
-              title: 'Maximize Refunds',
-              desc: 'Find all eligible deductions'
-            }
-          ].map((feature, index) => (
-            <div key={index} className="text-center">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <feature.icon className="w-8 h-8 text-blue-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">{feature.title}</h4>
-              <p className="text-sm text-gray-600">{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const handleFormSelection = async (formId) => {
-    try {
-      // Fetch complete form metadata from backend
-      const response = await fetch(`http://localhost:8000/api/tax/forms/${formId}`);
-      const data = await response.json();
-      
-      setSelectedForm(data.form_details || { id: formId, name: `Form ${formId}` });
-      setCurrentView('filing');
-    } catch (error) {
-      console.error('Error fetching form details:', error);
-      // Fallback: use minimal form data
-      setSelectedForm({ id: formId, name: `Form ${formId}` });
-      setCurrentView('filing');
-    }
-  };
-
-  const renderContent = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return renderDashboardView();
-      case 'discovery':
-        return (
-          <TaxFormDiscovery 
-            user={user} 
-            onFormSelected={handleFormSelection}
-          />
-        );
-      case 'documents':
-        return <TaxDocumentManager user={user} />;
-      case 'glossary':
-        return <TaxGlossaryHelp />;
-      case 'filing':
-        return (
-          <EnhancedTaxReturnCompletion 
-            selectedForm={selectedForm}
-            onBack={() => setCurrentView('discovery')}
-            onComplete={() => {
-              // Handle completion - could redirect to dashboard or show success
-              setCurrentView('dashboard');
-            }}
-          />
-        );
-      default:
-        return renderDashboardView();
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Indian Tax Filing</h1>
-              <p className="text-sm text-gray-600">Comprehensive Tax Return System</p>
-            </div>
+    <div className={`flex h-screen font-sans ${safeBg.primary} ${safeText.primary}`}>
+      {/* Sidebar */}
+      <div className={`w-72 ${safeBg.secondary} p-6 flex-shrink-0 shadow-2xl z-20 flex flex-col`}>
+        <div className="flex items-center space-x-3 mb-10">
+          <div className={`${safeAccent.primary} w-12 h-12 rounded-2xl flex items-center justify-center`}>
+            <FileText className="w-7 h-7 text-white" />
           </div>
-
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-              <Bell className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all">
-              <Settings className="w-5 h-5" />
-            </button>
-            <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-medium text-gray-900 hidden sm:block">
-                {user?.displayName || user?.email?.split('@')[0] || 'User'}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <span className={`text-2xl font-bold ${safeText.primary}`}>FinMate Taxes</span>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto flex">
-        {/* Sidebar Navigation */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-screen p-6">
-          <nav className="space-y-2">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentView === item.id;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentView(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${
-                    isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className={`text-xs ${isActive ? 'text-blue-100' : 'text-gray-500'}`}>
-                      {item.description}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
+        <nav className="mt-8 space-y-2 flex-1">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`flex items-center px-4 py-3 rounded-xl transition-all text-lg font-medium border-l-4 ${
+                location.pathname === item.path
+                  ? `${safeBg.tertiary} ${safeText.accent} ${safeBorder.accent}`
+                  : `${safeText.secondary} border-transparent hover:${safeBg.tertiary}`
+              }`}
+            >
+              <item.icon className="w-6 h-6 mr-4" />
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </nav>
 
-          {/* Progress Card */}
-          <div className="mt-8 p-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl border border-green-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <BarChart3 className="w-5 h-5 text-green-600" />
-              <span className="font-semibold text-green-900">Filing Progress</span>
-            </div>
-            <div className="w-full bg-white rounded-full h-2 mb-2">
-              <div className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full" style={{width: '65%'}}></div>
-            </div>
-            <p className="text-sm text-green-700">65% Complete</p>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {renderContent()}
-        </main>
+        <div className={`p-4 rounded-2xl ${safeBg.tertiary} border ${safeBorder.primary}`}>
+          <h4 className={`font-bold ${safeText.primary}`}>Need Help?</h4>
+          <p className={`text-sm ${safeText.secondary} mt-1 mb-3`}>
+            Our support team is here for you.
+          </p>
+          <button className={`w-full px-4 py-2 rounded-lg ${safeAccent.primary} text-white font-semibold`}>
+            Contact Support
+          </button>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <header className={`flex items-center justify-between p-6 border-b ${safeBorder.primary} ${safeBg.primary} flex-shrink-0`}>
+          <h1 className={`text-3xl font-bold ${safeText.primary}`}>
+            {navigationItems.find(item => item.path === location.pathname)?.name || 'Tax Dashboard'}
+          </h1>
+          <div className="flex items-center space-x-6">
+            <button className={`p-2 rounded-full hover:${safeBg.secondary}`}>
+              <Bell className={`w-6 h-6 ${safeText.secondary}`} />
+            </button>
+            <div className="flex items-center space-x-3">
+              <img
+                src={user?.photoURL || `https://i.pravatar.cc/150?u=${user?.uid}`}
+                alt="User"
+                className="w-10 h-10 rounded-full"
+              />
+              <div>
+                <div className={`font-semibold ${safeText.primary}`}>{user?.displayName || 'User'}</div>
+                <div className={`text-sm ${safeText.tertiary}`}>{user?.email}</div>
+              </div>
+            </div>
+            <button onClick={handleLogout} className={`p-2 rounded-full hover:${safeBg.secondary}`}>
+              <LogOut className={`w-6 h-6 ${safeText.secondary}`} />
+            </button>
+          </div>
+        </header>
+        
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-8">
+          <Routes>
+            <Route element={<Outlet context={{ user, selectedForm, setSelectedForm }} />}>
+              <Route index element={<TaxDashboardContent />} />
+              <Route path="discovery" element={<TaxFormDiscovery />} />
+              <Route path="documents" element={<TaxDocumentManager />} />
+              <Route path="glossary" element={<TaxGlossaryHelp />} />
+              <Route path="filing" element={<EnhancedTaxReturnCompletion />} />
+            </Route>
+          </Routes>
+        </div>
+      </main>
+
     </div>
   );
 };
