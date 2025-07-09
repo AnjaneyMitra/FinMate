@@ -26,9 +26,12 @@ const DEFAULT_SIDEBAR_ITEMS = [
   { id: 'risk', label: 'Risk Profiler', icon: 'user-check', path: '/dashboard/risk', isPinned: false, isDefault: false },
   { id: 'tax-breakdown', label: 'Tax Breakdown', icon: 'receipt', path: '/dashboard/tax', isPinned: false, isDefault: false },
   { id: 'tax-estimator', label: 'Tax Estimator', icon: 'calculator', path: '/dashboard/tax/estimator', isPinned: false, isDefault: false },
-  { id: 'tax-filing', label: 'Tax Filing', icon: 'file-text', path: '/tax-filing', isPinned: false, isDefault: false },
-  { id: 'settings', label: 'Settings', icon: 'settings', path: '/dashboard/settings', isPinned: true, isDefault: false },
+  { id: 'tax-filing', label: 'Tax Filing', icon: 'file-text', path: '/tax-filing', isPinned: true, isDefault: true },
+  { id: 'settings', label: 'Settings', icon: 'settings', path: '/dashboard/settings', isPinned: true, isDefault: true },
   { id: 'themes', label: 'Theme Manager', icon: 'palette', path: '/dashboard/themes', isPinned: false, isDefault: false },
+  ...(process.env.NODE_ENV === 'development' ? [
+    { id: 'firestore-test', label: 'Firestore Test', icon: 'database', path: '/dashboard/firestore-test', isPinned: false, isDefault: false }
+  ] : []),
 ];
 
 export const SidebarProvider = ({ children }) => {

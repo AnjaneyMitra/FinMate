@@ -60,7 +60,7 @@ export default function Sidebar({ user, setUser }) {
     planning: true,
     analytics: true,
     investments: false,
-    taxes: false,
+    taxes: true,
   });
   const dropdownRef = useRef(null);
 
@@ -121,7 +121,7 @@ export default function Sidebar({ user, setUser }) {
     {
       id: 'system',
       name: 'System',
-      items: ['settings', 'themes', 'firestore-test'],
+      items: ['themes', ...(process.env.NODE_ENV === 'development' ? ['firestore-test'] : [])],
       alwaysExpanded: true,
     },
   ];
@@ -213,12 +213,12 @@ export default function Sidebar({ user, setUser }) {
     <aside className={`h-screen w-64 ${safeBg.card} border-r ${safeBorder.primary} flex flex-col shadow-sm`}>
       <div className="flex-1 overflow-y-auto">
         {/* Header */}
-        <div className={`flex items-center gap-3 px-6 py-5 border-b ${safeBorder.secondary} ${safeBg.secondary}`}>
+        <Link to="/" className={`flex items-center gap-3 px-6 py-5 border-b ${safeBorder.secondary} ${safeBg.secondary} hover:opacity-80 transition-opacity`}>
           <div className={`w-8 h-8 ${safeAccent.primary} rounded-lg flex items-center justify-center`}>
             <span className="text-white font-bold text-lg">F</span>
           </div>
           <span className={`font-bold text-xl tracking-tight ${safeText.primary}`}>FinMate</span>
-        </div>
+        </Link>
 
         {/* Navigation Groups */}
         <nav className="py-4 space-y-1">
@@ -327,6 +327,34 @@ export default function Sidebar({ user, setUser }) {
             );
           })}
         </nav>
+      </div>
+
+      {/* Bottom Settings Section - Always visible and pinned */}
+      <div className={`border-t ${safeBorder.primary} ${safeBg.secondary}`}>
+        <div className="px-3 py-2">
+          <Link
+            to="/dashboard/settings"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${safeText.primary} hover:${safeBg.card} hover:${safeText.primary} transition-all duration-200 font-medium group ${
+              isActive({ path: '/dashboard/settings' }) 
+                ? `${safeBg.card} ${safeText.accent} font-semibold shadow-sm` 
+                : ``
+            }`}
+          >
+            <div className={`p-1.5 rounded-md sidebar-item-transition ${
+              isActive({ path: '/dashboard/settings' }) 
+                ? `${safeBg.secondary} ${safeText.accent}` 
+                : `${safeText.secondary} group-hover:${safeText.primary}`
+            }`}>
+              <Settings className="w-4 h-4" />
+            </div>
+            <span className="text-sm">Settings</span>
+            
+            {/* Active indicator */}
+            {isActive({ path: '/dashboard/settings' }) && (
+              <div className={`ml-auto w-2 h-2 ${safeAccent.primary} rounded-full animate-pulse-soft`}></div>
+            )}
+          </Link>
+        </div>
       </div>
     </aside>
   );

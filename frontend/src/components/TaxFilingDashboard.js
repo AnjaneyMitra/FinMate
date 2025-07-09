@@ -8,7 +8,8 @@ import {
   FolderOpen, 
   Bell, 
   LogOut,
-  Home
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { Link, Outlet, useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 
@@ -100,12 +101,12 @@ const TaxFilingDashboard = ({ user }) => {
     <div className={`flex h-screen font-sans ${safeBg.primary} ${safeText.primary}`}>
       {/* Sidebar */}
       <div className={`w-72 ${safeBg.secondary} p-6 flex-shrink-0 shadow-2xl z-20 flex flex-col`}>
-        <div className="flex items-center space-x-3 mb-10">
+        <Link to="/" className="flex items-center space-x-3 mb-10 hover:opacity-80 transition-opacity">
           <div className={`${safeAccent.primary} w-12 h-12 rounded-2xl flex items-center justify-center`}>
             <FileText className="w-7 h-7 text-white" />
           </div>
           <span className={`text-2xl font-bold ${safeText.primary}`}>FinMate Taxes</span>
-        </div>
+        </Link>
 
         <nav className="mt-8 space-y-2 flex-1">
           {navigationItems.map((item) => (
@@ -139,9 +140,18 @@ const TaxFilingDashboard = ({ user }) => {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
         <header className={`flex items-center justify-between p-6 border-b ${safeBorder.primary} ${safeBg.primary} flex-shrink-0`}>
-          <h1 className={`text-3xl font-bold ${safeText.primary}`}>
-            {navigationItems.find(item => item.path === location.pathname)?.name || 'Tax Dashboard'}
-          </h1>
+          <div className="flex items-center space-x-4">
+            <Link 
+              to="/dashboard" 
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${safeBg.secondary} hover:${safeBg.tertiary} transition-colors border ${safeBorder.primary}`}
+            >
+              <ArrowLeft className={`w-4 h-4 ${safeText.secondary}`} />
+              <span className={`text-sm font-medium ${safeText.secondary}`}>Back to Dashboard</span>
+            </Link>
+            <h1 className={`text-3xl font-bold ${safeText.primary}`}>
+              {navigationItems.find(item => item.path === location.pathname)?.name || 'Tax Dashboard'}
+            </h1>
+          </div>
           <div className="flex items-center space-x-6">
             <button className={`p-2 rounded-full hover:${safeBg.secondary}`}>
               <Bell className={`w-6 h-6 ${safeText.secondary}`} />
