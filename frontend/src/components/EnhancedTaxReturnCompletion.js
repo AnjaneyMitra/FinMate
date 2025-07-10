@@ -19,9 +19,11 @@ const mockFields = {
 };
 
 const EnhancedTaxReturnCompletion = () => {
-  const { selectedForm } = useOutletContext();
+  const outletContext = useOutletContext();
   const { theme } = useTheme();
 
+  // Use local state for selectedForm if not present in context
+  const [selectedForm, setSelectedForm] = useState(outletContext?.selectedForm || null);
   const [formData, setFormData] = useState({});
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ const EnhancedTaxReturnCompletion = () => {
   const [formFields, setFormFields] = useState([]);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [validation, setValidation] = useState({});
-  const [aiGuide, setAiGuide] = useState(null);
+  const [aiGuide, setAiGuide] = useState([]); // Always an array
   const [aiLoading, setAiLoading] = useState(true);
   const [aiError, setAiError] = useState('');
   const [selectedFormId, setSelectedFormId] = useState(null);
@@ -40,16 +42,52 @@ const EnhancedTaxReturnCompletion = () => {
   const sections = selectedForm?.sections || ['Personal Information', 'Income Details', 'Deductions', 'Summary'];
   const totalSteps = sections.length;
 
+  // Fetch form details if not present
   useEffect(() => {
-    // Get selected form from localStorage
-    const formId = localStorage.getItem('selectedTaxFormId');
+    let isMounted = true;
+    const rawFormId = localStorage.getItem('selectedTaxFormId');
+    const formId = rawFormId ? rawFormId.toLowerCase() : null;
     setSelectedFormId(formId);
+    console.log('[DEBUG] selectedTaxFormId from localStorage:', rawFormId, '| Normalized:', formId);
+    if (!selectedForm && formId) {
+      console.log('[DEBUG] Fetching form details for formId:', formId);
+      fetch(`/api/tax/forms/${formId}`)
+        .then(async res => {
+          const contentType = res.headers.get('content-type');
+          if (!res.ok) {
+            if (contentType && contentType.includes('application/json')) {
+              const data = await res.json();
+              throw new Error(JSON.stringify(data));
+            } else {
+              const text = await res.text();
+              console.error('[DEBUG] Non-JSON error response:', text);
+              throw new Error('Received non-JSON error from backend.');
+            }
+          }
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          } else {
+            const text = await res.text();
+            console.error('[DEBUG] Unexpected non-JSON response:', text);
+            throw new Error('Received non-JSON response from backend.');
+          }
+        })
+        .then(data => {
+          console.log('[DEBUG] Backend /api/tax/forms response:', data);
+          if (isMounted && data.form_details) setSelectedForm(data.form_details);
+        })
+        .catch(err => {
+          setError('Could not load form details. Please try again or contact support.');
+          console.error('[DEBUG] Exception fetching form details:', err);
+        });
+    }
     if (formId) {
       fetchAIGuide(formId);
     } else {
       setAiError('No tax form selected. Please select a form in discovery.');
       setAiLoading(false);
     }
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
@@ -74,13 +112,42 @@ const EnhancedTaxReturnCompletion = () => {
     setAiLoading(true);
     setAiError('');
     try {
-      // Call Gemini API backend endpoint for tax filing guide
+      console.log('[DEBUG] Fetching AI guide for formId:', formId);
       const res = await fetch(`/api/tax/ai-filing-guide?form_id=${encodeURIComponent(formId)}`);
-      if (!res.ok) throw new Error('Failed to fetch AI guide');
-      const data = await res.json();
-      setAiGuide(data.guide || data.steps || []);
+      const contentType = res.headers.get('content-type');
+      if (!res.ok) {
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          throw new Error(JSON.stringify(data));
+        } else {
+          const text = await res.text();
+          console.error('[DEBUG] Non-JSON error response (AI guide):', text);
+          throw new Error('Received non-JSON error from backend (AI guide).');
+        }
+      }
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        console.log('[DEBUG] AI Filing Guide API response:', data, 'Selected Form ID:', formId);
+        // Always set aiGuide to an array (even if empty)
+        if (Array.isArray(data.guide)) {
+          setAiGuide(data.guide);
+          if (!data.guide.length) setAiError('No AI tax filing guide available for this form.');
+        } else if (Array.isArray(data.steps)) {
+          setAiGuide(data.steps);
+          if (!data.steps.length) setAiError('No AI tax filing guide available for this form.');
+        } else {
+          setAiGuide([]);
+          setAiError('No AI tax filing guide available for this form.');
+        }
+      } else {
+        const text = await res.text();
+        console.error('[DEBUG] Unexpected non-JSON response (AI guide):', text);
+        throw new Error('Received non-JSON response from backend (AI guide).');
+      }
     } catch (e) {
       setAiError('Could not load AI tax filing guide.');
+      setAiGuide([]);
+      console.error('[DEBUG] Exception in fetchAIGuide:', e);
     } finally {
       setAiLoading(false);
     }

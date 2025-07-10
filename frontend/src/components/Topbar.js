@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useTheme } from '../contexts/ThemeContext';
-import { Search, Command, ChevronDown, LogOut, User } from 'lucide-react';
+import { Search, Command, ChevronDown, LogOut, User, Sun, Moon } from 'lucide-react';
 import ThemeSwitcher from './ThemeSwitcher';
 
 function getBreadcrumbs(pathname) {
@@ -24,7 +24,7 @@ export default function Topbar({ user, setUser }) {
   
   // Add theme context
   const themeContext = useTheme();
-  const { bg, text, border, accent } = themeContext || {};
+  const { bg, text, border, accent, currentTheme, changeTheme } = themeContext || {};
   
   // Safe fallbacks for theme properties
   const safeBg = bg || {
@@ -53,6 +53,11 @@ export default function Topbar({ user, setUser }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef(null);
+
+  const toggleTheme = () => {
+    const newTheme = currentTheme === 'dark' ? 'classic' : 'dark';
+    changeTheme(newTheme);
+  };
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -169,80 +174,88 @@ export default function Topbar({ user, setUser }) {
         </nav>
       </div>
 
-      {/* Theme Switcher */}
-      <ThemeSwitcher />
-
-      {/* Right Side: User Dropdown */}
-      <div className="relative" ref={dropdownRef}>
+      {/* Theme Toggle Button */}
+      <div className="flex items-center gap-4">
         <button
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className={`flex items-center gap-3 p-2 rounded-lg hover:${safeBg.secondary} transition-colors focus:outline-none focus:ring-2 focus:${safeAccent.ring} focus:ring-offset-2`}
+          onClick={toggleTheme}
+          className={`flex items-center justify-center w-10 h-10 rounded-full ${safeBg.secondary} ${safeText.secondary} hover:${safeAccent.bg} hover:${safeText.accent} transition-colors duration-200 focus:outline-none focus:ring-2 focus:${safeAccent.ring} focus:ring-offset-2`}
+          title="Toggle Theme"
         >
-          {/* User Avatar */}
-          <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-${safeAccent.primary.replace('text-', '')} to-blue-500 flex items-center justify-center text-white font-bold text-sm`}>
-            {user?.email?.[0]?.toUpperCase() || 'U'}
-          </div>
-          {/* User Info - Hidden on mobile */}
-          <div className="hidden sm:block text-left">
-            <div className={`text-sm font-medium ${safeText.secondary}`}>
-              {user?.email?.split('@')[0]}
-            </div>
-            <div className={`text-xs ${safeText.tertiary} truncate max-w-32`}>
-              {user?.email}
-            </div>
-          </div>
-          {/* Dropdown Arrow */}
-          <ChevronDown className={`w-4 h-4 ${safeText.tertiary} transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+          {currentTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
 
-        {/* Dropdown Menu */}
-        {dropdownOpen && (
-          <div className={`absolute right-0 mt-2 w-64 ${safeBg.card} rounded-lg shadow-lg border ${safeBorder.primary} py-2 z-50 animate-dropdown-fade`}>
-            {/* User Info Section */}
-            <div className={`px-4 py-3 border-b ${safeBorder.primary}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${safeAccent.primary.replace('text-', '')} to-blue-500 flex items-center justify-center text-white font-bold text-lg`}>
-                  {user?.email?.[0]?.toUpperCase() || 'U'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-semibold ${safeText.primary} truncate`}>
-                    {user?.email?.split('@')[0]}
+        {/* Right Side: User Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className={`flex items-center gap-3 p-2 rounded-lg hover:${safeBg.secondary} transition-colors focus:outline-none focus:ring-2 focus:${safeAccent.ring} focus:ring-offset-2`}
+          >
+            {/* User Avatar */}
+            <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-${safeAccent.primary.replace('text-', '')} to-blue-500 flex items-center justify-center text-white font-bold text-sm`}>
+              {user?.email?.[0]?.toUpperCase() || 'U'}
+            </div>
+            {/* User Info - Hidden on mobile */}
+            <div className="hidden sm:block text-left">
+              <div className={`text-sm font-medium ${safeText.secondary}`}>
+                {user?.email?.split('@')[0]}
+              </div>
+              <div className={`text-xs ${safeText.tertiary} truncate max-w-32`}>
+                {user?.email}
+              </div>
+            </div>
+            {/* Dropdown Arrow */}
+            <ChevronDown className={`w-4 h-4 ${safeText.tertiary} transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Dropdown Menu */}
+          {dropdownOpen && (
+            <div className={`absolute right-0 mt-2 w-64 ${safeBg.card} rounded-lg shadow-lg border ${safeBorder.primary} py-2 z-50 animate-dropdown-fade`}>
+              {/* User Info Section */}
+              <div className={`px-4 py-3 border-b ${safeBorder.primary}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${safeAccent.primary.replace('text-', '')} to-blue-500 flex items-center justify-center text-white font-bold text-lg`}>
+                    {user?.email?.[0]?.toUpperCase() || 'U'}
                   </div>
-                  <div className={`text-xs ${safeText.tertiary} truncate`}>
-                    {user?.email}
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-semibold ${safeText.primary} truncate`}>
+                      {user?.email?.split('@')[0]}
+                    </div>
+                    <div className={`text-xs ${safeText.tertiary} truncate`}>
+                      {user?.email}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Menu Items */}
-            <div className="py-1">
-              <button
-                onClick={() => {
-                  setDropdownOpen(false);
-                  navigate('/user-profile');
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-sm ${safeText.secondary} hover:${safeBg.secondary} transition-colors`}
-              >
-                <User className="w-4 h-4" />
-                View Profile
-              </button>
-              
-              <div className={`border-t ${safeBorder.primary} my-1`}></div>
-              
-              <button
-                onClick={() => {
-                  setDropdownOpen(false);
-                  handleLogout();
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
+              {/* Menu Items */}
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    navigate('/user-profile');
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm ${safeText.secondary} hover:${safeBg.secondary} transition-colors`}
+                >
+                  <User className="w-4 h-4" />
+                  View Profile
+                </button>
+                
+                <div className={`border-t ${safeBorder.primary} my-1`}></div>
+                
+                <button
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

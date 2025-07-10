@@ -24,12 +24,19 @@ const levels = [
     content: `
       Welcome to investing! As a beginner, it's important to understand that investing is about putting your money to work to generate returns over time. 
       
-      Key principles:
-      • Start early to benefit from compound interest
-      • Diversify your investments to reduce risk
-      • Invest regularly through SIPs
-      • Build an emergency fund first (6 months expenses)
-      • Don't invest money you need in the short term
+      Key Concepts:
+      • Principal: The initial amount you invest
+      • Returns: The profit or income generated from investments
+      • Compound Interest: Earning returns on your returns
+      • Risk: The possibility of losing money
+      • Diversification: Spreading investments across different assets
+
+      In India, popular investment options include:
+      • Mutual Funds through SIP (Systematic Investment Plan)
+      • Fixed Deposits (FD) and Recurring Deposits (RD)
+      • Public Provident Fund (PPF)
+      • Equity Linked Savings Scheme (ELSS)
+      • Direct Equity (Stocks)
     `
   },
   {
@@ -126,6 +133,78 @@ export default function InvestmentLearningPath() {
   const [availableTopics, setAvailableTopics] = useState({});
 
   const learningService = useMemo(() => new InvestmentLearningService(), []);
+
+  const defaultDisplayContent = useMemo(() => {
+    const currentLevel = levels[selectedLevel];
+    const rawContent = currentLevel.content;
+    const levelName = currentLevel.name;
+
+    const lines = rawContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    let title = `${levelName} Level Overview`;
+    let introduction = "";
+    let main_content = rawContent;
+    let key_takeaways = [];
+
+    if (levelName === "Beginner") {
+        title = "Understanding Investment Basics";
+        introduction = "Investing is the process of putting your money to work to generate returns over time.";
+        const keyConceptsIndex = lines.findIndex(line => line.includes("Key principles:") || line.includes("Key Concepts:"));
+        const popularOptionsIndex = lines.findIndex(line => line.includes("In India, popular investment options include:"));
+
+        if (keyConceptsIndex !== -1 && popularOptionsIndex !== -1) {
+            main_content = lines.slice(keyConceptsIndex, popularOptionsIndex).join('\n');
+            const takeawaysMatches = main_content.match(/•\s(.*?)$/gm);
+            if (takeawaysMatches) {
+                key_takeaways = takeawaysMatches.map(match => match.substring(2).trim());
+            }
+        } else {
+             main_content = rawContent;
+             key_takeaways = ["Learn foundational concepts", "Start your financial journey"];
+        }
+    } else if (levelName === "Intermediate") {
+        title = "Explore Investment Options";
+        introduction = "Understand different investment vehicles and strategies.";
+        const assetClassesIndex = lines.findIndex(line => line.includes("Asset Classes:"));
+        if (assetClassesIndex !== -1) {
+            main_content = lines.slice(assetClassesIndex).join('\n');
+            const takeawaysMatches = main_content.match(/•\s(.*?)$/gm);
+            if (takeawaysMatches) {
+                key_takeaways = takeawaysMatches.map(match => match.substring(2).trim());
+            }
+        } else {
+            main_content = rawContent;
+            key_takeaways = ["Diversify your portfolio", "Understand market dynamics"];
+        }
+    } else if (levelName === "Advanced") {
+        title = "Master Advanced Strategies";
+        introduction = "Dive deep into complex investment techniques and portfolio management.";
+        const strategiesIndex = lines.findIndex(line => line.includes("Advanced Strategies:"));
+        if (strategiesIndex !== -1) {
+            main_content = lines.slice(strategiesIndex).join('\n');
+            const takeawaysMatches = main_content.match(/•\s(.*?)$/gm);
+            if (takeawaysMatches) {
+                key_takeaways = takeawaysMatches.map(match => match.substring(2).trim());
+            }
+        } else {
+            main_content = rawContent;
+            key_takeaways = ["Optimize for tax efficiency", "Consider global markets"];
+        }
+    }
+
+    return {
+      title,
+      introduction,
+      main_content,
+      key_takeaways,
+      source: 'static_default',
+      personalized: false,
+      generated_at: new Date().toISOString(),
+      level: levelName.toLowerCase(),
+      topic: null
+    };
+  }, [selectedLevel]);
+
 
   // Load user profile and topics on component mount
   const loadUserProfile = useCallback(async () => {
@@ -432,56 +511,14 @@ export default function InvestmentLearningPath() {
               }}
             />
           ) : (
-            <div className="space-y-6">
-              <div className="prose max-w-none">
-                <div className="text-gray-700 whitespace-pre-line leading-relaxed">
-                  {levels[selectedLevel].content}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <button 
-                  onClick={() => {
-                    // Always start with first topic, default (non-personalized) content
-                    const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
-                    const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
-                    // Use default profile for non-personalized content
-                    setContentLoading(true);
-                    setSelectedTopic(firstTopic);
-                    learningService.getContentWithFallback(levelName, firstTopic, learningService.createDefaultProfile())
-                      .then(content => setTopicContent(content))
-                      .catch(() => setTopicContent({
-                        title: `${firstTopic}`,
-                        introduction: "Error loading content. Please try again.",
-                        main_content: "We're having trouble loading content right now.",
-                        key_takeaways: ["Please try again later"],
-                        source: 'error'
-                      }))
-                      .finally(() => setContentLoading(false));
-                  }}
-                  className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>Start Learning</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    const levelName = ['beginner', 'intermediate', 'advanced'][selectedLevel];
-                    const firstTopic = (availableTopics[levelName] || levels[selectedLevel].topics)[0];
-                    if (!userProfile) {
-                      setShowProfileSetup(true);
-                    } else {
-                      generatePersonalizedContent(selectedLevel, firstTopic);
-                    }
-                  }}
-                  className="border border-blue-600 text-blue-600 px-6 py-2 rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Personalized Content</span>
-                </button>
-              </div>
-            </div>
+            <PersonalizedContent
+              content={defaultDisplayContent}
+              isLoading={contentLoading}
+              userProfile={userProfile}
+              onMarkComplete={() => {}} // No action for default content
+              onRegenerate={() => {}} // No action for default content
+              onClose={() => {}} // No action for default content
+            />
           )}
         </div>
       </div>
@@ -498,7 +535,7 @@ export default function InvestmentLearningPath() {
           <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <div className="p-2 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg inline-block mb-2">
               <Target className="w-6 h-6 text-white" />
-            </div>
+              </div>
             <h4 className="font-semibold text-gray-800 mb-1">Set Clear Goals</h4>
             <p className="text-sm text-gray-600">Define your investment objectives and timeline</p>
           </div>

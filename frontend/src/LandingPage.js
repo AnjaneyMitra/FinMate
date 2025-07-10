@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardPreview, GoalsPreview, BudgetPreview } from './components/FeaturePreviews';
-import { PieChart } from 'lucide-react';
+import { PieChart, Sun, Moon } from 'lucide-react';
 import { useTheme } from './contexts/ThemeContext';
 
 export default function LandingPage() {
 	const navigate = useNavigate();
 	const themeContext = useTheme();
-	const { bg, text, border, accent, currentTheme } = themeContext || {};
+	const { bg, text, border, accent, currentTheme, changeTheme } = themeContext || {};
 	
 	// Safe fallbacks for theme properties
 	const safeBg = bg || {
@@ -36,6 +36,11 @@ export default function LandingPage() {
 		error: 'bg-red-600'
 	};
 
+  const toggleTheme = () => {
+    const newTheme = currentTheme === 'dark' ? 'classic' : 'dark';
+    changeTheme(newTheme);
+  };
+
 	return (
 		<div className={`min-h-screen ${safeBg.secondary} ${safeText.primary} font-sans antialiased`}>
 			{/* Fixed header */}
@@ -48,12 +53,21 @@ export default function LandingPage() {
 						FinMate
 					</span>
 				</div>
-				<button
-					className={`px-6 py-2.5 ${safeAccent.primary} hover:opacity-90 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 shadow-md text-sm md:text-base`}
-					onClick={() => navigate('/login')}
-				>
-					Try it out
-				</button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className={`flex items-center justify-center w-10 h-10 rounded-full ${safeBg.secondary} ${safeText.secondary} hover:${safeAccent.bg} hover:${safeText.accent} transition-colors duration-200 focus:outline-none focus:ring-2 focus:${safeAccent.ring} focus:ring-offset-2`}
+            title="Toggle Theme"
+          >
+            {currentTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          <button
+            className={`px-6 py-2.5 ${safeAccent.primary} hover:opacity-90 text-white rounded-lg font-semibold transition-all duration-200 hover:scale-105 shadow-md text-sm md:text-base`}
+            onClick={() => navigate('/login')}
+          >
+            Try it out
+          </button>
+        </div>
 			</header>
 
 			{/* Hero Section */}
