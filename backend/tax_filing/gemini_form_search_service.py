@@ -38,7 +38,7 @@ class GeminiFormSearchService:
             self.enabled = False
         else:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.model = genai.GenerativeModel('models/gemini-2.5-pro-preview-06-05')
             self.enabled = True
             logger.info("Gemini Form Search Service initialized successfully")
         
@@ -213,8 +213,29 @@ Respond in JSON format:
             
             # Generate response using Gemini
             response = self.model.generate_content(formatted_prompt)
-            response_text = response.text
-            
+
+            # --- Robust Gemini response text extraction patch ---
+            response_text = None
+            if hasattr(response, 'text') and isinstance(response.text, str):
+                response_text = response.text
+            elif hasattr(response, 'candidates') and response.candidates:
+                # Gemini 2.5 Flash: candidates[0].content.parts[0].text
+                try:
+                    candidate = response.candidates[0]
+                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                        part = candidate.content.parts[0]
+                        if isinstance(part, dict) and 'text' in part:
+                            response_text = part['text']
+                        elif hasattr(part, 'text'):
+                            response_text = part.text
+                except Exception as extract_err:
+                    logger.error(f"Error extracting text from Gemini candidates: {extract_err}")
+            if not response_text:
+                # Fallback: try str(response)
+                response_text = str(response)
+                logger.warning(f"Gemini response text extraction fallback. Raw response: {response}")
+            # --- End patch ---
+
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:

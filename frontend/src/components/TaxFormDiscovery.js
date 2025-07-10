@@ -3,17 +3,25 @@ import AIFormRecommender from './AIFormRecommender';
 import FormBrowser from './FormBrowser';
 import { Bot, Search } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 
 const TaxFormDiscovery = () => {
   const [activeView, setActiveView] = useState('browse'); // 'browse' or 'ai'
   const { user } = useOutletContext();
   const themeContext = useTheme();
   const { bg, text } = themeContext || {};
+  const navigate = useNavigate();
 
   // Safe fallbacks
   const safeBg = bg || { primary: 'bg-white', secondary: 'bg-gray-100', card: 'bg-white' };
   const safeText = text || { primary: 'text-gray-900', secondary: 'text-gray-600' };
+
+  // Handler for form selection
+  const handleFormSelected = (formId) => {
+    // Store selected form in localStorage for retrieval in filing page
+    localStorage.setItem('selectedTaxFormId', formId);
+    navigate('/tax-filing/filing');
+  };
 
   return (
     <div className={`max-w-7xl mx-auto p-6 ${safeBg.primary} ${safeText.primary}`}>
@@ -55,9 +63,10 @@ const TaxFormDiscovery = () => {
       {activeView === 'ai' ? (
         <AIFormRecommender 
           userProfile={user}
+          onFormSelected={handleFormSelected}
         />
       ) : (
-        <FormBrowser />
+        <FormBrowser onFormSelected={handleFormSelected} />
       )}
     </div>
   );

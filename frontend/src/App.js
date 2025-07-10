@@ -5,6 +5,7 @@ import { auth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEma
 import Dashboard from './Dashboard';
 import LandingPage from './LandingPage';
 import TaxFilingDashboard from './components/TaxFilingDashboard';
+import UserProfilePage from './components/UserProfilePage';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
@@ -106,6 +107,10 @@ function App() {
                     <Navigate to="/login" replace />
                   )
                 } 
+              />
+              <Route 
+                path="/user-profile" 
+                element={user ? <UserProfilePage /> : <Navigate to="/login" replace />} 
               />
               <Route 
                 path="/" 

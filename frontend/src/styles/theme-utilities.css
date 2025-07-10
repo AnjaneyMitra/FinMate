@@ -63,6 +63,12 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* Dropdown pop-in animation */
+@keyframes dropdown-fade {
+  0% { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* Utility classes that work with all themes */
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
@@ -106,6 +112,10 @@
 
 .animate-pop-in {
   animation: pop-in 0.3s ease-out;
+}
+
+.animate-dropdown-fade {
+  animation: dropdown-fade 0.22s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* Theme-aware focus states */

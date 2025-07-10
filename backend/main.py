@@ -2005,6 +2005,7 @@ async def get_user_documents(
             
     except Exception as e:
         logger.error(f"Error getting user documents: {e}")
+       
         raise HTTPException(status_code=500, detail="Could not retrieve documents")
 
 @app.get("/api/tax/documents/{document_id}/download")
@@ -2248,4 +2249,45 @@ def get_forms_by_category(category: str):
     except Exception as e:
         logger.error(f"Error getting forms by category {category}: {e}")
         raise HTTPException(status_code=500, detail="Could not retrieve forms by category.")
+
+from fastapi import Body
+
+class UserProfileIn(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    # Add more fields as needed
+
+@app.get("/api/user/profile", response_model=Dict[str, Any])
+def get_user_profile(user=Depends(verify_firebase_token)):
+    """Get the authenticated user's profile from Firestore."""
+    user_id = user['user_id'] if 'user_id' in user else user['uid']
+    profile = firestore_service.get_user_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User profile not found")
+    return profile
+
+@app.post("/api/user/profile", response_model=Dict[str, Any])
+def create_user_profile(
+    profile: UserProfileIn = Body(...),
+    user=Depends(verify_firebase_token)
+):
+    """Create a new user profile for the authenticated user."""
+    user_id = user['user_id'] if 'user_id' in user else user['uid']
+    data = profile.dict(exclude_unset=True)
+    data['email'] = user.get('email', data.get('email'))
+    firestore_service.create_user_profile(user_id, data)
+    return data
+
+@app.put("/api/user/profile", response_model=Dict[str, Any])
+def update_user_profile(
+    profile: UserProfileIn = Body(...),
+    user=Depends(verify_firebase_token)
+):
+    """Update the authenticated user's profile in Firestore."""
+    user_id = user['user_id'] if 'user_id' in user else user['uid']
+    data = profile.dict(exclude_unset=True)
+    firestore_service.update_user_profile(user_id, data)
+    return data
 

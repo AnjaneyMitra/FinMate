@@ -4,14 +4,13 @@ import FirebaseDataService from './services/FirebaseDataService';
 import BankStatementUpload from './components/BankStatementUpload';
 import { auth } from './firebase';
 import PinButton from './components/PinButton';
-import { useTheme, useThemeStyles } from './contexts/ThemeContext';
+import { useTheme } from './contexts/ThemeContext';
 
 export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   const themeContext = useTheme();
   const { bg, text, border, accent } = themeContext || {};
-  const styles = useThemeStyles();
-  
-  // Safe fallbacks for theme properties
+
+  // Safe defaults for theme properties
   const safeBg = bg || {
     primary: 'bg-white',
     secondary: 'bg-gray-50',
@@ -27,10 +26,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
     primary: 'border-gray-200'
   };
   const safeAccent = accent || {
-    primary: 'bg-teal-600',
-    secondary: 'text-teal-600',
-    bg: 'bg-teal-50',
-    border: 'border-teal-300'
+    primary: safeBg.primary,
+    secondary: safeText.primary,
+    bg: safeBg.secondary,
+    border: safeBorder.primary
+  };
+  
+  // Safe color extraction helper
+  const getColorFromBg = (bgClass) => {
+    if (!bgClass || typeof bgClass !== 'string') return 'gray-600';
+    return bgClass.replace('bg-', '');
   };
   
   const [formData, setFormData] = useState({
@@ -251,19 +256,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
       if (onClose) {
         onClose();
       }
-
     } catch (err) {
       console.error('❌ Detailed error:', err);
       console.error('❌ Error code:', err.code);
       console.error('❌ Error message:', err.message);
-      
       let errorMessage = err.message;
       if (err.code === 'permission-denied') {
         errorMessage = 'Permission denied. Please check your Firebase security rules.';
       } else if (err.code === 'unauthenticated') {
         errorMessage = 'You must be logged in to add transactions.';
       }
-      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -271,7 +273,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-8 px-4 relative ${safeBg.primary}`}>
+    <div className={`min-h-screen py-8 px-4 relative ${safeBg.primary}`}>
       {/* Floating Success Toast */}
       {success && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in">
@@ -303,7 +305,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 <span>Form completion:</span>
                 <div className={`flex-1 ${safeBg.secondary} rounded-full h-2 max-w-32`}>
                   <div 
-                    className={`bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-500 h-2 rounded-full transition-all duration-300`}
+                    className={`${safeAccent.primary} h-2 rounded-full transition-all duration-300`}
                     style={{ 
                       width: `${Math.min(100, (
                         (formData.amount ? 25 : 0) +
@@ -314,7 +316,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                     }}
                   />
                 </div>
-                <span className={`font-semibold ${safeAccent.secondary}`}>
+                <span className={`font-semibold ${safeText.primary}`}>
                   {Math.min(100, (
                     (formData.amount ? 25 : 0) +
                     (formData.description ? 25 : 0) +
@@ -330,7 +332,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
             <button
               type="button"
               onClick={() => setShowBankUpload(true)}
-              className={`flex items-center px-4 py-2 ${safeAccent.primary} text-white rounded-md hover:bg-blue-700 transition-colors`}
+              className={`flex items-center px-4 py-2 ${safeAccent.primary} text-white rounded-md hover:opacity-80 transition-colors`}
             >
               <Upload className="w-5 h-5 mr-2" />
               Upload Statement
@@ -493,9 +495,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                       <div className="flex items-center gap-2">
                         <span className={`${safeText.primary} font-semibold`}>₹{transaction.amount}</span>
                         <span className={`px-2 py-1 rounded text-xs ${
-                          transaction.category === 'food' ? 'bg-yellow-100 text-yellow-700' :
-                          transaction.category === 'transport' ? 'bg-blue-100 text-blue-700' :
-                          'bg-purple-100 text-purple-700'
+                          transaction.category === 'food' ? `${safeBg.tertiary} ${safeText.primary}` :
+                          transaction.category === 'transport' ? `${safeBg.tertiary} ${safeText.primary}` :
+                          `${safeBg.tertiary} ${safeText.primary}`
                         }`}>
                           {transaction.category}
                         </span>
@@ -512,64 +514,64 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               <h4 className={`font-semibold ${safeText.secondary} mb-3`}>Available Goals</h4>
               <div className="space-y-2">
                 {goalsLoading ? (
-                  <div className="text-sm text-gray-500">Loading goals...</div>
+                  <div className={`text-sm ${safeText.tertiary}`}>Loading goals...</div>
                 ) : goals.length > 0 ? (
                   goals.slice(0, 3).map((goal, index) => {
                     const percent = goal.target > 0 ? Math.min(100, Math.round((goal.saved / goal.target) * 100)) : 0;
                     return (
                       <div key={goal.id || index} className="flex items-center gap-2 text-sm">
-                        <div className="w-3 h-3 bg-teal-400 rounded-full"></div>
-                        <span className="text-gray-600 flex-1">{goal.emoji} {goal.name}</span>
-                        <span className="text-xs text-green-600 font-semibold">{percent}%</span>
+                        <div className={`w-3 h-3 ${safeAccent.primary} rounded-full`}></div>
+                        <span className={`${safeText.secondary} flex-1`}>{goal.emoji} {goal.name}</span>
+                        <span className={`text-xs ${safeText.primary} font-semibold`}>{percent}%</span>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-sm text-gray-500">No goals yet. Create some goals to track progress!</div>
+                  <div className={`text-sm ${safeText.tertiary}`}>No goals yet. Create some goals to track progress!</div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Link transactions to your goals</p>
+              <p className={`text-xs ${safeText.tertiary} mt-3`}>Link transactions to your goals</p>
             </div>
 
             {/* Real-time Insights */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-700 mb-3">Today's Summary</h4>
+            <div className={`${safeBg.card} rounded-lg p-4 shadow-sm`}>
+              <h4 className={`font-semibold ${safeText.secondary} mb-3`}>Today's Summary</h4>
               <div className="space-y-2">
                 <div className="text-sm">
-                  <span className="text-gray-600">Amount entering:</span>
-                  <span className="font-semibold text-gray-800 ml-1">
+                  <span className={`${safeText.secondary}`}>Amount entering:</span>
+                  <span className={`font-semibold ${safeText.primary} ml-1`}>
                     ₹{formData.amount || '0'}
                   </span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-gray-600">Category:</span>
-                  <span className="font-semibold text-blue-600 ml-1 capitalize">
+                  <span className={`${safeText.secondary}`}>Category:</span>
+                  <span className={`font-semibold ${safeText.primary} ml-1 capitalize`}>
                     {formData.category || 'Not selected'}
                   </span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-gray-600">Payment method:</span>
-                  <span className="font-semibold text-purple-600 ml-1">
-                    {formData.payment_method?.replace('_', ' ') || 'Not selected'}
+                  <span className={`${safeText.secondary}`}>Payment method:</span>
+                  <span className={`font-semibold ${safeText.primary} ml-1`}>
+                    {formData.payment_method?.replace?.('_', ' ') || 'Not selected'}
                   </span>
                 </div>
                 {formData.goalId && (
                   <div className="text-sm">
-                    <span className="text-gray-600">Assigned goal:</span>
-                    <span className="font-semibold text-teal-600 ml-1">
+                    <span className={`${safeText.secondary}`}>Assigned goal:</span>
+                    <span className={`font-semibold ${safeText.primary} ml-1`}>
                       {goals.find(g => g.id === formData.goalId)?.name || 'Selected goal'}
                     </span>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Live transaction preview</p>
+              <p className={`text-xs ${safeText.tertiary} mt-3`}>Live transaction preview</p>
             </div>
           </div>
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-              <div className="bg-purple-100 p-1 rounded">
-                <Zap className="w-3 h-3 text-purple-600" />
-              </div>
+            <p className={`text-sm ${safeText.secondary} flex items-center justify-center gap-2`}>
+              <span className={`${safeBg.tertiary} p-1 rounded`}>
+                <Zap className={`w-3 h-3 ${safeText.primary}`} />
+              </span>
               <strong>Real-time tracking:</strong> Smart categorization • Goal linking • Live insights • Instant analysis
             </p>
           </div>
@@ -577,13 +579,13 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Amount and Date - Hero Section */}
-          <div className={`bg-gradient-to-r from-${safeAccent.bg.replace('bg-', '')} to-blue-50 rounded-lg p-6 border ${safeAccent.border}`}>
+          <div className={`${safeBg.secondary} rounded-lg p-6 border ${safeBorder.primary}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Amount */}
               <div>
-                <label htmlFor="amount" className={`block text-lg font-semibold ${safeAccent.secondary} mb-3 flex items-center gap-2`}>
-                  <div className={`${safeAccent.bg} p-1.5 rounded-lg`}>
-                    <DollarSign className={`w-4 h-4 ${safeAccent.secondary}`} />
+                <label htmlFor="amount" className={`block text-lg font-semibold ${safeText.primary} mb-3 flex items-center gap-2`}>
+                  <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                    <DollarSign className={`w-4 h-4 ${safeText.secondary}`} />
                   </div>
                   Amount (₹) *
                 </label>
@@ -596,16 +598,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   step="0.01"
                   min="0"
                   required
-                  className={`w-full px-4 py-3 text-xl font-semibold border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
+                  className={`w-full px-4 py-3 text-xl font-semibold border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
                   placeholder="0.00"
                 />
               </div>
 
               {/* Date */}
               <div>
-                <label htmlFor="date" className={`block text-lg font-semibold ${safeAccent.secondary} mb-3 flex items-center gap-2`}>
-                  <div className={`${safeAccent.bg} p-1.5 rounded-lg`}>
-                    <Calendar className={`w-4 h-4 ${safeAccent.secondary}`} />
+                <label htmlFor="date" className={`block text-lg font-semibold ${safeText.primary} mb-3 flex items-center gap-2`}>
+                  <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                    <Calendar className={`w-4 h-4 ${safeText.secondary}`} />
                   </div>
                   Date *
                 </label>
@@ -616,7 +618,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   value={formData.date}
                   onChange={handleInputChange}
                   required
-                  className={`w-full px-4 py-3 text-lg border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
+                  className={`w-full px-4 py-3 text-lg border-2 ${safeAccent.border} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
                 />
               </div>
             </div>
@@ -637,7 +639,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               value={formData.description}
               onChange={handleInputChange}
               required
-              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
+              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
               placeholder="What did you spend on?"
             />
           </div>
@@ -658,8 +660,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                     onClick={() => setFormData(prev => ({ ...prev, category: cat, subcategory: '' }))}
                     className={`p-3 rounded-lg border-2 transition-all duration-200 flex items-center space-x-2 ${
                       formData.category === cat
-                        ? `${safeAccent.border} ${safeAccent.bg} ${safeAccent.secondary} shadow-md`
-                        : `${safeBorder.primary} hover:border-${safeAccent.primary.replace('bg-', '')} hover:${safeAccent.bg}`
+                        ? `${safeBorder.primary} ${safeBg.tertiary} ${safeText.primary} shadow-md`
+                        : `${safeBorder.primary} hover:border-${getColorFromBg(safeAccent.primary)} hover:${safeBg.secondary}`
                     }`}
                   >
                     <div className="p-1">
@@ -682,7 +684,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 name="subcategory"
                 value={formData.subcategory}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${safeAccent.primary.replace('bg-', '')} focus:border-${safeAccent.primary.replace('bg-', '')} ${safeBg.card}`}
+                className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
               >
                 <option value="">Select subcategory</option>
                 {categories[formData.category]?.subcategories?.map(subcat => (
@@ -708,8 +710,8 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   onClick={() => setFormData(prev => ({ ...prev, payment_method: method.value }))}
                   className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
                     formData.payment_method === method.value
-                      ? `${safeAccent.border} ${safeAccent.bg} ${safeAccent.secondary} shadow-md transform scale-105`
-                      : `${safeBorder.primary} hover:border-${safeAccent.primary.replace('bg-', '')} hover:${safeAccent.bg}`
+                      ? `${safeBorder.primary} ${safeBg.tertiary} ${safeText.primary} shadow-md transform scale-105`
+                      : `${safeBorder.primary} hover:border-${getColorFromBg(safeAccent.primary)} hover:${safeBg.secondary}`
                   }`}
                 >
                   <div className="p-1">
@@ -723,9 +725,9 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
 
           {/* Merchant */}
           <div>
-            <label htmlFor="merchant_name" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <div className="bg-gray-100 p-1.5 rounded-lg">
-                <Building2 className="w-4 h-4 text-gray-600" />
+            <label htmlFor="merchant_name" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                <Building2 className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               Merchant/Store
             </label>
@@ -735,16 +737,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               name="merchant_name"
               value={formData.merchant_name}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
               placeholder="Where did you shop?"
             />
           </div>
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <div className="bg-gray-100 p-1.5 rounded-lg">
-                <FileText className="w-4 h-4 text-gray-600" />
+            <label htmlFor="notes" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                <FileText className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               Notes
             </label>
@@ -754,16 +756,16 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               value={formData.notes}
               onChange={handleInputChange}
               rows="4"
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
               placeholder="Additional notes (optional)"
             />
           </div>
 
           {/* Goal Assignment Dropdown */}
           <div>
-            <label htmlFor="goalId" className="block text-lg font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <div className="bg-gray-100 p-1.5 rounded-lg">
-                <Target className="w-4 h-4 text-gray-600" />
+            <label htmlFor="goalId" className={`block text-lg font-medium ${safeText.secondary} mb-3 flex items-center gap-2`}>
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg`}>
+                <Target className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               Assign to Goal (optional)
             </label>
@@ -772,7 +774,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
               name="goalId"
               value={formData.goalId || ''}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className={`w-full px-4 py-3 text-lg border-2 ${safeBorder.primary} rounded-lg focus:outline-none focus:ring-2 focus:ring-${getColorFromBg(safeAccent.primary)} focus:border-${getColorFromBg(safeAccent.primary)} ${safeBg.card}`}
               disabled={goalsLoading || goals.length === 0}
             >
               <option value="">No goal</option>
@@ -782,7 +784,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 </option>
               ))}
             </select>
-            {goalsLoading && <div className="text-xs text-gray-400 mt-1">Loading goals...</div>}
+            {goalsLoading && <div className={`text-xs ${safeText.tertiary} mt-1`}>Loading goals...</div>}
           </div>
 
           {/* Submit Button */}
@@ -795,7 +797,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                   ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
                   : success
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 scale-105 shadow-xl'
-                    : `bg-gradient-to-r from-${safeAccent.primary.replace('bg-', '')} to-blue-600 hover:from-${safeAccent.primary.replace('bg-', '')} hover:to-blue-700 hover:scale-105 shadow-lg hover:shadow-xl`
+                    : `${safeAccent.primary} hover:scale-105 shadow-lg hover:shadow-xl`
               } text-white`}
             >
               {loading ? (
@@ -813,7 +815,7 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-white mr-3" />
+                  <span className="text-white text-xl mr-3 font-bold">₹</span>
                   <span>Add Transaction</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transform -skew-x-12 transition-all duration-700"></div>
                 </div>
@@ -833,48 +835,48 @@ export default function TransactionForm({ onTransactionAdded, onClose, user }) {
         </form>
 
         {/* Tips Section */}
-        <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-            <div className="bg-blue-100 p-2 rounded-lg mr-3">
-              <Lightbulb className="w-5 h-5 text-blue-600" />
+        <div className={`mt-8 p-6 ${safeBg.secondary} rounded-lg border ${safeBorder.primary}`}>
+          <h3 className={`text-lg font-semibold ${safeText.primary} mb-4 flex items-center`}>
+            <div className={`${safeBg.tertiary} p-2 rounded-lg mr-3`}>
+              <Lightbulb className={`w-5 h-5 ${safeText.primary}`} />
             </div>
             Pro Tips for Better Expense Tracking
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start">
-              <div className="bg-blue-100 p-1.5 rounded-lg mr-3 mt-0.5">
-                <Sparkles className="w-4 h-4 text-blue-600" />
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg mr-3 mt-0.5`}>
+                <Sparkles className={`w-4 h-4 ${safeText.primary}`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-800">Be Specific</p>
-                <p className="text-sm text-blue-700">Use detailed descriptions like "Groceries at Walmart" instead of just "Shopping"</p>
+                <p className={`text-sm font-medium ${safeText.primary}`}>Be Specific</p>
+                <p className={`text-sm ${safeText.secondary}`}>Use detailed descriptions like "Groceries at Walmart" instead of just "Shopping"</p>
               </div>
             </div>
             <div className="flex items-start">
-              <div className="bg-purple-100 p-1.5 rounded-lg mr-3 mt-0.5">
-                <Target className="w-4 h-4 text-purple-600" />
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg mr-3 mt-0.5`}>
+                <Target className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-purple-800">Track Merchants</p>
-                <p className="text-sm text-purple-700">Adding store names helps identify spending patterns and favorite locations</p>
+                <p className={`text-sm font-medium ${safeText.primary}`}>Track Merchants</p>
+                <p className={`text-sm ${safeText.secondary}`}>Adding store names helps identify spending patterns and favorite locations</p>
               </div>
             </div>
             <div className="flex items-start">
-              <div className="bg-green-100 p-1.5 rounded-lg mr-3 mt-0.5">
-                <BarChart3 className="w-4 h-4 text-green-600" />
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg mr-3 mt-0.5`}>
+                <BarChart3 className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-green-800">Consistent Categories</p>
-                <p className="text-sm text-green-700">Use the same categories regularly to get accurate spending insights</p>
+                <p className={`text-sm font-medium ${safeText.primary}`}>Consistent Categories</p>
+                <p className={`text-sm ${safeText.secondary}`}>Use the same categories regularly to get accurate spending insights</p>
               </div>
             </div>
             <div className="flex items-start">
-              <div className="bg-orange-100 p-1.5 rounded-lg mr-3 mt-0.5">
-                <FileText className="w-4 h-4 text-orange-600" />
+              <div className={`${safeBg.tertiary} p-1.5 rounded-lg mr-3 mt-0.5`}>
+                <FileText className={`w-4 h-4 ${safeText.secondary}`} />
               </div>
               <div>
-                <p className="text-sm font-medium text-orange-800">Note Large Expenses</p>
-                <p className="text-sm text-orange-700">Add context for unusual or large purchases for future reference</p>
+                <p className={`text-sm font-medium ${safeText.primary}`}>Note Large Expenses</p>
+                <p className={`text-sm ${safeText.secondary}`}>Add context for unusual or large purchases for future reference</p>
               </div>
             </div>
           </div>

@@ -18,7 +18,7 @@ const mockFields = {
   ],
 };
 
-const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
+const EnhancedTaxReturnCompletion = () => {
   const { selectedForm } = useOutletContext();
   const { theme } = useTheme();
 
@@ -32,9 +32,25 @@ const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
   const [formFields, setFormFields] = useState([]);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [validation, setValidation] = useState({});
+  const [aiGuide, setAiGuide] = useState(null);
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError] = useState('');
+  const [selectedFormId, setSelectedFormId] = useState(null);
 
   const sections = selectedForm?.sections || ['Personal Information', 'Income Details', 'Deductions', 'Summary'];
   const totalSteps = sections.length;
+
+  useEffect(() => {
+    // Get selected form from localStorage
+    const formId = localStorage.getItem('selectedTaxFormId');
+    setSelectedFormId(formId);
+    if (formId) {
+      fetchAIGuide(formId);
+    } else {
+      setAiError('No tax form selected. Please select a form in discovery.');
+      setAiLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedForm?.id) {
@@ -54,6 +70,22 @@ const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
     }, 500);
   };
 
+  const fetchAIGuide = async (formId) => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      // Call Gemini API backend endpoint for tax filing guide
+      const res = await fetch(`/api/tax/ai-filing-guide?form_id=${encodeURIComponent(formId)}`);
+      if (!res.ok) throw new Error('Failed to fetch AI guide');
+      const data = await res.json();
+      setAiGuide(data.guide || data.steps || []);
+    } catch (e) {
+      setAiError('Could not load AI tax filing guide.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -64,7 +96,6 @@ const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
 
   const handleBack = () => {
     if (currentStep > 0) setCurrentStep(currentStep - 1);
-    else if (onBack) onBack();
   };
 
   const handleSaveDraft = () => {
@@ -82,7 +113,6 @@ const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
     setTimeout(() => {
       setSuccess(true);
       setLoading(false);
-      if (onComplete) onComplete();
     }, 1500);
   };
 
@@ -149,14 +179,38 @@ const EnhancedTaxReturnCompletion = ({ onBack, onComplete }) => {
     setAiHelp('AI-powered help and suggestions will appear here.');
   };
 
+  // Render AI guide if available
+  if (aiLoading) {
+    return <div className="flex flex-col items-center justify-center min-h-[60vh] text-lg"><Loader className="animate-spin w-10 h-10 mb-4 text-blue-500" />Loading your personalized tax filing guide...</div>;
+  }
+  if (aiError) {
+    return <div className="flex flex-col items-center justify-center min-h-[60vh] text-red-500 text-lg">{aiError}</div>;
+  }
+  if (aiGuide && aiGuide.length > 0) {
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <h1 className="text-3xl font-bold mb-6 text-blue-700">Step-by-Step Tax Filing Guide</h1>
+        <ol className="space-y-8">
+          {aiGuide.map((step, idx) => (
+            <li key={idx} className="relative pl-10">
+              <span className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 text-white flex items-center justify-center font-bold text-lg shadow">{idx + 1}</span>
+              <div className="bg-white rounded-xl shadow p-6 border border-blue-100">
+                <h2 className="text-xl font-semibold mb-2 text-blue-700">{step.title || `Step ${idx + 1}`}</h2>
+                <p className="text-gray-700 whitespace-pre-line">{step.description || step.text || step}</p>
+                {step.tips && <div className="mt-3 text-sm text-teal-700 bg-teal-50 rounded p-3">💡 {step.tips}</div>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
   if (!selectedForm) {
     return (
         <div className={`p-8 rounded-lg ${theme.bg.card} ${theme.text.primary} text-center`}>
             <h3 className="text-lg font-semibold">No Form Selected</h3>
             <p className={`${theme.text.secondary} mt-2`}>Please go back to the discovery page and select a tax form to begin.</p>
-            <button onClick={onBack} className={`mt-4 px-4 py-2 rounded-lg ${theme.accent.primary} text-white`}>
-                Go Back
-            </button>
         </div>
     )
   }

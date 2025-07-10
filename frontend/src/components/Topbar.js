@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,6 +19,7 @@ function getBreadcrumbs(pathname) {
 
 export default function Topbar({ user, setUser }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const breadcrumbs = getBreadcrumbs(location.pathname.replace('/dashboard', ''));
   
   // Add theme context
@@ -50,6 +51,7 @@ export default function Topbar({ user, setUser }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const dropdownRef = useRef(null);
   
   // Close dropdown when clicking outside
@@ -180,7 +182,6 @@ export default function Topbar({ user, setUser }) {
           <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-${safeAccent.primary.replace('text-', '')} to-blue-500 flex items-center justify-center text-white font-bold text-sm`}>
             {user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
-          
           {/* User Info - Hidden on mobile */}
           <div className="hidden sm:block text-left">
             <div className={`text-sm font-medium ${safeText.secondary}`}>
@@ -190,14 +191,13 @@ export default function Topbar({ user, setUser }) {
               {user?.email}
             </div>
           </div>
-          
           {/* Dropdown Arrow */}
           <ChevronDown className={`w-4 h-4 ${safeText.tertiary} transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Dropdown Menu */}
         {dropdownOpen && (
-          <div className={`absolute right-0 mt-2 w-64 ${safeBg.card} rounded-lg shadow-lg border ${safeBorder.primary} py-2 z-50 animate-slide-down`}>
+          <div className={`absolute right-0 mt-2 w-64 ${safeBg.card} rounded-lg shadow-lg border ${safeBorder.primary} py-2 z-50 animate-dropdown-fade`}>
             {/* User Info Section */}
             <div className={`px-4 py-3 border-b ${safeBorder.primary}`}>
               <div className="flex items-center gap-3">
@@ -220,8 +220,7 @@ export default function Topbar({ user, setUser }) {
               <button
                 onClick={() => {
                   setDropdownOpen(false);
-                  // TODO: Add profile/settings navigation
-                  console.log('Navigate to profile');
+                  navigate('/user-profile');
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-2 text-sm ${safeText.secondary} hover:${safeBg.secondary} transition-colors`}
               >

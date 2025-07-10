@@ -620,3 +620,27 @@ class FirestoreService:
         except Exception as e:
             print(f"❌ Error updating OCR data for document {document_id}: {e}")
             return False
+
+    # User Profile CRUD
+    def get_user_profile(self, user_id: str) -> dict:
+        """Get a user's profile document from the users collection."""
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        doc = self.db.collection('users').document(user_id).get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+
+    def update_user_profile(self, user_id: str, profile_data: dict) -> bool:
+        """Update a user's profile document in the users collection."""
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        self.db.collection('users').document(user_id).set(profile_data, merge=True)
+        return True
+
+    def create_user_profile(self, user_id: str, profile_data: dict) -> str:
+        """Create a new user profile document in the users collection."""
+        if not self.db:
+            raise Exception("Firestore client not initialized")
+        self.db.collection('users').document(user_id).set(profile_data)
+        return user_id
