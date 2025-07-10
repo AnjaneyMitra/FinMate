@@ -12,6 +12,7 @@ from firestore_service import FirestoreService
 from bank_statement_parser import BankStatementParser
 from spending_analysis_service import SpendingAnalysisService
 from gemini_content_service import GeminiContentService, ContentRequest, UserProfile
+import json
 
 import models, database
 from models import Expense, User, BankStatementUploadResponse, TransactionImportRequest, TransactionImportResponse, SupportedBankInfo
@@ -1096,7 +1097,7 @@ def submit_tax_form(submission: TaxFormSubmission, user=Depends(optional_firebas
         submission_id = firestore_service.save_tax_form_submission(user_id, submission.form_id, submission.form_data)
         
         # Optional: 3. Delete the draft if it exists
-        # This part is tricky without knowing the draft_id. You might need to query drafts by form_id.
+        # This part is tricky without knowing the draft_id. You might need to query drafts to find and delete the corresponding draft.
         
         return {"status": "success", "submission_id": submission_id}
     except HTTPException as he:
@@ -2005,7 +2006,6 @@ async def get_user_documents(
             
     except Exception as e:
         logger.error(f"Error getting user documents: {e}")
-       
         raise HTTPException(status_code=500, detail="Could not retrieve documents")
 
 @app.get("/api/tax/documents/{document_id}/download")
@@ -2290,4 +2290,69 @@ def update_user_profile(
     data = profile.dict(exclude_unset=True)
     firestore_service.update_user_profile(user_id, data)
     return data
+
+@app.get("/api/tax/ai-filing-guide")
+def get_ai_filing_guide(form_id: str):
+    """
+    Generate a step-by-step AI-powered tax filing guide for the given form_id.
+    Returns: { guide: [ ...steps... ] }
+    """
+    try:
+        # Get form details for context (optional, fallback if not found)
+        form_details = get_form_details(form_id)
+        form_name = form_details["name"] if form_details and "name" in form_details else form_id
+        sections = form_details["sections"] if form_details and "sections" in form_details else ["Personal Information", "Income Details", "Deductions", "Summary"]
+
+        # Compose prompt for Gemini
+        prompt = f"""
+        You are an expert Indian tax advisor. Generate a clear, step-by-step filing guide for the tax form '{form_name}' (form_id: {form_id}).
+        The guide should be actionable, concise, and tailored for a typical Indian taxpayer.
+        
+        Structure the response as a JSON array called 'guide', where each element is an object with:
+        - 'step': Step number (integer)
+        - 'title': Short title for the step
+        - 'description': 1-2 sentence explanation of what to do in this step
+        - 'section': (optional) The form section this step relates to
+        
+        Example format:
+        [
+          {"step": 1, "title": "Enter Personal Details", "description": "Fill in your PAN, Aadhaar, and contact information.", "section": "Personal Information"},
+          ...
+        ]
+        
+        The guide should cover all major sections: {sections}.
+        """
+
+        # Try Gemini if available
+        from gemini_content_service import gemini_service
+        if hasattr(gemini_service, "model") and gemini_service.enabled:
+            response = gemini_service.model.generate_content(prompt)
+            response_text = response.text
+            # Extract JSON array from response
+            start_idx = response_text.find('[')
+            end_idx = response_text.rfind(']') + 1
+            if start_idx != -1 and end_idx > start_idx:
+                try:
+                    guide = json.loads(response_text[start_idx:end_idx])
+                    return {"guide": guide, "source": "ai_generated"}
+                except Exception as e:
+                    logger.error(f"Failed to parse Gemini guide JSON: {e}")
+            # Fallback to raw text if JSON parse fails
+            return {"guide": [], "raw": response_text, "source": "ai_generated", "error": "Failed to parse JSON"}
+        else:
+            logger.warning("Gemini not enabled, using fallback guide")
+    except Exception as e:
+        logger.error(f"Error generating AI filing guide: {e}")
+        form_name = form_id
+        sections = ["Personal Information", "Income Details", "Deductions", "Summary"]
+
+    # Fallback static guide
+    fallback_guide = [
+        {"step": 1, "title": "Enter Personal Details", "description": "Fill in your PAN, Aadhaar, and contact information.", "section": "Personal Information"},
+        {"step": 2, "title": "Report Income Details", "description": "Provide details of your salary, house property, and other income sources.", "section": "Income Details"},
+        {"step": 3, "title": "Claim Deductions", "description": "Enter eligible deductions such as 80C, 80D, and others to reduce your taxable income.", "section": "Deductions"},
+        {"step": 4, "title": "Review and Validate", "description": "Check all entered information for accuracy and completeness.", "section": "Summary"},
+        {"step": 5, "title": "Submit Return", "description": "Submit your completed tax return and save the acknowledgment.", "section": "Summary"}
+    ]
+    return {"guide": fallback_guide, "source": "fallback"}
 

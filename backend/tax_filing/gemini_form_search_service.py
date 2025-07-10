@@ -38,7 +38,7 @@ class GeminiFormSearchService:
             self.enabled = False
         else:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('models/gemini-2.5-pro-preview-06-05')
+            self.model = genai.GenerativeModel('gemini-2.5-pro-preview-06-05')
             self.enabled = True
             logger.info("Gemini Form Search Service initialized successfully")
         
