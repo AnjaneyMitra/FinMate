@@ -4,8 +4,10 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const TaxGlossaryHelp = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [explanation, setExplanation] = useState(null); // Stores the detailed explanation from Gemini
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all'); // Keep for category buttons, but terms will be dynamic
 
   const themeContext = useTheme();
   const { bg, text, border, accent } = themeContext || {};
@@ -25,177 +27,104 @@ const TaxGlossaryHelp = () => {
     { id: 'penalties', label: 'Penalties & Compliance', icon: '⚠️' }
   ];
 
-  const glossaryTerms = [
-    {
-      id: 'pan',
-      term: 'PAN (Permanent Account Number)',
-      category: 'procedures',
-      definition: 'A unique 10-character alphanumeric identifier assigned by the Income Tax Department to track financial transactions and tax compliance.',
-      detailedExplanation: 'PAN is mandatory for various financial transactions including opening bank accounts, purchasing assets above certain limits, and filing income tax returns. The format is ABCDE1234F where the first 5 characters are letters, followed by 4 digits and ending with a letter.',
-      examples: ['ABCDE1234F', 'PQRST5678K'],
-      relatedTerms: ['ITR', 'TDS', 'Aadhaar'],
-      commonMistakes: ['Using incorrect format', 'Not linking with Aadhaar', 'Multiple PAN applications'],
-      videoUrl: null,
-      popularity: 95
-    },
-    {
-      id: 'section_80c',
-      term: 'Section 80C Deductions',
-      category: 'deductions',
-      definition: 'Tax deduction available up to ₹1.5 lakh per year for investments in specified instruments like EPF, PPF, ELSS, and life insurance premiums.',
-      detailedExplanation: 'Section 80C is one of the most popular tax-saving provisions that allows taxpayers to reduce their taxable income by investing in qualifying instruments. The deduction is available under the old tax regime.',
-      examples: [
-        'EPF contribution: ₹50,000',
-        'PPF investment: ₹1,00,000',
-        'Life insurance premium: ₹25,000',
-        'ELSS mutual funds: ₹50,000'
-      ],
-      relatedTerms: ['Section 80D', 'ELSS', 'PPF', 'EPF'],
-      commonMistakes: ['Exceeding ₹1.5 lakh limit', 'Not claiming employer EPF contribution', 'Double counting EPF'],
-      videoUrl: 'https://example.com/80c-explained',
-      popularity: 88
-    },
-    {
-      id: 'itr1',
-      term: 'ITR-1 (Sahaj)',
-      category: 'forms',
-      definition: 'Income Tax Return form for individuals with salary income, one house property, and other income up to ₹50 lakhs.',
-      detailedExplanation: 'ITR-1 is the simplest tax return form designed for salaried individuals. It cannot be used if you have business income, capital gains, or income from multiple house properties.',
-      examples: ['Salaried employee with ₹8 lakh annual income', 'Person with salary + savings account interest'],
-      relatedTerms: ['ITR-2', 'Form 16', 'TDS'],
-      commonMistakes: ['Using when having capital gains', 'Not reporting all income sources', 'Filing without Form 16'],
-      videoUrl: 'https://example.com/itr1-filing',
-      popularity: 92
-    },
-    {
-      id: 'tds',
-      term: 'TDS (Tax Deducted at Source)',
-      category: 'procedures',
-      definition: 'Tax collected by the payer at the time of making payment to the payee, which is then deposited with the government.',
-      detailedExplanation: 'TDS is a mechanism to collect tax at the source of income generation. Employers deduct TDS from salary, banks deduct from interest, and so on. You can claim credit for TDS while filing returns.',
-      examples: ['TDS on salary by employer', 'TDS on bank interest', 'TDS on professional fees'],
-      relatedTerms: ['Form 16', 'Form 16A', 'TCS'],
-      commonMistakes: ['Not claiming TDS credit', 'Mismatched TDS details', 'Not downloading Form 16'],
-      videoUrl: 'https://example.com/tds-explained',
-      popularity: 85
-    },
-    {
-      id: 'capital_gains',
-      term: 'Capital Gains',
-      category: 'income',
-      definition: 'Profit earned from the sale of capital assets like stocks, real estate, or mutual funds.',
-      detailedExplanation: 'Capital gains are classified as short-term (held for less than specified period) or long-term (held for more than specified period). Tax rates vary based on the type and holding period.',
-      examples: ['Selling shares after 2 years', 'Selling house property', 'Mutual fund redemption'],
-      relatedTerms: ['STCG', 'LTCG', 'Indexation', 'Section 54'],
-      commonMistakes: ['Not calculating indexed cost', 'Wrong classification of gains', 'Not considering exemptions'],
-      videoUrl: 'https://example.com/capital-gains',
-      popularity: 75
-    },
-    {
-      id: 'hra',
-      term: 'HRA (House Rent Allowance)',
-      category: 'deductions',
-      definition: 'Allowance paid by employer to employees for accommodation expenses, which is partially or fully exempt from tax.',
-      detailedExplanation: 'HRA exemption is calculated as the minimum of: actual HRA received, 50% of basic salary (40% for non-metro cities), or actual rent paid minus 10% of basic salary.',
-      examples: ['Monthly HRA of ₹20,000 in Delhi', 'HRA exemption calculation for ₹50,000 basic salary'],
-      relatedTerms: ['Section 80GG', 'Metro cities', 'Basic salary'],
-      commonMistakes: ['Not providing rent receipts', 'Wrong calculation method', 'Not claiming when eligible'],
-      videoUrl: 'https://example.com/hra-calculation',
-      popularity: 80
+  // New function to fetch explanation
+  const fetchExplanation = async (termToSearch) => {
+    if (!termToSearch.trim()) return; // Don't search for empty terms
+
+    setIsLoading(true);
+    setError(null);
+    setExplanation(null); // Clear previous explanation
+
+    try {
+      const response = await fetch(`/api/tax/glossary/explain?term=${encodeURIComponent(termToSearch)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+
+      if (result.success) {
+        // Validate the structure of result.data before setting it
+        if (result.data && typeof result.data === 'object' && 'term' in result.data && 'explanation' in result.data) {
+          setExplanation(result.data);
+        } else {
+          // Log the unexpected data and set a user-friendly error
+          console.error('Received unexpected data format from backend for glossary explanation:', result.data);
+          setError('Could not process the explanation. Unexpected data format.');
+          setExplanation(null); // Ensure explanation is null if invalid
+        }
+      } else {
+        setError(result.error || `Could not find explanation for "${termToSearch}".`);
+      }
+    } catch (e) {
+      console.error("Error fetching glossary explanation:", e);
+      setError(`Failed to fetch explanation: ${e.message}.`);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
-  const filteredTerms = glossaryTerms.filter(term => {
-    const matchesSearch = searchTerm === '' || 
-      term.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      term.definition.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      term.relatedTerms.some(related => related.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = selectedCategory === 'all' || term.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  }).sort((a, b) => b.popularity - a.popularity);
+  // Handle search submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    fetchExplanation(searchTerm);
+  };
 
+  // TermDetailModal is now simpler, directly using the 'explanation' state
+  const TermDetailModal = ({ explanationData, onClose }) => {
+    if (!explanationData) return null;
 
-  const TermDetailModal = ({ term, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className={`${safeBg.card} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
-        <div className={`p-6 border-b ${safeBorder.primary}`}>
-          <div className="flex items-center justify-between">
-            <h2 className={`text-2xl font-bold ${safeText.primary}`}>{term.term}</h2>
-            <button onClick={onClose} className={`${safeText.tertiary} hover:${safeText.primary} text-2xl`}>×</button>
-          </div>
-        </div>
-        
-        <div className="p-6 space-y-6">
-          <div>
-            <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Definition</h3>
-            <p className={`${safeText.secondary}`}>{term.definition}</p>
-          </div>
-
-          <div>
-            <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Detailed Explanation</h3>
-            <p className={`${safeText.secondary}`}>{term.detailedExplanation}</p>
-          </div>
-
-          {term.examples && term.examples.length > 0 && (
-            <div>
-              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Examples</h3>
-              <ul className={`list-disc list-inside space-y-1 ${safeText.secondary}`}>
-                {term.examples.map((example, index) => (
-                  <li key={index}>{example}</li>
-                ))}
-              </ul>
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className={`${safeBg.card} rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
+          <div className={`p-6 border-b ${safeBorder.primary}`}>
+            <div className="flex items-center justify-between">
+              <h2 className={`text-2xl font-bold ${safeText.primary}`}>{explanationData.term}</h2>
+              <button onClick={onClose} className={`${safeText.tertiary} hover:${safeText.primary} text-2xl`}>×</button>
             </div>
-          )}
-
-          {term.commonMistakes && term.commonMistakes.length > 0 && (
+          </div>
+          
+          <div className="p-6 space-y-6">
             <div>
-              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>⚠️ Common Mistakes</h3>
-              <ul className={`list-disc list-inside space-y-1 text-red-700 ${safeBg.secondary} p-4 rounded-lg`}>
-                {term.commonMistakes.map((mistake, index) => (
-                  <li key={index}>{mistake}</li>
-                ))}
-              </ul>
+              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Explanation</h3>
+              <p className={`${safeText.secondary} whitespace-pre-line`}>{explanationData.explanation}</p>
             </div>
-          )}
 
-          {term.relatedTerms && term.relatedTerms.length > 0 && (
-            <div>
-              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Related Terms</h3>
-              <div className="flex flex-wrap gap-2">
-                {term.relatedTerms.map((relatedTerm, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      const related = glossaryTerms.find(t => t.term.toLowerCase().includes(relatedTerm.toLowerCase()));
-                      if (related) {
-                        setSelectedTerm(related);
-                      }
-                    }}
-                    className={`px-3 py-1 ${safeAccent.secondary} bg-opacity-20 ${safeText.accent} rounded-full text-sm hover:bg-opacity-30 transition-colors`}
-                  >
-                    {relatedTerm}
-                  </button>
-                ))}
+            {explanationData.examples && explanationData.examples.length > 0 && (
+              <div>
+                <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Examples</h3>
+                <ul className={`list-disc list-inside space-y-1 ${safeText.secondary}`}>
+                  {explanationData.examples.map((example, index) => (
+                    <li key={index}>{example}</li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          )}
+            )}
 
-          {term.videoUrl && (
-            <div>
-              <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>📹 Video Explanation</h3>
-              <a href={term.videoUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 ${safeAccent.error} bg-opacity-20 text-red-800 rounded-lg hover:bg-opacity-30 transition-colors`}>
-                <Video className="w-4 h-4" />
-                Watch Video Tutorial
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          )}
+            {explanationData.related_terms && explanationData.related_terms.length > 0 && (
+              <div>
+                <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Related Terms</h3>
+                <div className="flex flex-wrap gap-2">
+                  {explanationData.related_terms.map((relatedTerm, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        // When a related term is clicked, fetch its explanation
+                        fetchExplanation(relatedTerm);
+                        setSearchTerm(relatedTerm); // Update search bar with new term
+                      }}
+                      className={`px-3 py-1 ${safeAccent.secondary} bg-opacity-20 ${safeText.accent} rounded-full text-sm hover:bg-opacity-30 transition-colors`}
+                    >
+                      {relatedTerm}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={`max-w-7xl mx-auto p-6 ${safeBg.primary} ${safeText.primary}`}>
@@ -229,7 +158,7 @@ const TaxGlossaryHelp = () => {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="relative mb-6">
+          <form onSubmit={handleSearchSubmit} className="relative mb-6">
             <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${safeText.tertiary}`} />
             <input
               type="text"
@@ -238,9 +167,94 @@ const TaxGlossaryHelp = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-12 pr-4 py-3 ${safeBg.secondary} ${safeText.primary} border ${safeBorder.primary} rounded-lg focus:ring-2 focus:ring-offset-1 focus:${safeBorder.accent} outline-none`}
             />
-          </div>
+            <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Search</button>
+          </form>
 
-          <div className="space-y-4">
+          {isLoading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+              <p className={`${safeText.secondary}`}>Fetching explanation...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className={`p-4 rounded-lg bg-red-50 text-red-700 border border-red-200`}>
+              <p className="font-medium">Error: {error}</p>
+              <p className="text-sm mt-1">Please check the term or try again later.</p>
+            </div>
+          )}
+
+          {explanation && !isLoading && !error && (
+            <div className={`p-5 rounded-lg ${safeBg.card} border ${safeBorder.primary} shadow-lg`}> {/* Display explanation directly */}
+              <h3 className={`text-xl font-bold ${safeText.primary} mb-3`}>{explanation.term}</h3>
+              {typeof explanation.explanation === 'string' ? (
+                <p className={`${safeText.secondary} mb-4 whitespace-pre-line`}>{explanation.explanation}</p>
+              ) : (
+                <div className={`${safeText.secondary} mb-4`}>
+                  <p>Detailed explanation format is unexpected. Showing raw data:</p>
+                  <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto">{JSON.stringify(explanation.explanation, null, 2)}</pre>
+                </div>
+              )}
+
+              {explanation.examples && Array.isArray(explanation.examples) && explanation.examples.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h4 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Examples:</h4>
+                  <ul className={`list-disc list-inside space-y-1 ${safeText.secondary}`}>
+                    {explanation.examples.map((example, index) => (
+                      <li key={index}>{example}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {explanation.related_terms && Array.isArray(explanation.related_terms) && explanation.related_terms.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h4 className={`text-lg font-semibold ${safeText.primary} mb-2`}>Related Terms:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {explanation.related_terms.map((relatedTerm, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSearchTerm(relatedTerm);
+                          fetchExplanation(relatedTerm);
+                        }}
+                        className={`px-3 py-1 ${safeAccent.secondary} bg-opacity-20 ${safeText.accent} rounded-full text-sm hover:bg-opacity-30 transition-colors`}
+                      >
+                        {relatedTerm}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* This section is removed as commonMistakes is not in the new API response */}
+              {/* {term.commonMistakes && term.commonMistakes.length > 0 && (
+                <div>
+                  <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>⚠️ Common Mistakes</h3>
+                  <ul className={`list-disc list-inside space-y-1 text-red-700 ${safeBg.secondary} p-4 rounded-lg`}>
+                    {term.commonMistakes.map((mistake, index) => (
+                      <li key={index}>{mistake}</li>
+                    ))}
+                  </ul>
+                </div>
+              )} */}
+
+              {/* Removed videoUrl as it's not in the new API response */}
+              {/* {term.videoUrl && (
+                <div>
+                  <h3 className={`text-lg font-semibold ${safeText.primary} mb-2`}>📹 Video Explanation</h3>
+                  <a href={term.videoUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 px-4 py-2 ${safeAccent.error} bg-opacity-20 text-red-800 rounded-lg hover:bg-opacity-30 transition-colors`}>
+                    <Video className="w-4 h-4" />
+                    Watch Video Tutorial
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              )} */}
+            </div>
+          )}
+
+          {/* Removed dynamic term list - now relies on search */}
+          {/* <div className="space-y-4">
             {filteredTerms.map(term => (
               <div
                 key={term.id}
@@ -248,17 +262,22 @@ const TaxGlossaryHelp = () => {
                 className={`p-5 rounded-lg ${safeBg.card} border ${safeBorder.primary} hover:shadow-lg hover:border-teal-300 cursor-pointer transition-all`}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className={`text-lg font-semibold ${safeText.accent}`}>{term.term}</h3>
+                  <div>
+                    <h3 className={`text-lg font-semibold ${safeText.primary}`}>{term.term}</h3>
+                    <p className={`text-sm ${safeText.secondary}`}>{term.definition}</p>
+                  </div>
                   <ChevronRight className={`w-5 h-5 ${safeText.tertiary}`} />
                 </div>
-                <p className={`mt-2 text-sm ${safeText.secondary}`}>{term.definition}</p>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
 
-      {selectedTerm && <TermDetailModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />}
+      {/* Removed old modal usage - now directly using the 'explanation' state to render */}
+      {/* {selectedTerm && (
+        <TermDetailModal term={selectedTerm} onClose={() => setSelectedTerm(null)} />
+      )} */}
     </div>
   );
 };

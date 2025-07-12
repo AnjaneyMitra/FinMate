@@ -31,11 +31,12 @@ class GeminiGlossaryService:
             You are an expert Indian tax advisor. Provide a detailed but easy-to-understand explanation for the Indian tax term: "{term}".
             
             The explanation should be comprehensive, actionable, and suitable for a general audience, including beginners.
+            It MUST be a single plain string of text, not a nested JSON object.
             Include practical examples relevant to the Indian context where appropriate.
 
             Structure the response as a JSON object with the following fields:
             - 'term': The original term being explained.
-            - 'explanation': A detailed explanation of the term (3-7 sentences).
+            - 'explanation': A detailed explanation of the term (3-7 sentences). This MUST be a plain text string.
             - 'examples': A JSON array of 1-3 simple, practical examples demonstrating the term.
             - 'related_terms': A JSON array of 2-4 related tax terms that the user might find useful.
             
