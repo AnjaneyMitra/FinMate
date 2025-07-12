@@ -282,14 +282,18 @@ const EnhancedTaxReturnCompletion = () => {
             const currentGradient = gradients[idx % gradients.length];
 
             return (
-              <li key={idx} className="relative pl-12 sm:pl-16"> {/* Increased padding for larger icon and line */}
+              <li 
+                key={idx} 
+                className="relative pl-12 sm:pl-16 animate-fade-in-up" 
+                style={{ animationDelay: `${idx * 0.1}s` }} 
+              > {/* Increased padding for larger icon and line and added entry animation */}
                 {/* Step indicator with icon - made more prominent */} 
-                <span className={`absolute left-0 top-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full ${currentGradient} text-blue-700 flex items-center justify-center font-bold text-lg shadow-md border-2 border-white`}>
-                  <IconComponent className="w-6 h-6 text-blue-700" /> {/* Larger icon */} 
+                <span className={`absolute left-0 top-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full ${currentGradient} text-blue-700 flex items-center justify-center font-bold text-lg shadow-md border-2 border-white transform transition-transform duration-300 hover:scale-110 `}> {/* Added hover effect for icon */} 
+                  <IconComponent className="w-6 h-6 text-blue-700 animate-pulse-subtle" /> {/* Larger icon and subtle pulse animation */} 
                 </span>
                 {/* Connector line for steps */} 
                 {idx < aiGuide.length - 1 && (
-                  <div className="absolute left-5 sm:left-7 top-10 sm:top-12 h-full border-l-2 border-blue-200" style={{ height: 'calc(100% - 2.5rem)' }}></div>
+                  <div className="absolute left-5 sm:left-7 top-10 sm:top-12 h-full border-l-2 border-blue-200 transform origin-top animate-grow-line" style={{ animationDelay: `${idx * 0.1 + 0.05}s`, height: 'calc(100% - 2.5rem)' }}></div>
                 )}
                 {/* Main content card for the step */} 
                 <div className={`bg-white rounded-xl shadow-lg p-6 border border-blue-100 transform transition-transform duration-300 hover:scale-[1.01] ${currentGradient.replace('bg-gradient-to-br', '').replace('100', '50')}`}> {/* Subtle hover effect and lighter gradient background */} 
