@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { AlertCircle, FileText, ArrowLeft, ArrowRight, Save, Send, Clock, Loader } from 'lucide-react';
+import { AlertCircle, FileText, ArrowLeft, ArrowRight, Save, Send, Clock, Loader, User, Wallet, PiggyBank, ClipboardCheck, FolderOpen, CheckCircle } from 'lucide-react';
 
 // Mock data for demonstration
 const mockFields = {
@@ -21,6 +21,17 @@ const mockFields = {
 const EnhancedTaxReturnCompletion = () => {
   const outletContext = useOutletContext();
   const { theme } = useTheme();
+
+  // Map icon_suggestion from backend to Lucide React components
+  const iconMap = {
+    personal: User,
+    income: Wallet,
+    documents: FolderOpen,
+    deductions: PiggyBank,
+    review: ClipboardCheck,
+    submit: CheckCircle,
+    // Add more mappings as needed
+  };
 
   // Use local state for selectedForm if not present in context
   const [selectedForm, setSelectedForm] = useState(outletContext?.selectedForm || null);
@@ -46,9 +57,9 @@ const EnhancedTaxReturnCompletion = () => {
   useEffect(() => {
     let isMounted = true;
     const rawFormId = localStorage.getItem('selectedTaxFormId');
-    const formId = rawFormId ? rawFormId.toLowerCase() : null;
+    const formId = rawFormId ? rawFormId : null; // Removed .toLowerCase()
     setSelectedFormId(formId);
-    console.log('[DEBUG] selectedTaxFormId from localStorage:', rawFormId, '| Normalized:', formId);
+    console.log('[DEBUG] selectedTaxFormId from localStorage:', rawFormId, '| Used:', formId);
     if (!selectedForm && formId) {
       console.log('[DEBUG] Fetching form details for formId:', formId);
       fetch(`/api/tax/forms/${formId}`)
@@ -258,16 +269,54 @@ const EnhancedTaxReturnCompletion = () => {
       <div className="max-w-3xl mx-auto py-12 px-4">
         <h1 className="text-3xl font-bold mb-6 text-blue-700">Step-by-Step Tax Filing Guide</h1>
         <ol className="space-y-8">
-          {aiGuide.map((step, idx) => (
-            <li key={idx} className="relative pl-10">
-              <span className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-400 text-white flex items-center justify-center font-bold text-lg shadow">{idx + 1}</span>
-              <div className="bg-white rounded-xl shadow p-6 border border-blue-100">
-                <h2 className="text-xl font-semibold mb-2 text-blue-700">{step.title || `Step ${idx + 1}`}</h2>
-                <p className="text-gray-700 whitespace-pre-line">{step.description || step.text || step}</p>
-                {step.tips && <div className="mt-3 text-sm text-teal-700 bg-teal-50 rounded p-3">💡 {step.tips}</div>}
-              </div>
-            </li>
-          ))}
+          {aiGuide.map((step, idx) => {
+            const IconComponent = iconMap[step.icon_suggestion] || FileText; // Default to FileText
+            // Define a set of gradients to cycle through for visual variety
+            const gradients = [
+              'bg-gradient-to-br from-blue-100 to-indigo-100',
+              'bg-gradient-to-br from-purple-100 to-pink-100',
+              'bg-gradient-to-br from-green-100 to-teal-100',
+              'bg-gradient-to-br from-yellow-100 to-orange-100',
+              'bg-gradient-to-br from-red-100 to-rose-100',
+            ];
+            const currentGradient = gradients[idx % gradients.length];
+
+            return (
+              <li key={idx} className="relative pl-12 sm:pl-16"> {/* Increased padding for larger icon and line */}
+                {/* Step indicator with icon - made more prominent */} 
+                <span className={`absolute left-0 top-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full ${currentGradient} text-blue-700 flex items-center justify-center font-bold text-lg shadow-md border-2 border-white`}>
+                  <IconComponent className="w-6 h-6 text-blue-700" /> {/* Larger icon */} 
+                </span>
+                {/* Connector line for steps */} 
+                {idx < aiGuide.length - 1 && (
+                  <div className="absolute left-5 sm:left-7 top-10 sm:top-12 h-full border-l-2 border-blue-200" style={{ height: 'calc(100% - 2.5rem)' }}></div>
+                )}
+                {/* Main content card for the step */} 
+                <div className={`bg-white rounded-xl shadow-lg p-6 border border-blue-100 transform transition-transform duration-300 hover:scale-[1.01] ${currentGradient.replace('bg-gradient-to-br', '').replace('100', '50')}`}> {/* Subtle hover effect and lighter gradient background */} 
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 text-blue-800">{step.title || `Step ${idx + 1}`}</h2> {/* Larger title with darker blue */} 
+                  <p className="text-gray-700 leading-relaxed mb-4">{step.description || step.text || step}</p> {/* Improved line height and margin for readability */} 
+
+                  {step.key_points && step.key_points.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-gray-200"> {/* Stronger border for separation */} 
+                      <h3 className="text-md sm:text-lg font-semibold text-gray-800 mb-2">Key Points:</h3>
+                      <ul className="list-disc list-inside text-gray-700 space-y-1">
+                        {step.key_points.map((point, pointIdx) => (
+                          <li key={pointIdx} className="flex items-start">
+                            <span className="mr-2 text-blue-600">•</span> {point} {/* Custom bullet with accent color */} 
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {step.tips && (
+                    <div className="mt-4 text-sm bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg p-4 flex items-start gap-3 border border-teal-200 shadow-sm"> {/* More vibrant tips box with subtle shadow */} 
+                      <span className="text-teal-600 text-lg">💡</span> <p className="flex-1 text-teal-800 font-medium">{step.tips}</p> {/* Larger icon and bolder text for tip */} 
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ol>
       </div>
     );
