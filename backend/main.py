@@ -30,6 +30,7 @@ from tax_filing.gemini_tax_service import gemini_tax_service
 from tax_filing.validation_engine import validate_form_data
 from tax_filing.gemini_guide_service import gemini_tax_guide_service
 from tax_filing.gemini_glossary_service import gemini_glossary_service
+from expense_predictor_model import CustomExpenseForecaster # Import the class, not an instance
 
 load_dotenv()
 
@@ -587,23 +588,26 @@ class ForecastRequestInput(BaseModel):
 def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_firebase_token)):
     """
     Generate expense forecasts for the specified timeframe and category using actual user data from Firestore.
-    Falls back to mock data if insufficient historical data is available.
+    Falls back to mock data if insufficient historical data is available or custom model fails.
     """
     try:
+        historical_expenses = []
         # Try to use Firestore data for authenticated users
         if user and firestore_service and firestore_service.db:
             try:
                 user_id = user['user_id']
-                print(f"[Forecast] Attempting to use Firestore data for user: {user_id}")
+                logger.info(f"[Forecast] Attempting to use Firestore data for user: {user_id}")
+                
+                # Instantiate CustomExpenseForecaster
+                forecaster = CustomExpenseForecaster()
                 
                 # Get historical data from Firestore using simplified query
                 try:
                     simple_query = firestore_service.db.collection('transactions').where('userId', '==', user_id).limit(1000)
                     docs = simple_query.stream()
                     
-                    historical_expenses = []
                     end_date = datetime.now()
-                    start_date = end_date - timedelta(days=365)  # Get last year of data
+                    start_date = end_date - timedelta(days=365 * 2)  # Get last 2 years of data for better ML training
                     
                     for doc in docs:
                         data = doc.to_dict()
@@ -614,10 +618,12 @@ def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_fir
                                 if 'T' in date_str:
                                     doc_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
                                 else:
-                                    doc_date = datetime.fromisoformat(date_str)
+                                    # Handle simple date string like 'YYYY-MM-DD'
+                                    doc_date = datetime.strptime(date_str, '%Y-%m-%d')
                             else:
                                 continue
-                        except:
+                        except ValueError:
+                            logger.warning(f"[Forecast] Could not parse date '{date_str}' for transaction {data.get('id')}")
                             continue
                         
                         # Apply date filter and category filter in memory
@@ -627,96 +633,69 @@ def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_fir
                         if input.category != "all" and data.get('category', '') != input.category:
                             continue
                         
-                        historical_expenses.append({
-                            'amount': data.get('amount', 0),
-                            'category': data.get('category', 'uncategorized'),
-                            'date': date_str,
-                            'timestamp': doc_date,
-                            'description': data.get('description', ''),
-                            'type': data.get('type', 'expense')
-                        })
+                        # Only include 'expense' type transactions for forecasting expenses
+                        if data.get('type', '').lower() == 'expense':
+                            historical_expenses.append({
+                                'amount': data.get('amount', 0),
+                                'category': data.get('category', 'uncategorized'),
+                                'date': date_str,
+                                'timestamp': doc_date, # Use datetime object for ML model
+                                'description': data.get('description', ''),
+                                'type': data.get('type', 'expense')
+                            })
                     
-                    print(f"[Forecast] Found {len(historical_expenses)} historical transactions")
+                    logger.info(f"[Forecast] Found {len(historical_expenses)} historical expense transactions from Firestore")
                     
                 except Exception as query_error:
-                    print(f"[Forecast] Firestore query failed: {query_error}")
+                    logger.error(f"[Forecast] Firestore query failed: {query_error}")
                     historical_expenses = []
                 
-                # Check if we have sufficient data for forecasting
-                if len(historical_expenses) >= 10:  # Minimum data requirement
-                    print(f"[Forecast] Using {len(historical_expenses)} historical transactions")
-                    
-                    # Process historical data for forecasting
-                    monthly_data = {}
-                    for expense in historical_expenses:
-                        month_key = expense.get('month', expense.get('date', '').split('-')[:2])
-                        if isinstance(month_key, list):
-                            month_key = '-'.join(month_key)
-                        
-                        if month_key not in monthly_data:
-                            monthly_data[month_key] = 0
-                        monthly_data[month_key] += expense.get('amount', 0)
-                    
-                    # Calculate forecast based on historical trends
-                    monthly_amounts = list(monthly_data.values())
-                    avg_monthly = sum(monthly_amounts) / len(monthly_amounts) if monthly_amounts else 1500
-                    
-                    # Add some trend analysis
-                    if len(monthly_amounts) >= 3:
-                        recent_avg = sum(monthly_amounts[-3:]) / 3
-                        trend_factor = recent_avg / avg_monthly if avg_monthly > 0 else 1.0
-                    else:
-                        trend_factor = 1.0
-                    
-                    # Generate forecast
-                    forecast_data = []
-                    for i in range(input.timeframe):
-                        # Apply trend and seasonal variation
-                        seasonal_factor = 1.0 + 0.1 * np.sin(2 * np.pi * i / 12)  # Seasonal pattern
-                        predicted_amount = avg_monthly * trend_factor * seasonal_factor
-                        
-                        future_date = datetime.now() + timedelta(days=30 * (i + 1))
-                        forecast_data.append({
-                            "date": future_date.strftime("%Y-%m-%d"),
-                            "period": future_date.strftime("%Y-%m"),
-                            "predicted_amount": round(predicted_amount, 2),
-                            "category": input.category if input.category != "all" else "all",
-                            "confidence": round(min(0.95, 0.7 + (len(monthly_amounts) / 24)), 2)
-                        })
-                    
-                    # Generate category breakdown from historical data
+                # --- Use Custom ML Model for Forecasting ---
+                if len(historical_expenses) >= 5: # Minimum data requirement for ML model
+                    logger.info("[Forecast] Using custom ML model for prediction.")
+                    # The custom_expense_forecaster expects a list of dicts with 'timestamp' as datetime
+                    ml_forecast_result = forecaster.train_and_predict(historical_expenses, input.timeframe)
+                    forecast_data = ml_forecast_result["forecast"]
+                    model_accuracy = ml_forecast_result["model_accuracy"]
+                    data_source = "custom_ml_model"
+                    message = f"Forecast based on {len(historical_expenses)} transactions using custom ML model."
+
+                    # Re-calculate category breakdown based on historical distribution if 'all' categories requested
                     category_breakdown = {}
                     if input.category == "all" or input.category is None:
                         category_totals = {}
+                        total_historical_amount = 0
                         for expense in historical_expenses:
                             cat = expense.get('category', 'other').lower()
                             category_totals[cat] = category_totals.get(cat, 0) + expense.get('amount', 0)
+                            total_historical_amount += expense.get('amount', 0)
                         
-                        # Scale to predicted monthly amounts
-                        total_historical = sum(category_totals.values())
-                        avg_predicted = sum(item["predicted_amount"] for item in forecast_data) / len(forecast_data)
-                        
-                        for cat, total in category_totals.items():
-                            if total_historical > 0:
-                                category_breakdown[cat] = round((total / total_historical) * avg_predicted, 2)
+                        if total_historical_amount > 0 and forecast_data:
+                            avg_predicted_monthly = sum(item["predicted_amount"] for item in forecast_data) / len(forecast_data)
+                            for cat, total in category_totals.items():
+                                category_breakdown[cat] = round((total / total_historical_amount) * avg_predicted_monthly, 2)
+                        else:
+                            # Fallback to general distribution if historical data is problematic
+                            category_breakdown = _get_default_category_breakdown(avg_predicted_monthly=forecast_data[0]["predicted_amount"] if forecast_data else 1500)
                     else:
+                        # If a specific category is requested, the ML model gives total for that category, so we just use that
                         category_breakdown[input.category] = sum(item["predicted_amount"] for item in forecast_data)
-                    
+
                     return {
                         "forecast": forecast_data,
                         "category_breakdown": category_breakdown,
-                        "model_accuracy": round(min(0.95, 0.75 + (len(historical_expenses) / 100)), 3),
-                        "data_source": "firestore",
-                        "message": f"Forecast based on {len(historical_expenses)} historical transactions",
-                        "user_authenticated": True
+                        "model_accuracy": model_accuracy,
+                        "data_source": data_source,
+                        "message": message,
+                        "user_authenticated": user is not None
                     }
                 else:
-                    print(f"[Forecast] Insufficient Firestore data ({len(historical_expenses)} transactions), using enhanced mock data")
+                    logger.warning(f"[Forecast] Insufficient Firestore data ({len(historical_expenses)} transactions) for custom ML, falling back to mock data.")
                     
             except Exception as e:
-                print(f"[Forecast] Firestore error: {e}, falling back to mock data")
+                logger.error(f"[Forecast] Error using custom ML model: {e}, falling back to mock data.")
         
-        # Generate mock forecast data for non-authenticated users or when Firestore fails
+        # --- Fallback to Mock Data (or if Firestore failed/insufficient data) ---
         import random
         forecast_data = []
         base_amount = 1500  # Base monthly amount
@@ -745,21 +724,8 @@ def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_fir
                 "confidence": round(random.uniform(0.75, 0.95), 2)
             })
         
-        # Generate category breakdown
-        categories = ["Food", "Transport", "Entertainment", "Shopping", "Bills", "Healthcare"]
-        category_breakdown = {}
-        if input.category == "all" or input.category is None:
-            total_monthly = sum(item["predicted_amount"] for item in forecast_data) / len(forecast_data)
-            remaining = total_monthly
-            for i, category in enumerate(categories[:-1]):
-                # Distribute amounts across categories
-                percent = random.uniform(0.1, 0.3)
-                amount = remaining * percent
-                category_breakdown[category.lower()] = round(amount, 2)
-                remaining -= amount
-            category_breakdown[categories[-1].lower()] = round(remaining, 2)
-        else:
-            category_breakdown[input.category] = sum(item["predicted_amount"] for item in forecast_data)
+        # Generate category breakdown for mock data
+        category_breakdown = _get_default_category_breakdown(avg_predicted_monthly=sum(item["predicted_amount"] for item in forecast_data) / len(forecast_data) if forecast_data else base_amount)
         
         return {
             "forecast": forecast_data,
@@ -771,8 +737,25 @@ def forecast_expenses_new(input: ForecastRequestInput, user=Depends(optional_fir
         }
         
     except Exception as e:
-        print(f"[Forecast] Error: {e}")
+        logger.error(f"[Forecast] Top-level error: {e}")
         raise HTTPException(status_code=500, detail=f"Forecast generation failed: {str(e)}")
+
+def _get_default_category_breakdown(avg_predicted_monthly: float) -> Dict[str, float]:
+    """
+    Helper to generate a default category breakdown for mock/fallback scenarios.
+    """
+    import random
+    categories = ["Food", "Transport", "Entertainment", "Shopping", "Bills", "Healthcare"]
+    category_breakdown = {}
+    remaining = avg_predicted_monthly
+    for i, category in enumerate(categories[:-1]):
+        # Distribute amounts across categories
+        percent = random.uniform(0.1, 0.25) # Slightly adjusted distribution
+        amount = remaining * percent
+        category_breakdown[category.lower()] = round(amount, 2)
+        remaining -= amount
+    category_breakdown[categories[-1].lower()] = round(remaining, 2) # Assign remaining to last category
+    return category_breakdown
 
 from fastapi import Query
 

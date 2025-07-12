@@ -159,7 +159,7 @@ const FutureExpensePrediction = () => {
         description: `${selectedTimeframe}-month outlook`
       },
       {
-        icon: <DollarSign className="w-6 h-6" />,
+        icon: <span className="w-6 h-6 flex items-center justify-center font-bold text-xl">₹</span>,
         title: "Avg Monthly Forecast",
         value: `₹${avgMonthly.toFixed(0)}`,
         color: "text-blue-500",
@@ -587,23 +587,22 @@ const FutureExpensePrediction = () => {
               <Brain className="w-8 h-8 text-purple-600" />
             </div>
             <h3 className="text-gray-900 text-lg font-bold mb-2">Powered by Advanced AI</h3>
-            <p className="text-gray-700 text-sm mb-4">
-              Our prediction engine uses Prophet time series forecasting and ARIMA models to analyze your spending patterns 
-              and generate accurate future expense predictions with confidence intervals.
+            <p className="text-md text-gray-700 mb-4 text-center max-w-2xl mx-auto">
+              Our advanced AI prediction engine analyzes your unique spending patterns using a custom-trained machine learning model, generating accurate future expense predictions. It's designed to adapt to your financial behavior over time.
             </p>
-            <div className="flex justify-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-teal-600">
-                <TrendingUp className="w-4 h-4" />
-                <span>Prophet ML Model</span>
-              </div>
-              <div className="flex items-center gap-2 text-blue-600">
-                <Activity className="w-4 h-4" />
-                <span>ARIMA Forecasting</span>
-              </div>
-              <div className="flex items-center gap-2 text-purple-600">
-                <Brain className="w-4 h-4" />
+            <div className="flex justify-center space-x-6 text-sm font-semibold text-purple-700">
+              <span className="flex items-center space-x-2">
+                <i className="fas fa-brain text-purple-500"></i>
+                <span>Custom ML Model</span>
+              </span>
+              <span className="flex items-center space-x-2">
+                <i className="fas fa-chart-line text-green-500"></i>
+                <span>Adaptive Learning</span>
+              </span>
+              <span className="flex items-center space-x-2">
+                <i className="fas fa-magic text-blue-500"></i>
                 <span>Pattern Recognition</span>
-              </div>
+              </span>
             </div>
           </div>
         </PredictionCard>
