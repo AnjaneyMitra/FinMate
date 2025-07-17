@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { AlertCircle, FileText, ArrowLeft, ArrowRight, Save, Send, Clock, Loader, User, Wallet, PiggyBank, ClipboardCheck, FolderOpen, CheckCircle } from 'lucide-react';
@@ -42,6 +42,7 @@ const EnhancedTaxReturnCompletion = () => {
   const [success, setSuccess] = useState(false);
   const [aiHelp, setAiHelp] = useState(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
   const [formFields, setFormFields] = useState([]);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [validation, setValidation] = useState({});
@@ -49,6 +50,48 @@ const EnhancedTaxReturnCompletion = () => {
   const [aiLoading, setAiLoading] = useState(true);
   const [aiError, setAiError] = useState('');
   const [selectedFormId, setSelectedFormId] = useState(null);
+
+  // New state for active timeline step and refs for each step
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const stepRefs = useRef([]);
+
+  // Effect to observe steps and update activeStepIndex on scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Find the index of the intersecting entry
+            const index = stepRefs.current.indexOf(entry.target);
+            if (index !== -1) {
+              setActiveStepIndex(index);
+            }
+          }
+        });
+      },
+      { rootMargin: '-50% 0% -50% 0%', threshold: 0 } // Adjust rootMargin to trigger when section is in middle of viewport
+    );
+
+    stepRefs.current.forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      stepRefs.current.forEach(ref => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [aiGuide]); // Re-run when aiGuide changes
+
+  // Function to handle smooth scroll to a step
+  const scrollToStep = (index) => {
+    if (stepRefs.current[index]) {
+      stepRefs.current[index].scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  };
 
   const sections = selectedForm?.sections || ['Personal Information', 'Income Details', 'Deductions', 'Summary'];
   const totalSteps = sections.length;
@@ -142,9 +185,11 @@ const EnhancedTaxReturnCompletion = () => {
         // Always set aiGuide to an array (even if empty)
         if (Array.isArray(data.guide)) {
           setAiGuide(data.guide);
+          console.log('[DEBUG] AI Guide Data Received:', data.guide); // Add this line
           if (!data.guide.length) setAiError('No AI tax filing guide available for this form.');
         } else if (Array.isArray(data.steps)) {
           setAiGuide(data.steps);
+          console.log('[DEBUG] AI Guide Data Received (steps):', data.steps); // Add this line
           if (!data.steps.length) setAiError('No AI tax filing guide available for this form.');
         } else {
           setAiGuide([]);
@@ -266,62 +311,100 @@ const EnhancedTaxReturnCompletion = () => {
   }
   if (aiGuide && aiGuide.length > 0) {
     return (
-      <div className="max-w-3xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold mb-6 text-blue-700">Step-by-Step Tax Filing Guide</h1>
-        <ol className="space-y-8">
-          {aiGuide.map((step, idx) => {
-            const IconComponent = iconMap[step.icon_suggestion] || FileText; // Default to FileText
-            // Define a set of gradients to cycle through for visual variety
-            const gradients = [
-              'bg-gradient-to-br from-blue-100 to-indigo-100',
-              'bg-gradient-to-br from-purple-100 to-pink-100',
-              'bg-gradient-to-br from-green-100 to-teal-100',
-              'bg-gradient-to-br from-yellow-100 to-orange-100',
-              'bg-gradient-to-br from-red-100 to-rose-100',
-            ];
-            const currentGradient = gradients[idx % gradients.length];
-
-            return (
+      <div className="flex flex-col lg:flex-row max-w-7xl mx-auto py-12 px-4 gap-8">
+        {/* Sticky Sidebar for Progress/Navigation */}
+        <div className={`lg:w-1/4 ${isSidebarCollapsed ? 'lg:w-16' : 'lg:w-1/4'} lg:sticky lg:top-12 h-fit p-6 bg-white rounded-xl shadow-lg border border-blue-100 hidden lg:block transition-all duration-300`}> 
+          <div className="flex justify-between items-center mb-4">
+            <h2 className={`text-xl font-bold text-blue-700 ${isSidebarCollapsed ? 'hidden' : ''}`}>Guide Overview</h2>
+            <button 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors bg-red-200" // Added temporary red background
+            >
+              {isSidebarCollapsed ? <ArrowRight className="w-5 h-5 text-gray-600" /> : <ArrowLeft className="w-5 h-5 text-gray-600" />}
+            </button>
+          </div>
+          <ul className={`space-y-3 ${isSidebarCollapsed ? 'hidden' : ''}`}>
+            {aiGuide.map((step, idx) => (
               <li 
                 key={idx} 
-                className="relative pl-12 sm:pl-16 animate-fade-in-up" 
-                style={{ animationDelay: `${idx * 0.1}s` }} 
-              > {/* Increased padding for larger icon and line and added entry animation */}
-                {/* Step indicator with icon - made more prominent */} 
-                <span className={`absolute left-0 top-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full ${currentGradient} text-blue-700 flex items-center justify-center font-bold text-lg shadow-md border-2 border-white transform transition-transform duration-300 hover:scale-110 `}> {/* Added hover effect for icon */} 
-                  <IconComponent className="w-6 h-6 text-blue-700 animate-pulse-subtle" /> {/* Larger icon and subtle pulse animation */} 
+                className="flex items-center space-x-3 group cursor-pointer hover:text-blue-600 transition-colors"
+                onClick={() => scrollToStep(idx)} // Add onClick to scroll
+              >
+                <span className={`w-3 h-3 rounded-full ${idx === activeStepIndex ? 'bg-blue-600' : 'bg-gray-300'} group-hover:bg-blue-400 transition-colors`}></span>
+                <span className={`text-gray-700 group-hover:text-blue-600 font-medium transition-colors ${idx === activeStepIndex ? 'text-blue-700 font-semibold' : ''}`}> {/* Apply bold/color for active */} 
+                  {step.title || `Step ${idx + 1}`}
                 </span>
-                {/* Connector line for steps */} 
-                {idx < aiGuide.length - 1 && (
-                  <div className="absolute left-5 sm:left-7 top-10 sm:top-12 h-full border-l-2 border-blue-200 transform origin-top animate-grow-line" style={{ animationDelay: `${idx * 0.1 + 0.05}s`, height: 'calc(100% - 2.5rem)' }}></div>
-                )}
-                {/* Main content card for the step */} 
-                <div className={`bg-white rounded-xl shadow-lg p-6 border border-blue-100 transform transition-transform duration-300 hover:scale-[1.01] ${currentGradient.replace('bg-gradient-to-br', '').replace('100', '50')}`}> {/* Subtle hover effect and lighter gradient background */} 
-                  <h2 className="text-xl sm:text-2xl font-bold mb-2 text-blue-800">{step.title || `Step ${idx + 1}`}</h2> {/* Larger title with darker blue */} 
-                  <p className="text-gray-700 leading-relaxed mb-4">{step.description || step.text || step}</p> {/* Improved line height and margin for readability */} 
-
-                  {step.key_points && step.key_points.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-gray-200"> {/* Stronger border for separation */} 
-                      <h3 className="text-md sm:text-lg font-semibold text-gray-800 mb-2">Key Points:</h3>
-                      <ul className="list-disc list-inside text-gray-700 space-y-1">
-                        {step.key_points.map((point, pointIdx) => (
-                          <li key={pointIdx} className="flex items-start">
-                            <span className="mr-2 text-blue-600">•</span> {point} {/* Custom bullet with accent color */} 
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {step.tips && (
-                    <div className="mt-4 text-sm bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg p-4 flex items-start gap-3 border border-teal-200 shadow-sm"> {/* More vibrant tips box with subtle shadow */} 
-                      <span className="text-teal-600 text-lg">💡</span> <p className="flex-1 text-teal-800 font-medium">{step.tips}</p> {/* Larger icon and bolder text for tip */} 
-                    </div>
-                  )}
-                </div>
               </li>
-            );
-          })}
-        </ol>
+            ))}
+          </ul>
+        </div>
+
+        {/* Main Content Area - Scrollable Guide Steps */}
+        <div className={`flex-1 ${isSidebarCollapsed ? 'lg:ml-16' : ''}`}> {/* Adjust margin when sidebar is collapsed */} 
+          <h1 className="text-3xl font-bold mb-12 text-blue-700 lg:hidden">Step-by-Step Tax Filing Guide</h1> {/* Hide on large screens, shown in sidebar */}
+          <ol className="space-y-16">
+            {aiGuide.map((step, idx) => {
+              const IconComponent = iconMap[step.icon_suggestion] || FileText; // Default to FileText
+              // Define a set of gradients to cycle through for visual variety
+              const gradients = [
+                'bg-gradient-to-br from-blue-100 to-indigo-100',
+                'bg-gradient-to-br from-purple-100 to-pink-100',
+                'bg-gradient-to-br from-green-100 to-teal-100',
+                'bg-gradient-to-br from-yellow-100 to-orange-100',
+                'bg-gradient-to-br from-red-100 to-rose-100',
+              ];
+              const currentGradient = gradients[idx % gradients.length];
+              const isEven = idx % 2 === 0; // Determine if step is even for alternating layout
+
+              return (
+                <li 
+                  key={idx} 
+                  ref={el => stepRefs.current[idx] = el} // Assign ref to each list item
+                  className="relative flex items-start mb-12 animate-fade-in-up" 
+                  style={{ animationDelay: `${idx * 0.1}s` }} 
+                > {/* Increased padding for larger icon and line and added entry animation */}
+                  {/* Central Timeline Dot/Icon */}
+                  <div className="flex flex-col items-center mr-4 sm:mr-8">
+                    <span className={`z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full ${currentGradient} text-blue-700 flex items-center justify-center font-bold text-lg shadow-xl border-2 border-white transform transition-transform duration-300 hover:scale-110 animate-icon-glow`}> {/* Added glow animation on hover */} 
+                      <IconComponent className="w-6 h-6 text-blue-700 animate-pulse-subtle" />
+                    </span>
+                    {/* Connector Line */}
+                    {idx < aiGuide.length - 1 && (
+                      <div 
+                        className="flex-grow border-l-2 border-blue-200 transform origin-top animate-grow-line"
+                        style={{ height: '100%', animationDelay: `${idx * 0.1 + 0.05}s` }}
+                      ></div>
+                    )}
+                  </div>
+
+                  {/* Main Content Card */}
+                  <div className={`flex-1 bg-white rounded-xl shadow-2xl p-6 border border-blue-100 transform transition-all duration-300 card-hover-3d relative ${isEven ? '' : 'md:ml-auto md:w-3/4 lg:w-2/3'}`}> {/* Stronger shadow and hover effect */} 
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2 text-blue-800">{step.title || `Step ${idx + 1}`}</h2>
+                    <p className="text-gray-700 leading-relaxed mb-4">{step.description || step.text || step}</p> {/* Improved line height and margin for readability */} 
+
+                    {step.key_points && step.key_points.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-200"> {/* Stronger border for separation */} 
+                        <h3 className="text-md sm:text-lg font-semibold text-gray-800 mb-2">Key Points:</h3>
+                        <ul className="list-disc list-inside text-gray-700 space-y-1">
+                          {step.key_points.map((point, pointIdx) => (
+                            <li key={pointIdx} className="flex items-start">
+                              <span className="mr-2 text-blue-600">•</span> {point} {/* Custom bullet with accent color */} 
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {step.tips && (
+                      <div className="mt-4 text-sm bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg p-4 flex items-start gap-3 border border-teal-200 shadow-sm"> {/* More vibrant tips box with subtle shadow */} 
+                        <span className="text-teal-600 text-lg">💡</span> <p className="flex-1 text-teal-800 font-medium">{step.tips}</p> {/* Larger icon and bolder text for tip */} 
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </div>
     );
   }
